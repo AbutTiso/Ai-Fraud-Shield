@@ -1,0 +1,423 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}AI Fraud Shield - Complete Scam Detection Suite | Kenya{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'detector/css/style.css' %}">
+<!-- Add this in the <head> section -->
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>">
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<!-- Stats Bar -->
+<div class="row g-3 mb-4">
+    <div class="col-md-2 col-6">
+        <div class="stats-card">
+            <div class="stats-number" id="totalReports">0</div>
+            <div><i class="fas fa-chart-line"></i> Total Reports</div>
+        </div>
+    </div>
+    <div class="col-md-2 col-6">
+        <div class="stats-card danger-gradient">
+            <div class="stats-number" id="highRisk">0</div>
+            <div><i class="fas fa-exclamation-triangle"></i> High Risk</div>
+        </div>
+    </div>
+    <div class="col-md-2 col-6">
+        <div class="stats-card" style="background: linear-gradient(135deg, #17a2b8, #138496);">
+            <div class="stats-number" id="smsCount">0</div>
+            <div><i class="fas fa-sms"></i> SMS Reports</div>
+        </div>
+    </div>
+    <div class="col-md-2 col-6">
+        <div class="stats-card" style="background: linear-gradient(135deg, #fd7e14, #e8590c);">
+            <div class="stats-number" id="emailCount">0</div>
+            <div><i class="fas fa-envelope"></i> Email Reports</div>
+        </div>
+    </div>
+    <div class="col-md-2 col-6">
+        <div class="stats-card" style="background: linear-gradient(135deg, #20c997, #12b886);">
+            <div class="stats-number" id="whatsappCount">0</div>
+            <div><i class="fab fa-whatsapp"></i> WhatsApp</div>
+        </div>
+    </div>
+    <div class="col-md-2 col-6">
+        <div class="stats-card" style="background: linear-gradient(135deg, #dc3545, #c82333);">
+            <div class="stats-number" id="callCount">0</div>
+            <div><i class="fas fa-phone-alt"></i> Call Reports</div>
+        </div>
+    </div>
+    <div class="col-md-2 col-6">
+        <div class="stats-card success-gradient">
+            <div class="stats-number" id="avgRiskScore">0</div>
+            <div><i class="fas fa-percent"></i> Avg Risk Score</div>
+        </div>
+    </div>
+</div>
+
+<!-- Tab Buttons -->
+<div class="tab-buttons">
+    <button class="tab-btn active" data-tab="sms"><i class="fas fa-sms"></i> SMS Detection</button>
+    <button class="tab-btn" data-tab="email"><i class="fas fa-envelope"></i> Email (Safe)</button>
+    <button class="tab-btn" data-tab="whatsapp"><i class="fab fa-whatsapp"></i> WhatsApp</button>
+    <button class="tab-btn" data-tab="screenshot"><i class="fas fa-camera"></i> Screenshot</button>
+    <button class="tab-btn" data-tab="url"><i class="fas fa-link"></i> URL Checker</button>
+    <button class="tab-btn" data-tab="call"><i class="fas fa-phone-alt"></i> Call Monitor</button>
+    <button class="tab-btn" data-tab="stats"><i class="fas fa-chart-bar"></i> Dashboard</button>
+    <a href="/about/" class="tab-btn" style="text-decoration: none;"><i class="fas fa-info-circle"></i> About</a>
+</div>
+
+<!-- SMS Tab -->
+<div id="smsTab" class="tab-content active">
+    <h5 class="mb-3"><i class="fas fa-sms"></i> SMS Scam Detector</h5>
+    <p class="text-muted">Paste any suspicious SMS to check if it's a scam. Works with English and Swahili messages.</p>
+    
+    <div class="example-buttons mb-3">
+        <small class="text-muted"><i class="fas fa-flask"></i> Test examples:</small>
+        <button type="button" class="example-btn" data-type="sms" data-example="scam"><i class="fas fa-exclamation-triangle"></i> Account Scam</button>
+        <button type="button" class="example-btn" data-type="sms" data-example="prize"><i class="fas fa-gift"></i> Prize Scam</button>
+        <button type="button" class="example-btn" data-type="sms" data-example="safe"><i class="fas fa-check-circle"></i> Safe SMS</button>
+    </div>
+    
+    <form id="smsForm">
+        <div class="mb-3">
+            <textarea class="form-control" id="smsText" rows="6" placeholder="Paste SMS message here..."></textarea>
+        </div>
+        <button type="submit" class="btn-analyze"><i class="fas fa-search"></i> Analyze SMS</button>
+    </form>
+    
+    <div class="spinner" id="smsSpinner">
+        <div class="spinner-border text-primary"></div>
+        <p class="mt-2">Analyzing message...</p>
+    </div>
+    
+    <div id="smsResult" class="result-card"></div>
+</div>
+
+<!-- Email Tab -->
+<div id="emailTab" class="tab-content">
+    <h5 class="mb-3"><i class="fas fa-envelope"></i> Safe Email Phishing Detector</h5>
+    
+    <div class="safe-analysis-badge">
+        <div class="d-flex align-items-center">
+            <div style="font-size: 2rem; margin-right: 15px;"><i class="fas fa-shield-alt"></i></div>
+            <div>
+                <strong><i class="fas fa-check-circle"></i> 100% SAFE ANALYSIS - NO CLICKS REQUIRED!</strong><br>
+                <small>We NEVER click links. You paste email content as TEXT only.</small>
+            </div>
+        </div>
+    </div>
+    
+    <div class="alert alert-primary mb-3">
+        <strong><i class="fas fa-info-circle"></i> How to safely get email content:</strong>
+        <ol class="mb-0 mt-2">
+            <li>Open the suspicious email in your email client (Gmail, Outlook, etc.)</li>
+            <li><strong class="text-danger">DO NOT</strong> click any links or download attachments</li>
+            <li>Select <strong>ALL</strong> email text (Ctrl+A or Cmd+A)</li>
+            <li>Copy the text (Ctrl+C or Cmd+C)</li>
+            <li>Paste it below (Ctrl+V or Cmd+V)</li>
+        </ol>
+    </div>
+    
+    <div class="example-buttons mb-3">
+        <small class="text-muted"><i class="fas fa-flask"></i> Test examples:</small>
+        <button type="button" class="example-btn" data-type="email" data-example="phishing"><i class="fas fa-fish"></i> Phishing Email</button>
+        <button type="button" class="example-btn" data-type="email" data-example="safe"><i class="fas fa-check-circle"></i> Safe Email</button>
+    </div>
+    
+    <form id="emailForm">
+        <div class="mb-3">
+            <label class="form-label fw-bold"><i class="fas fa-file-alt"></i> Paste Email Content Here:</label>
+            <textarea class="form-control" id="emailText" rows="12" placeholder="Paste email content here..."></textarea>
+        </div>
+        <button type="submit" class="btn-analyze"><i class="fas fa-shield-alt"></i> Analyze Email Safely</button>
+    </form>
+    
+    <div class="spinner" id="emailSpinner">
+        <div class="spinner-border text-primary"></div>
+        <p class="mt-2">Analyzing email...</p>
+    </div>
+    
+    <div id="emailResult" class="result-card"></div>
+    
+    <div class="alert alert-warning mt-4">
+        <strong><i class="fas fa-exclamation-triangle"></i> Important Email Safety Rules:</strong>
+        <ul class="mb-0 mt-2">
+            <li>🚫 <strong>NEVER click links</strong> in suspicious emails</li>
+            <li>🚫 <strong>NEVER download attachments</strong> from unknown senders</li>
+            <li>📧 <strong>Forward phishing emails</strong> to <code>report@kenyacic.go.ke</code></li>
+        </ul>
+    </div>
+</div>
+
+<!-- WhatsApp Tab -->
+<div id="whatsappTab" class="tab-content">
+    <h5 class="mb-3"><i class="fab fa-whatsapp"></i> WhatsApp Scam Detector</h5>
+    <p class="text-muted">
+        Export WhatsApp chat and paste here to detect scams.
+        <br>
+        <small><i class="fas fa-info-circle"></i> How to export: Open chat → Menu (⋮) → More → Export chat → Without media</small>
+    </p>
+    
+    <form id="whatsappForm">
+        <div class="mb-3">
+            <textarea class="form-control" id="whatsappText" rows="10" placeholder="Paste exported WhatsApp chat here..." style="font-family: monospace;"></textarea>
+        </div>
+        <button type="submit" class="btn-analyze"><i class="fab fa-whatsapp"></i> Analyze Chat</button>
+    </form>
+    
+    <div class="spinner" id="whatsappSpinner">
+        <div class="spinner-border text-primary"></div>
+        <p class="mt-2">Analyzing WhatsApp chat...</p>
+    </div>
+    
+    <div id="whatsappResult" class="result-card"></div>
+</div>
+
+<!-- Call Detection Tab -->
+<div id="callTab" class="tab-content">
+    <h5 class="mb-3"><i class="fas fa-phone-alt"></i> Phone Call Scam Detector</h5>
+    <p class="text-muted">Detect vishing (voice phishing) calls by analyzing what the caller says or checking phone numbers.</p>
+    
+    <!-- Manual Transcript Analysis -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h6><i class="fas fa-keyboard"></i> Manual Call Transcript Analysis</h6>
+                    <p class="small text-muted">Paste what the caller said during the conversation:</p>
+                    <textarea id="callTranscript" class="form-control" rows="8" 
+                        placeholder="Paste call transcript here...
+                        
+Example:
+Caller: Hello, this is from Safaricom. Your M-Pesa account has been suspended.
+Caller: You need to verify immediately or your account will be closed.
+Caller: Send your MPIN to this number for verification..."></textarea>
+                    <button class="btn-analyze mt-3" id="analyzeCallBtn">
+                        <i class="fas fa-search"></i> Analyze Call Transcript
+                    </button>
+                    <div class="spinner" id="callSpinner" style="display: none;">
+                        <div class="spinner-border text-primary"></div>
+                        <p class="mt-2">Analyzing call transcript...</p>
+                    </div>
+                    <div id="callResult" class="result-card mt-3"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h6><i class="fas fa-database"></i> Check Phone Number</h6>
+                    <p class="small text-muted">Enter the caller's phone number to check if it's known as a scammer:</p>
+                    <div class="input-group">
+                        <input type="tel" id="callerNumber" class="form-control" placeholder="Enter caller's number (e.g., 0712345678)">
+                        <button class="btn btn-outline-primary" id="checkNumberBtn" style="border-radius: 0 12px 12px 0;">
+                            <i class="fas fa-search"></i> Check
+                        </button>
+                    </div>
+                    <div id="numberCheckResult" class="mt-3"></div>
+                </div>
+            </div>
+            
+            <div class="card bg-danger text-white mb-3" style="background: linear-gradient(135deg, #dc3545, #c82333);">
+                <div class="card-body">
+                    <h6><i class="fas fa-shield-alt"></i> ⚠️ During the Call - Quick Reference</h6>
+                    <ul class="mb-0 mt-2 small">
+                        <li>❌ NEVER share your M-PESA PIN</li>
+                        <li>❌ NEVER share OTP or verification codes</li>
+                        <li>❌ NEVER send money to "verify" your account</li>
+                        <li>✅ Hang up and call back on official numbers</li>
+                        <li>✅ Safaricom ONLY calls from 0722000000</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Real-time Call Monitor with Microphone -->
+    <div class="card mb-3" style="background: linear-gradient(135deg, #1e3a8a, #2563eb); color: white;">
+        <div class="card-body text-center">
+            <h6><i class="fas fa-microphone-alt"></i> Real-Time Call Monitor (Advanced)</h6>
+            <p class="small">Enable this BEFORE answering a suspicious call. It will listen and alert you during the call.</p>
+            
+            <div class="d-flex justify-content-center gap-3">
+                <button class="btn btn-light" id="startCallMonitorBtn" style="border-radius: 50px;">
+                    <i class="fas fa-play-circle"></i> Start Monitoring
+                </button>
+                <button class="btn btn-outline-light" id="stopCallMonitorBtn" style="border-radius: 50px;" disabled>
+                    <i class="fas fa-stop-circle"></i> Stop Monitoring
+                </button>
+            </div>
+            
+            <div id="monitorStatus" class="mt-3">
+                <span class="badge bg-secondary">⚪ Not monitoring</span>
+            </div>
+            
+            <!-- LIVE TRANSCRIPT CONTAINER - Added -->
+            <div id="liveTranscriptContainer" class="mt-3"></div>
+            
+            <div id="realtimeAlerts" class="mt-3" style="max-height: 150px; overflow-y: auto; text-align: left;">
+                <div class="text-muted small">Real-time alerts will appear here...</div>
+            </div>
+            
+            <div id="dangerAlert" style="display: none;" class="mt-3 p-2 bg-danger rounded">
+                <strong><i class="fas fa-exclamation-triangle"></i> SCAM DETECTED!</strong>
+                <p class="mb-0 small">HANG UP NOW! This is a scam call.</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Red Flags Guide -->
+    <div class="alert alert-success mt-2">
+        <strong><i class="fas fa-flag-checkered"></i> Red Flags to Watch For:</strong>
+        <div class="row mt-2">
+            <div class="col-md-3"><span class="badge bg-danger">URGENCY</span> "Immediate action"</div>
+            <div class="col-md-3"><span class="badge bg-danger">FEAR</span> "Account will be closed"</div>
+            <div class="col-md-3"><span class="badge bg-danger">REWARD</span> "You've won a prize"</div>
+            <div class="col-md-3"><span class="badge bg-warning text-dark">PIN REQUEST</span> "Send your MPIN"</div>
+        </div>
+    </div>
+</div>
+
+<!-- Screenshot Tab -->
+<div id="screenshotTab" class="tab-content">
+    <h5 class="mb-3"><i class="fas fa-camera"></i> Fake M-Pesa Receipt Detector</h5>
+    <p class="text-muted">Upload a screenshot of an M-Pesa message to verify authenticity.</p>
+    
+    <div class="drop-zone" id="dropZone">
+        <div class="text-center">
+            <div style="font-size: 3rem;">📸</div>
+            <div>Drag & drop screenshot here or click to upload</div>
+            <small class="text-muted">Supports JPG, PNG (Max 5MB)</small>
+        </div>
+    </div>
+    <input type="file" id="screenshotInput" accept="image/*" style="display: none;">
+    
+    <div id="screenshotPreview" style="display: none; text-align: center; margin-top: 20px;">
+        <img id="previewImage" style="max-width: 100%; max-height: 300px; border-radius: 10px;">
+        <button class="btn-analyze" id="analyzeScreenshotBtn" style="margin-top: 15px;"><i class="fas fa-search"></i> Analyze Screenshot</button>
+    </div>
+    
+    <div class="spinner" id="screenshotSpinner">
+        <div class="spinner-border text-primary"></div>
+        <p class="mt-2">Extracting text...</p>
+    </div>
+    
+    <div id="screenshotResult" class="result-card"></div>
+</div>
+
+<!-- URL Checker Tab -->
+<div id="urlTab" class="tab-content">
+    <h5 class="mb-3"><i class="fas fa-link"></i> Safe URL Checker</h5>
+    <p class="text-muted">Check if a link is safe without clicking it.</p>
+    
+    <form id="urlForm">
+        <div class="mb-3">
+            <input type="url" class="form-control" id="urlInput" placeholder="https://example.com" required>
+            <small class="text-muted"><i class="fas fa-info-circle"></i> Example: https://www.safaricom.com</small>
+        </div>
+        <button type="submit" class="btn-analyze"><i class="fas fa-shield-alt"></i> Check URL Safety</button>
+    </form>
+    
+    <div class="spinner" id="urlSpinner">
+        <div class="spinner-border text-primary"></div>
+        <p class="mt-2">Analyzing URL...</p>
+    </div>
+    
+    <div id="urlResult" class="result-card"></div>
+</div>
+
+<!-- Stats Tab - Enhanced with Charts -->
+<div id="statsTab" class="tab-content">
+    <!-- Summary Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3 col-6">
+            <div class="stats-card" style="background: linear-gradient(135deg, #667eea, #764ba2);">
+                <div class="stats-number" id="statTotalReports">0</div>
+                <div><i class="fas fa-database"></i> Total Detections</div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="stats-card" style="background: linear-gradient(135deg, #dc3545, #c82333);">
+                <div class="stats-number" id="statHighRisk">0</div>
+                <div><i class="fas fa-exclamation-triangle"></i> High Risk</div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="stats-card" style="background: linear-gradient(135deg, #28a745, #20c997);">
+                <div class="stats-number" id="statAccuracy">98<span style="font-size: 1rem;">%</span></div>
+                <div><i class="fas fa-check-circle"></i> Detection Rate</div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="stats-card" style="background: linear-gradient(135deg, #17a2b8, #138496);">
+                <div class="stats-number" id="statAvgScore">0</div>
+                <div><i class="fas fa-chart-line"></i> Avg Risk Score</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-6">
+            <div class="chart-card">
+                <h5><i class="fas fa-chart-pie"></i> Scams by Type</h5>
+                <canvas id="scamTypeChart" style="max-height: 300px; width: 100%;"></canvas>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="chart-card">
+                <h5><i class="fas fa-chart-bar"></i> Risk Score Distribution</h5>
+                <canvas id="riskDistributionChart" style="max-height: 300px; width: 100%;"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-md-12">
+            <div class="chart-card">
+                <h5><i class="fas fa-chart-line"></i> Detection Trend (Last 7 Days)</h5>
+                <canvas id="trendChart" style="max-height: 300px; width: 100%;"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Scams Table -->
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <h5><i class="fas fa-table"></i> Recent Scam Reports</h5>
+        <div>
+            <button class="btn-export" onclick="exportReports()">
+                <i class="fas fa-download"></i> Export CSV
+            </button>
+            <button class="btn-export ms-2" onclick="refreshStats()" style="background: linear-gradient(135deg, #667eea, #764ba2);">
+                <i class="fas fa-sync-alt"></i> Refresh
+            </button>
+        </div>
+    </div>
+    
+    <div class="table-responsive">
+        <table class="table table-hover" id="recentScamsTable">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Type</th>
+                    <th>Content</th>
+                    <th>Risk Score</th>
+                    <th>Risk Level</th>
+                </tr>
+            </thead>
+            <tbody id="recentScamsBody">
+                <tr><td colspan="5" class="text-center"><i class="fas fa-spinner fa-spin"></i> Loading statistics...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'detector/js/main.js' %}"></script>
+{% endblock %}

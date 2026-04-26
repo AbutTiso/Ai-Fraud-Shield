@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Latest Scam Alerts - AI Fraud Shield{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="main-card">
+        <div class="header">
+            <h1><i class="fas fa-bell"></i> Latest Scam Alerts</h1>
+            <p>Stay informed about the latest scams targeting Kenyans</p>
+        </div>
+        <div class="content p-4">
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-triangle"></i> <strong>Current Alerts:</strong>
+                <ul class="mt-2 mb-0">
+                    <li>⚠️ Fake M-Pesa suspension messages circulating</li>
+                    <li>⚠️ Fraudulent KCB loan offers asking for processing fees</li>
+                    <li>⚠️ "You won an iPhone" WhatsApp scams</li>
+                    <li>⚠️ Fake KRA tax refund emails</li>
+                </ul>
+            </div>
+            
+            <h4>Recent Scam Reports</h4>
+            <div id="recentAlerts">
+                {% if recent_scams %}
+                    {% for scam in recent_scams %}
+                    <div class="scam-item">
+                        <strong><i class="fas fa-{{ scam.type|lower }}"></i> [{{ scam.type }}]</strong>
+                        <span class="badge bg-danger">Score: {{ scam.score }}/100</span>
+                        <p class="mt-2 mb-1">{{ scam.content|truncatechars:200 }}</p>
+                        <small class="text-muted">{{ scam.date }}</small>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-muted">No scam reports yet. Check back later.</p>
+                {% endif %}
+            </div>
+            
+            <div class="alert alert-warning mt-4">
+                <strong><i class="fas fa-phone-alt"></i> See a scam? Report it!</strong><br>
+                Forward scam messages to <strong>333</strong> (Safaricom) or <strong>3333</strong> (Airtel)
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

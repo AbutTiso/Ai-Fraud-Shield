@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Report Phishing Email - AI Fraud Shield{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="main-card">
+        <div class="header">
+            <h1><i class="fas fa-fish"></i> Report Phishing Email</h1>
+            <p>Help stop email scammers by reporting phishing attempts</p>
+        </div>
+        <div class="content p-4">
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i> Forward suspicious emails to <strong>report@kenyacic.go.ke</strong>
+            </div>
+            
+            <form method="post" action="/api/submit-feedback/">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label class="form-label">Email Sender</label>
+                    <input type="email" class="form-control" placeholder="sender@example.com">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Email Subject</label>
+                    <input type="text" class="form-control" placeholder="Email subject line">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Email Content (Copy & Paste)</label>
+                    <textarea class="form-control" rows="8" placeholder="Paste the email content here..."></textarea>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Suspicious Links in Email</label>
+                    <input type="url" class="form-control" placeholder="https://suspicious-link.com">
+                </div>
+                <button type="submit" class="btn-analyze"><i class="fas fa-paper-plane"></i> Submit Report</button>
+            </form>
+            
+            <div class="alert alert-success mt-4">
+                <strong><i class="fas fa-shield-alt"></i> Already reported to authorities?</strong><br>
+                Forward the email to <strong>report@kenyacic.go.ke</strong> - Kenya's national cybercrime unit.
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

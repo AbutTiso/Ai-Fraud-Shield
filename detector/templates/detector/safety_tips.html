@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Safety Tips - AI Fraud Shield{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="main-card">
+        <div class="header">
+            <h1><i class="fas fa-shield-alt"></i> Safety Tips</h1>
+            <p>How to protect yourself from digital scams</p>
+        </div>
+        <div class="content p-4">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h4><i class="fas fa-sms"></i> SMS Safety</h4>
+                            <ul>
+                                <li>Never click links in unsolicited SMS</li>
+                                <li>Never share your M-Pesa PIN</li>
+                                <li>Verify urgent requests by calling official numbers</li>
+                                <li>Report scam SMS to 333 (Safaricom) or 3333 (Airtel)</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h4><i class="fas fa-envelope"></i> Email Safety</h4>
+                            <ul>
+                                <li>Never click links in suspicious emails</li>
+                                <li>Check sender's email address carefully</li>
+                                <li>Hover over links to see real destination</li>
+                                <li>Forward phishing to report@kenyacic.go.ke</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h4><i class="fab fa-whatsapp"></i> WhatsApp Safety</h4>
+                            <ul>
+                                <li>Verify urgent money requests with a phone call</li>
+                                <li>Don't share verification codes</li>
+                                <li>Block and report suspicious contacts</li>
+                                <li>Enable two-step verification</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h4><i class="fas fa-money-bill-wave"></i> M-Pesa Safety</h4>
+                            <ul>
+                                <li>Never share your M-Pesa PIN with anyone</li>
+                                <li>Verify receipts in your official M-Pesa app</li>
+                                <li>Don't send money to unknown numbers</li>
+                                <li>Report fake receipts immediately</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="alert alert-danger mt-3">
+                <strong><i class="fas fa-exclamation-triangle"></i> Golden Rule:</strong>
+                If something seems too good to be true, it probably is. Always verify through official channels!
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

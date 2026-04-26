@@ -1,0 +1,305 @@
+/* detector/static/detector/css/style.css */
+
+.drop-zone {
+    border: 2px dashed #667eea;
+    border-radius: 10px;
+    padding: 40px;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-align: center;
+}
+.drop-zone:hover {
+    border-color: #764ba2;
+    background-color: #f0f0ff;
+}
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+body {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    min-height: 100vh;
+}
+.container {
+    padding: 20px;
+}
+.main-card {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    overflow: hidden;
+    margin: 20px auto;
+    max-width: 1400px;
+}
+.header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 30px;
+    text-align: center;
+}
+.header h1 {
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+}
+.badge-custom {
+    background: rgba(255,255,255,0.2);
+    padding: 5px 15px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+}
+.content {
+    padding: 30px;
+}
+textarea, input[type="url"] {
+    border: 2px solid #e0e0e0;
+    border-radius: 10px;
+    font-size: 1rem;
+    transition: all 0.3s;
+    width: 100%;
+    padding: 10px;
+}
+textarea:focus, input[type="url"]:focus {
+    border-color: #667eea;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(102,126,234,0.1);
+}
+.btn-analyze {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 12px 30px;
+    border-radius: 50px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s;
+    margin-top: 10px;
+}
+.btn-analyze:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(102,126,234,0.4);
+}
+.btn-analyze:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+.result-card {
+    margin-top: 30px;
+    padding: 20px;
+    border-radius: 15px;
+    display: none;
+}
+.result-card.show {
+    display: block;
+    animation: slideIn 0.5s ease;
+}
+@keyframes slideIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.risk-score {
+    font-size: 2rem;
+    font-weight: bold;
+    text-align: center;
+    margin: 20px 0;
+}
+.risk-progress {
+    height: 30px;
+    border-radius: 15px;
+    margin: 20px 0;
+}
+.reason-item {
+    padding: 10px;
+    margin: 8px 0;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border-left: 4px solid;
+}
+.spinner {
+    display: none;
+    text-align: center;
+    margin: 20px 0;
+}
+.spinner.show {
+    display: block;
+}
+.spinner-border {
+    width: 3rem;
+    height: 3rem;
+}
+.footer {
+    text-align: center;
+    padding: 20px;
+    background: #f8f9fa;
+    color: #666;
+    font-size: 0.9rem;
+}
+.tab-buttons {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #e0e0e0;
+    flex-wrap: wrap;
+}
+.tab-btn {
+    background: none;
+    border: none;
+    padding: 10px 20px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s;
+    color: #666;
+}
+.tab-btn.active {
+    color: #667eea;
+    border-bottom: 2px solid #667eea;
+    font-weight: 600;
+}
+.tab-content {
+    display: none;
+}
+.tab-content.active {
+    display: block;
+    animation: fadeIn 0.5s ease;
+}
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+.stats-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 15px;
+    border-radius: 10px;
+    text-align: center;
+    margin-bottom: 15px;
+    transition: transform 0.3s;
+}
+.stats-card:hover {
+    transform: translateY(-5px);
+}
+.stats-number {
+    font-size: 2rem;
+    font-weight: bold;
+}
+.recent-scams {
+    max-height: 400px;
+    overflow-y: auto;
+}
+.scam-item {
+    background: #f8f9fa;
+    padding: 10px;
+    margin: 5px 0;
+    border-radius: 5px;
+    border-left: 3px solid #dc3545;
+    transition: all 0.2s;
+}
+.scam-item:hover {
+    background: #e9ecef;
+    transform: translateX(5px);
+}
+.scam-item small {
+    color: #666;
+}
+.example-buttons {
+    margin-top: 10px;
+}
+.example-btn {
+    background: #f0f0f0;
+    border: none;
+    padding: 5px 12px;
+    margin: 3px;
+    border-radius: 15px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.example-btn:hover {
+    background: #667eea;
+    color: white;
+    transform: scale(1.05);
+}
+.btn-export {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    border: none;
+    padding: 8px 20px;
+    border-radius: 20px;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+.btn-export:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(40,167,69,0.3);
+}
+#whatsappText {
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
+    background-color: #f8f9fa;
+}
+.result-header {
+    padding: 20px;
+    color: white;
+    border-radius: 10px 10px 0 0;
+}
+.result-header.danger {
+    background-color: #dc3545;
+}
+.result-header.warning {
+    background-color: #ffc107;
+    color: #333;
+}
+.result-header.success {
+    background-color: #28a745;
+}
+.score-circle {
+    text-align: center;
+    margin-top: 10px;
+}
+.score-value {
+    font-size: 36px;
+    font-weight: bold;
+}
+.result-body {
+    padding: 20px;
+    background-color: white;
+    border: 1px solid #e0e0e0;
+    border-top: none;
+    border-radius: 0 0 10px 10px;
+}
+.safe-analysis-badge {
+    background: #d4edda;
+    border-left: 4px solid #28a745;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+}
+.url-text-display {
+    word-break: break-all;
+    background: #f8f9fa;
+    padding: 8px;
+    border-radius: 5px;
+    font-family: monospace;
+    font-size: 0.85rem;
+}
+@media (max-width: 768px) {
+    .header h1 {
+        font-size: 1.8rem;
+    }
+    .content {
+        padding: 20px;
+    }
+    .stats-number {
+        font-size: 1.2rem;
+    }
+    .tab-btn {
+        padding: 8px 12px;
+        font-size: 0.9rem;
+    }
+    .stats-card {
+        padding: 10px;
+    }
+}
