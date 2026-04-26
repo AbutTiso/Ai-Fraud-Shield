@@ -2,12 +2,13 @@
   "manifest_version": 3,
   "name": "AI Fraud Shield - Scam Detector",
   "version": "1.0.0",
-  "description": "Protect yourself from SMS, email, and web scams in Kenya",
+  "description": "Protect yourself from web scams with real-time detection and high-contrast themes for ChatGPT & DeepSeek",
   "permissions": [
     "activeTab",
     "storage",
     "notifications",
-    "webNavigation"
+    "webNavigation",
+    "scripting"
   ],
   "host_permissions": [
     "http://localhost:8000/*",

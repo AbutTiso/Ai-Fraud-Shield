@@ -5,6 +5,26 @@ function getCSRFToken() {
         ?.split('=')[1] || '';
 }
 
+// Load dark mode setting
+chrome.storage.sync.get(['darkModeEnabled'], (settings) => {
+    const darkModeToggle = document.getElementById('darkModeToggle');
+    if (darkModeToggle) {
+        darkModeToggle.checked = settings.darkModeEnabled || false;
+        
+        darkModeToggle.addEventListener('change', async (e) => {
+            chrome.storage.sync.set({ darkModeEnabled: e.target.checked });
+            
+            // Send message to content script to apply theme
+            const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+            if (tab && tab.id) {
+                chrome.tabs.sendMessage(tab.id, { action: "toggleDarkMode" }).catch(() => {
+                    console.log('Content script not ready');
+                });
+            }
+        });
+    }
+});
+
 document.getElementById('checkPageBtn').addEventListener('click', async () => {
     const loading = document.getElementById('loading');
     const resultDiv = document.getElementById('result');
@@ -13,17 +33,14 @@ document.getElementById('checkPageBtn').addEventListener('click', async () => {
     resultDiv.classList.remove('show');
     
     try {
-        // Get current tab
         const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
         
-        // Check if it's a chrome:// page (can't inject scripts)
         if (tab.url.startsWith('chrome://') || tab.url.startsWith('edge://')) {
             displayError("Cannot analyze browser internal pages");
             loading.classList.remove('show');
             return;
         }
         
-        // Send message to content script
         chrome.tabs.sendMessage(tab.id, { action: "analyzePage" }, async (response) => {
             if (chrome.runtime.lastError) {
                 console.error(chrome.runtime.lastError);
@@ -33,13 +50,11 @@ document.getElementById('checkPageBtn').addEventListener('click', async () => {
             }
             
             if (response && response.content) {
-                // Send to Django backend for analysis
                 try {
                     const analysis = await analyzeWithBackend(response.content, response.url);
                     displayResult(analysis);
                 } catch (error) {
                     console.error('Backend error:', error);
-                    // Fallback to client-side analysis
                     const fallbackAnalysis = analyzeLocally(response.content, response.url);
                     displayResult(fallbackAnalysis, true);
                 }
@@ -55,7 +70,6 @@ document.getElementById('checkPageBtn').addEventListener('click', async () => {
     }
 });
 
-// Analyze with Django backend
 async function analyzeWithBackend(content, url) {
     const response = await fetch('http://localhost:8000/api/detect-web/', {
         method: 'POST',
@@ -81,7 +95,6 @@ async function analyzeWithBackend(content, url) {
     return await response.json();
 }
 
-// Local fallback analysis (if backend unavailable)
 function analyzeLocally(content, url) {
     const scamKeywords = [
         'urgent', 'verify', 'account suspended', 'win', 'prize',
@@ -93,7 +106,6 @@ function analyzeLocally(content, url) {
     let reasons = [];
     const text = content.text.toLowerCase();
     
-    // Check for scam keywords
     scamKeywords.forEach(keyword => {
         if (text.includes(keyword)) {
             score += 15;
@@ -101,7 +113,6 @@ function analyzeLocally(content, url) {
         }
     });
     
-    // Check for suspicious URL patterns
     const suspiciousUrls = content.links.filter(link => 
         link.includes('secure-') || link.includes('verify-') || link.includes('login-')
     );
@@ -111,7 +122,6 @@ function analyzeLocally(content, url) {
         reasons.push(`🔗 Found ${suspiciousUrls.length} suspicious link(s)`);
     }
     
-    // Check for form submissions
     if (content.forms > 0 && score > 30) {
         score += 10;
         reasons.push(`📝 Page has forms asking for information`);

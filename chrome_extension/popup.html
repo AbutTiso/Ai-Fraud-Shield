@@ -51,8 +51,9 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         }
         
-        .btn-check:active {
-            transform: translateY(0);
+        .btn-secondary {
+            background: #1f2937;
+            color: white;
         }
         
         .result {
@@ -142,29 +143,55 @@
         .badge-warning { background: #ffc107; color: #333; }
         .badge-success { background: #28a745; color: white; }
         
+        .switch-label {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin: 8px 0;
+            padding: 8px 0;
+        }
+        
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 46px;
+            height: 24px;
+        }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: 0.3s;
+            border-radius: 24px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: 0.3s;
+            border-radius: 50%;
+        }
+        input:checked + .slider { background-color: #667eea; }
+        input:checked + .slider:before { transform: translateX(22px); }
+        
         hr {
             margin: 10px 0;
             border: none;
-            border-top: 1px solid #eee;
+            border-top: 1px solid rgba(255,255,255,0.2);
         }
         
-        ul {
-            margin: 8px 0 0 20px;
-            padding: 0;
-        }
-        
-        li {
-            margin: 5px 0;
-            font-size: 12px;
-        }
-        
-        .text-center {
-            text-align: center;
-        }
-        
-        .mt-2 {
-            margin-top: 8px;
-        }
+        .text-center { text-align: center; }
+        .mt-2 { margin-top: 8px; }
+        .mb-2 { margin-bottom: 8px; }
     </style>
 </head>
 <body>
@@ -172,6 +199,16 @@
         <h3>🛡️ AI Fraud Shield</h3>
         <p>Real-time scam detection for your browser</p>
     </div>
+    
+    <div class="switch-label">
+        <span style="color: white; font-size: 13px;">🌙 High Contrast Mode (ChatGPT/DeepSeek)</span>
+        <label class="switch">
+            <input type="checkbox" id="darkModeToggle">
+            <span class="slider"></span>
+        </label>
+    </div>
+    
+    <hr>
     
     <button class="btn-check" id="checkPageBtn">
         🔍 Check Current Page for Scams
