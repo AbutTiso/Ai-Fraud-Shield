@@ -5,89 +5,181 @@ function applyHighContrastTheme() {
     const hostname = window.location.hostname;
     let styleContent = '';
     
+    // Ultra high contrast colors - WCAG AAA compliant
     const colors = {
-        bg: '#0a0e27',
-        card: '#111827',
-        text: '#f3f4f6',
-        textMuted: '#9ca3af',
-        accent: '#3b82f6',
-        accentHover: '#60a5fa',
-        border: '#374151',
-        input: '#1f2937'
+        bg: '#000000',           // Pure black for max contrast
+        card: '#0a0a0a',         // Almost black
+        text: '#ffffff',         // Pure white
+        textMuted: '#d4d4d4',    // Light gray (still high contrast)
+        accent: '#3b82f6',       // Bright blue
+        accentHover: '#60a5fa',  // Lighter blue
+        border: '#2a2a2a',       // Dark gray border
+        input: '#1a1a1a'         // Dark input background
     };
     
-    // ChatGPT theme with high contrast
+    // ChatGPT theme with maximum contrast
     if (hostname.includes('chat.openai.com') || hostname.includes('chatgpt.com')) {
         styleContent = `
-            body, html, #__next, main, .flex.h-full, .overflow-hidden {
+            /* Force dark background on all elements */
+            body, html, #__next, main, .flex.h-full, .overflow-hidden,
+            .bg-white, .dark\\:bg-gray-800, .bg-gray-50, .bg-gray-100,
+            .bg-gray-200, .bg-gray-900, .flex-shrink-0 {
                 background-color: ${colors.bg} !important;
             }
-            .dark\\:bg-gray-800, .bg-gray-900, .flex-shrink-0 {
-                background-color: ${colors.card} !important;
-            }
+            
+            /* Force white text on all text elements */
+            body, p, span, div, h1, h2, h3, h4, h5, h6, li, a,
             .text-gray-600, .text-gray-700, .text-gray-800, .text-gray-900,
-            p, span, div, .text-base, .text-sm {
+            .text-base, .text-sm, .text-xs, .text-lg, .text-xl,
+            .prose, .markdown, .message, .text-token-text-primary {
                 color: ${colors.text} !important;
             }
-            .text-gray-400, .text-gray-500 {
+            
+            /* Muted text gets light gray (still readable) */
+            .text-gray-400, .text-gray-500, .text-token-text-secondary {
                 color: ${colors.textMuted} !important;
             }
-            button, .btn, .rounded-full {
+            
+            /* Buttons and interactive elements */
+            button, .btn, .rounded-full, [role="button"] {
                 background-color: ${colors.input} !important;
                 color: ${colors.text} !important;
                 border: 1px solid ${colors.border} !important;
             }
-            button:hover {
+            
+            button:hover, .btn:hover {
                 background-color: ${colors.accent} !important;
-                color: white !important;
+                color: ${colors.text} !important;
+                border-color: ${colors.accentHover} !important;
             }
-            input, textarea, .ProseMirror {
+            
+            /* Input fields */
+            input, textarea, .ProseMirror, [contenteditable="true"] {
                 background-color: ${colors.input} !important;
                 color: ${colors.text} !important;
                 border: 1px solid ${colors.border} !important;
             }
-            pre, code {
+            
+            input:focus, textarea:focus {
+                border-color: ${colors.accent} !important;
+                outline: none !important;
+            }
+            
+            /* Code blocks */
+            pre, code, .code-block {
                 background-color: ${colors.bg} !important;
                 color: #fbbf24 !important;
+                border: 1px solid ${colors.border} !important;
             }
-            a { color: ${colors.accent} !important; }
-            ::-webkit-scrollbar { width: 8px; background: ${colors.bg}; }
-            ::-webkit-scrollbar-thumb { background: ${colors.accent}; border-radius: 4px; }
+            
+            /* Links */
+            a, a:visited {
+                color: ${colors.accentHover} !important;
+                text-decoration: underline !important;
+            }
+            
+            a:hover {
+                color: ${colors.accent} !important;
+            }
+            
+            /* Sidebar and panels */
+            .dark\\:bg-gray-800, .sidebar, .nav, aside {
+                background-color: ${colors.card} !important;
+                border-right: 1px solid ${colors.border} !important;
+            }
+            
+            /* Scrollbar */
+            ::-webkit-scrollbar {
+                width: 10px;
+                background: ${colors.bg};
+            }
+            ::-webkit-scrollbar-track {
+                background: ${colors.card};
+            }
+            ::-webkit-scrollbar-thumb {
+                background: ${colors.accent};
+                border-radius: 5px;
+            }
+            ::-webkit-scrollbar-thumb:hover {
+                background: ${colors.accentHover};
+            }
+            
+            /* Selection highlight */
+            ::selection {
+                background: ${colors.accent};
+                color: ${colors.text};
+            }
         `;
     }
     
-    // DeepSeek theme with high contrast
+    // DeepSeek theme with maximum contrast
     else if (hostname.includes('chat.deepseek.com')) {
         styleContent = `
-            body, .app-container, .chat-container {
+            /* Force dark background everywhere */
+            body, .app-container, .chat-container, main, .sidebar,
+            .history-panel, .message-list, .input-area {
                 background-color: ${colors.bg} !important;
             }
-            .sidebar, .history-panel {
+            
+            /* Cards and panels */
+            .sidebar, .history-panel, .settings-panel {
                 background-color: ${colors.card} !important;
+                border-right: 1px solid ${colors.border} !important;
             }
-            .message, .user-message, .assistant-message {
+            
+            /* Messages */
+            .message, .user-message, .assistant-message,
+            .message-content, .bubble {
                 background-color: ${colors.card} !important;
                 color: ${colors.text} !important;
+                border: 1px solid ${colors.border} !important;
             }
-            .user-message {
+            
+            /* User messages stand out with accent color */
+            .user-message, [class*="user"] {
                 background-color: ${colors.accent} !important;
-                color: white !important;
-            }
-            p, span, div, h1, h2, h3 {
                 color: ${colors.text} !important;
             }
-            textarea, input {
+            
+            /* All text elements */
+            p, span, div, h1, h2, h3, h4, h5, h6, li,
+            .text, .message-text, .chat-text {
+                color: ${colors.text} !important;
+            }
+            
+            /* Secondary text */
+            .text-muted, .timestamp, .secondary {
+                color: ${colors.textMuted} !important;
+            }
+            
+            /* Input fields */
+            textarea, input, .input-box {
                 background-color: ${colors.input} !important;
                 color: ${colors.text} !important;
                 border: 1px solid ${colors.border} !important;
             }
-            button {
+            
+            textarea:focus, input:focus {
+                border-color: ${colors.accent} !important;
+                outline: none !important;
+            }
+            
+            /* Buttons */
+            button, .btn {
                 background-color: ${colors.input} !important;
                 color: ${colors.text} !important;
+                border: 1px solid ${colors.border} !important;
             }
-            button:hover {
+            
+            button:hover, .btn:hover {
                 background-color: ${colors.accent} !important;
-                color: white !important;
+                color: ${colors.text} !important;
+            }
+            
+            /* Code blocks */
+            pre, code {
+                background-color: ${colors.bg} !important;
+                color: #fbbf24 !important;
             }
         `;
     }
@@ -117,12 +209,14 @@ function checkAndDisplayScamWarning() {
     const scamKeywords = [
         'urgent', 'verify your account', 'suspended', 'blocked',
         'send money', 'mpesa', 'safaricom', 'airtel', 'winner', 'prize',
-        'pin', 'password', 'otp', 'verification code', 'account will be closed'
+        'pin', 'password', 'otp', 'verification code', 'account will be closed',
+        'click here', 'limited time', 'act now', 'congratulations',
+        'verify your identity', 'security alert', 'unusual activity'
     ];
     
     scamKeywords.forEach(keyword => {
         if (pageText.includes(keyword)) {
-            scamScore += 12;
+            scamScore += 10;
             foundKeywords.push(keyword);
         }
     });
@@ -131,23 +225,36 @@ function checkAndDisplayScamWarning() {
     const links = document.querySelectorAll('a');
     const suspiciousLinks = Array.from(links).filter(link => {
         const href = link.href.toLowerCase();
-        return href.includes('secure-') || href.includes('verify-') || href.includes('login-');
+        return href.includes('secure-') || href.includes('verify-') || 
+               href.includes('login-') || href.includes('update-') ||
+               href.includes('confirm-') || href.includes('account-');
     });
     
     if (suspiciousLinks.length > 0) {
-        scamScore += suspiciousLinks.length * 5;
+        scamScore += Math.min(suspiciousLinks.length * 5, 25);
     }
     
     // Check for forms asking for sensitive info
-    const inputs = document.querySelectorAll('input[type="password"], input[name*="pin"], input[name*="mpin"]');
-    if (inputs.length > 0 && scamScore > 30) {
+    const sensitiveInputs = document.querySelectorAll(
+        'input[type="password"], input[name*="pin"], input[name*="mpin"], ' +
+        'input[name*="otp"], input[name*="card"], input[name*="cvv"]'
+    );
+    if (sensitiveInputs.length > 0 && scamScore > 30) {
         scamScore += 15;
     }
+    
+    // Check for fake urgency indicators
+    const urgencyWords = ['immediately', 'asap', 'within 24 hours', 'deadline', 'expires'];
+    urgencyWords.forEach(word => {
+        if (pageText.includes(word)) {
+            scamScore += 5;
+        }
+    });
     
     scamScore = Math.min(100, scamScore);
     
     // Show warning if high risk
-    if (scamScore > 40 && !document.getElementById('ai-fraud-warning')) {
+    if (scamScore > 35 && !document.getElementById('ai-fraud-warning')) {
         const warningDiv = document.createElement('div');
         warningDiv.id = 'ai-fraud-warning';
         warningDiv.style.cssText = `
@@ -155,23 +262,45 @@ function checkAndDisplayScamWarning() {
             top: 0;
             left: 0;
             right: 0;
-            background: linear-gradient(135deg, #dc2626, #b91c1c);
-            color: white;
+            background: #000000;
+            color: #ffffff;
             text-align: center;
-            padding: 12px;
+            padding: 14px;
             z-index: 999999;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            font-size: 13px;
+            font-size: 14px;
             font-weight: 500;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            border-bottom: 2px solid #ef4444;
         `;
+        
+        let riskColor = '#f59e0b';
+        let riskText = 'SUSPICIOUS';
+        if (scamScore >= 70) {
+            riskColor = '#ef4444';
+            riskText = 'HIGH RISK - SCAM DETECTED';
+        } else if (scamScore >= 50) {
+            riskColor = '#f59e0b';
+            riskText = 'ELEVATED RISK';
+        } else {
+            riskColor = '#fbbf24';
+            riskText = 'CAUTION ADVISED';
+        }
+        
         warningDiv.innerHTML = `
-            <div style="max-width: 800px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <span style="font-size: 20px;">⚠️</span>
-                    <span><strong>AI Fraud Shield Alert</strong> | This page shows scam indicators (Risk: ${scamScore}%)</span>
+            <div style="max-width: 900px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <span style="font-size: 24px; background: ${riskColor}; border-radius: 50%; width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center;">⚠️</span>
+                    <div style="text-align: left;">
+                        <strong style="color: ${riskColor};">AI Fraud Shield Alert</strong>
+                        <span style="color: #d4d4d4;"> | ${riskText}</span>
+                        <span style="margin-left: 8px; background: ${riskColor}; color: #000; padding: 2px 8px; border-radius: 20px; font-size: 12px; font-weight: bold;">Risk: ${scamScore}%</span>
+                    </div>
                 </div>
-                <button id="closeWarning" style="background: white; color: #dc2626; border: none; padding: 4px 12px; border-radius: 20px; cursor: pointer; font-weight: bold; font-size: 12px;">✕ Close</button>
+                <div style="display: flex; gap: 8px;">
+                    <button id="learnMoreWarning" style="background: #1f2937; color: white; border: 1px solid #374151; padding: 6px 16px; border-radius: 20px; cursor: pointer; font-weight: 500; font-size: 12px;">📋 Details</button>
+                    <button id="closeWarning" style="background: ${riskColor}; color: #000; border: none; padding: 6px 16px; border-radius: 20px; cursor: pointer; font-weight: bold; font-size: 12px;">✕ Close</button>
+                </div>
             </div>
         `;
         document.body.insertBefore(warningDiv, document.body.firstChild);
@@ -179,27 +308,101 @@ function checkAndDisplayScamWarning() {
         document.getElementById('closeWarning')?.addEventListener('click', () => {
             warningDiv.remove();
         });
+        
+        document.getElementById('learnMoreWarning')?.addEventListener('click', () => {
+            const detailsDiv = document.createElement('div');
+            detailsDiv.id = 'warning-details';
+            detailsDiv.style.cssText = `
+                position: fixed;
+                top: 70px;
+                left: 20px;
+                right: 20px;
+                max-width: 500px;
+                margin: 0 auto;
+                background: #0a0a0a;
+                border: 1px solid #ef4444;
+                border-radius: 12px;
+                padding: 16px;
+                z-index: 999999;
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+                box-shadow: 0 8px 25px rgba(0,0,0,0.5);
+            `;
+            detailsDiv.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                    <strong style="color: #ef4444;">⚠️ Scam Indicators Found</strong>
+                    <button id="closeDetails" style="background: none; border: none; color: white; font-size: 20px; cursor: pointer;">✕</button>
+                </div>
+                <div style="color: #d4d4d4; font-size: 13px; margin-bottom: 12px;">
+                    <strong>Risk Score: ${scamScore}/100</strong>
+                    <div style="background: #1f2937; border-radius: 4px; height: 8px; margin: 8px 0;">
+                        <div style="background: ${riskColor}; width: ${scamScore}%; height: 8px; border-radius: 4px;"></div>
+                    </div>
+                </div>
+                <div style="color: #d4d4d4; font-size: 12px;">
+                    <strong>Suspicious keywords found:</strong>
+                    <ul style="margin: 8px 0 0 20px; color: #fbbf24;">
+                        ${foundKeywords.slice(0, 8).map(kw => `<li>${kw}</li>`).join('')}
+                    </ul>
+                    ${suspiciousLinks.length > 0 ? `<p style="margin-top: 10px;"><strong>🔗 Suspicious links:</strong> ${suspiciousLinks.length} found</p>` : ''}
+                    ${sensitiveInputs.length > 0 ? `<p><strong>🔐 Sensitive form fields:</strong> ${sensitiveInputs.length} found</p>` : ''}
+                </div>
+                <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #2a2a2a; color: #fca5a5; font-size: 11px;">
+                    ⚠️ Never share passwords, PINs, OTPs, or send money to unknown sites
+                </div>
+            `;
+            document.body.appendChild(detailsDiv);
+            
+            document.getElementById('closeDetails')?.addEventListener('click', () => {
+                detailsDiv.remove();
+            });
+        });
     }
     
     return { score: scamScore, keywords: foundKeywords, isScam: scamScore > 40 };
+}
+
+// ============ PAGE CONTENT EXTRACTION ============
+function extractPageContent() {
+    // Get visible text only
+    const visibleText = Array.from(document.querySelectorAll('body *'))
+        .filter(el => {
+            const style = window.getComputedStyle(el);
+            return style.display !== 'none' && 
+                   style.visibility !== 'hidden' && 
+                   style.opacity !== '0';
+        })
+        .map(el => el.innerText)
+        .join(' ')
+        .substring(0, 10000);
+    
+    // Get all links
+    const links = Array.from(document.querySelectorAll('a'))
+        .map(a => a.href)
+        .filter(href => href && !href.startsWith('javascript:'))
+        .slice(0, 100);
+    
+    // Get form count
+    const forms = document.querySelectorAll('form').length;
+    
+    // Get page title
+    const title = document.title;
+    
+    return {
+        text: visibleText,
+        links: links,
+        forms: forms,
+        title: title
+    };
 }
 
 // ============ MESSAGE HANDLERS ============
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     // Analyze page for scam indicators
     if (request.action === "analyzePage") {
-        const pageText = document.body.innerText;
-        const links = Array.from(document.querySelectorAll('a')).map(a => a.href);
-        const forms = document.querySelectorAll('form').length;
-        const title = document.title;
+        const pageContent = extractPageContent();
         
         sendResponse({
-            content: {
-                text: pageText.substring(0, 5000),
-                links: links.slice(0, 100),
-                forms: forms,
-                title: title
-            },
+            content: pageContent,
             url: window.location.href
         });
     }
@@ -221,6 +424,16 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         sendResponse({ success: true });
     }
     
+    // Get current page risk score
+    if (request.action === "getRiskScore") {
+        const result = checkAndDisplayScamWarning();
+        sendResponse({ 
+            score: result.score, 
+            isScam: result.isScam,
+            keywords: result.keywords 
+        });
+    }
+    
     return true;
 });
 
@@ -232,7 +445,30 @@ chrome.storage.sync.get(['darkModeEnabled'], (settings) => {
     }
 });
 
-// Check for scam indicators after page loads
-setTimeout(() => {
-    checkAndDisplayScamWarning();
-}, 2000);
+// Check for scam indicators after page loads (delayed to ensure DOM is ready)
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        setTimeout(() => {
+            checkAndDisplayScamWarning();
+        }, 1500);
+    });
+} else {
+    setTimeout(() => {
+        checkAndDisplayScamWarning();
+    }, 1500);
+}
+
+// Also check on URL changes (for SPAs)
+let lastUrl = location.href;
+new MutationObserver(() => {
+    const url = location.href;
+    if (url !== lastUrl) {
+        lastUrl = url;
+        setTimeout(() => {
+            checkAndDisplayScamWarning();
+        }, 1000);
+    }
+}).observe(document, { subtree: true, childList: true });
+
+// Log that content script is loaded
+console.log('🛡️ AI Fraud Shield: Content script loaded');
