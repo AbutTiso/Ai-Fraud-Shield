@@ -27,6 +27,7 @@ try:
     MODELS_AVAILABLE = True
 except ImportError:
     MODELS_AVAILABLE = False
+
     class ScamReport:
         objects = None
 
@@ -93,6 +94,52 @@ def detect_sms_scam(text):
     
     # ============ ENHANCED SCAM PATTERNS (80+ patterns) ============
     scam_patterns = [
+        # Add these to your existing scam_patterns list (around line 200)
+
+        # Investment Scams (Kenyan specific)
+        (r'bitcoin.*?(investment|double|profit)', '₿ Crypto Scam', 'Fake cryptocurrency investment'),
+        (r'forex.*?(trading|investment|signal)', '📊 Forex Scam', 'Fake forex trading scam'),
+        (r'ponzi.*?(scheme|investment)', '📈 Ponzi Scheme', 'Ponzi/pyramid scheme scam'),
+        (r'get rich quick', '💰 Get Rich Quick', 'Unrealistic wealth promises'),
+        (r'passive income', '💤 Passive Income Scam', 'Fake passive income opportunity'),
+
+        # Job Scams (Common in Kenya)
+        (r'work from home.*?(earn|make|ksh)', '🏠 Work From Home', 'Fake remote job opening'),
+        (r'data entry.*?(job|work)', '📝 Data Entry Job', 'Fake data entry position'),
+        (r'online job.*?(registration|fee)', '💼 Online Job Scam', 'Job requiring upfront fee'),
+        (r'position.*?(urgent|immediate).*?(salary|ksh)', '👔Urgent Hiring', 'Fake urgent job opening'),
+        (r'cv.*?(update|submit).*?(link|click)', '📄 CV Update Scam', 'Fake CV update request'),
+
+        # Loan Scams (Very common in Kenya)
+        (r'loan.*?(approved|pre-approved).*?fee', '💰 Loan Fee Scam', 'Fake loan requiring processing fee'),
+        (r'instant loan.*?(no credit|guaranteed)', '💵 Instant Loan', 'Fake instant loan offer'),
+        (r'fuliza.*?(limit increase|upgrade)', '💳 Fuliza Scam', 'Fake Fuliza limit increase'),
+        (r'm-shwari.*?(bonus|promotion)', '🏦 M-Shwari Scam', 'Fake M-Shwari bonus'),
+        (r'kcb mpesa.*?(loan|advance)', '🏦 KCB M-PESA Scam', 'Fake KCB M-PESA loan'),
+
+        # Government Benefits Scams
+        (r'economic stimulus.*?(program|payment)', '💰 Stimulus Scam', 'Fake government stimulus'),
+        (r'inuarisha.*?(bidii|program)', '📋 Inuarisha Scam', 'Fake Inuarisha program'),
+        (r'kazi mtaani.*?(payment|registration)', '👷 Kazi Mtaani Scam', 'Fake Kazi Mtaani payment'),
+        (r'hustler fund.*?(loan|application)', '💵 Hustler Fund Scam', 'Fake Hustler Fund offer'),
+
+        # SMS Phishing (Smishing)
+        (r'dial.*?\*.*?#.*?cancel', '📞 USSD Scam', 'Fake USSD code to dial'),
+        (r'safaricom.*?(reward|points|bonus)', '🎁 Safaricom Rewards', 'Fake Safaricom reward'),
+        (r'airtel.*?(reward|points|bonus)', '🎁 Airtel Rewards', 'Fake Airtel reward'),
+        (r'telkom.*?(reward|points|bonus)', '🎁 Telkom Rewards', 'Fake Telkom reward'),
+
+        # Fake Delivery Scams
+        (r'(fedex|dhl|ups|posta).*?(delivery|package)', '📦 Delivery Scam', 'Fake package delivery'),
+        (r'package.*?(held|pending|customs)', '📦 Package Hold Scam', 'Fake customs fee request'),
+        (r'delivery.*?(fee|payment).*?ksh', '💰 Delivery Fee Scam', 'Fake delivery fee request'),
+
+        # Family Emergency Scams
+        (r'(son|daughter|child|mtoto).*?(accident|emergency)', '🚨 Family Emergency', 'Fake family emergency'),
+        (r'(mum|dad|mom|father|mother).*?(hospital|accident)', '🏥 Parent Emergency', 'Fake parent emergency'),
+        (r'(brother|sister|ndugu).*?(money|pesa|help)', '👨‍👩‍👧 Sibling Emergency', 'Fake sibling request'),
+
+        # Formatted as: (pattern, emoji, message)
         # Phone numbers
         (r'\b(07|01|2547)\d{8}\b', '📞 Phone number', 'Contains Kenyan phone number - scammers may call you'),
         
@@ -563,7 +610,7 @@ def check_url(request):
         
         # ============ URL SHORTENERS (20+ services) ============
         shorteners = [
-            'bit.ly', 'tinyurl.com', 'goo.gl', 'short.link', 'cutt.ly', 
+            'bit.ly', 'tinyurl.com', 'goo.gl', 'short.link', 'cutt.ly',
             't.co', 'ow.ly', 'is.gd', 'tr.im', 'shorte.st', 'buff.ly',
             'adf.ly', 'shorturl.at', 'rb.gy', 'tiny.cc', 'clck.ru',
             'soo.gd', '2.gy', 'bc.vc', 'budurl.com', 'clicky.me'
@@ -956,36 +1003,61 @@ def bulk_detect(request):
         'analysis_time': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     })
 
-
 # ============ REMAINING FUNCTIONS (Keep as is) ============
+
 
 def home(request):
     return render(request, 'detector/home.html')
 
+
 def about(request):
     return render(request, 'detector/about.html')
+
 
 def how_it_works(request):
     return render(request, 'detector/how_it_works.html')
 
+
 def faq(request):
     return render(request, 'detector/faq.html')
 
+
 def scam_alerts(request):
-    if MODELS_AVAILABLE and ScamReport.objects:
-        recent_scams = ScamReport.objects.order_by('-date_reported')[:20]
-    else:
-        recent_scams = []
-    return render(request, 'detector/scam_alerts.html', {'recent_scams': recent_scams})
+    """Display scam alerts page with real-time data"""
+    try:
+        if MODELS_AVAILABLE and ScamReport.objects:
+            recent_scams = ScamReport.objects.order_by('-date_reported')[:50]
+            
+            # Prepare data for template
+            scams_data = []
+            for scam in recent_scams:
+                scams_data.append({
+                    'type': scam.report_type,
+                    'score': scam.risk_score,
+                    'content': scam.content,
+                    'date': scam.date_reported.strftime('%Y-%m-%d %H:%M'),
+                })
+        else:
+            scams_data = []
+        
+        return render(request, 'detector/scam_alerts.html', {
+            'recent_scams': scams_data
+        })
+    except Exception as e:
+        print(f"Scam alerts error: {e}")
+        return render(request, 'detector/scam_alerts.html', {'recent_scams': []})
 
 def safety_tips(request):
     return render(request, 'detector/safety_tips.html')
 
+
 def contact(request):
     return render(request, 'detector/contact.html')
 
+
 def report_scam(request):
     return render(request, 'detector/report_scam.html')
+
 
 def report_phishing(request):
     return render(request, 'detector/report_phishing.html')
@@ -1007,13 +1079,42 @@ def detect_sms(request):
         
         result = detect_sms_scam(sms_text)
         
+        # FIX: Normalize risk_level for frontend
+        if 'risk_level' in result:
+            # Extract just the risk level without extra text
+            if 'CRITICAL' in result['risk_level']:
+                result['risk_level_display'] = 'CRITICAL'
+                result['risk_level'] = 'CRITICAL'
+            elif 'HIGH' in result['risk_level']:
+                result['risk_level_display'] = 'HIGH'
+                result['risk_level'] = 'HIGH'
+            elif 'MEDIUM' in result['risk_level']:
+                result['risk_level_display'] = 'MEDIUM'
+                result['risk_level'] = 'MEDIUM'
+            elif 'LOW' in result['risk_level']:
+                result['risk_level_display'] = 'LOW'
+                result['risk_level'] = 'LOW'
+            else:
+                result['risk_level'] = result['risk_level'].split(' - ')[0].strip()
+        
+        # Add color mapping
+        if result['score'] >= 70:
+            result['color'] = 'danger'
+            result['badge_class'] = 'bg-danger'
+        elif result['score'] >= 40:
+            result['color'] = 'warning'
+            result['badge_class'] = 'bg-warning'
+        else:
+            result['color'] = 'success'
+            result['badge_class'] = 'bg-success'
+        
         if MODELS_AVAILABLE and ScamReport.objects:
             try:
                 ScamReport.objects.create(
                     report_type='SMS',
                     content=sms_text[:500],
                     risk_score=result['score'],
-                    risk_level=result['risk_level'].split(' - ')[0] if ' - ' in result['risk_level'] else result['risk_level'],
+                    risk_level=result.get('risk_level_display', result['risk_level']),
                     reported_by=request.META.get('REMOTE_ADDR', 'anonymous')
                 )
             except Exception as e:
@@ -1022,7 +1123,6 @@ def detect_sms(request):
         return JsonResponse(result)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
-
 
 # EMAIL DETECTION ENDPOINT
 @csrf_exempt
@@ -1101,7 +1201,6 @@ def detect_whatsapp(request):
         }, status=200)
 
 
-# CALL DETECTION ENDPOINT
 @csrf_exempt
 @require_http_methods(["POST"])
 def detect_call(request):
@@ -1119,24 +1218,70 @@ def detect_call(request):
         
         result = detect_call_scam(transcript, phone_number if phone_number else None)
         result['analysis_time'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        result['type'] = 'CALL'
         
+        # FIX: Normalize risk_level for frontend
+        if 'risk_level' in result:
+            if 'CRITICAL' in result['risk_level']:
+                result['risk_level'] = 'CRITICAL'
+                result['risk_level_display'] = 'CRITICAL'
+                result['color'] = 'danger'
+                result['badge_class'] = 'bg-danger'
+                result['emoji'] = '🔴🚨'
+            elif 'HIGH' in result['risk_level']:
+                result['risk_level'] = 'HIGH_RISK'
+                result['risk_level_display'] = 'HIGH'
+                result['color'] = 'danger'
+                result['badge_class'] = 'bg-danger'
+                result['emoji'] = '🔴'
+            elif 'MEDIUM' in result['risk_level']:
+                result['risk_level'] = 'MEDIUM_RISK'
+                result['risk_level_display'] = 'MEDIUM'
+                result['color'] = 'warning'
+                result['badge_class'] = 'bg-warning'
+                result['emoji'] = '🟡'
+            else:
+                result['risk_level'] = 'LOW_RISK'
+                result['risk_level_display'] = 'LOW'
+                result['color'] = 'success'
+                result['badge_class'] = 'bg-success'
+                result['emoji'] = '🟢'
+        
+        # Ensure score is present
+        if 'score' not in result:
+            result['score'] = result.get('combined_score', 0)
+        
+        # Add warnings if missing
+        if 'warnings' not in result:
+            result['warnings'] = result.get('reasons', [])
+        
+        # Add message if missing
+        if 'message' not in result:
+            if result['score'] >= 70:
+                result['message'] = "🔴 CRITICAL: This call shows overwhelming scam indicators! HANG UP NOW!"
+            elif result['score'] >= 50:
+                result['message'] = "⚠️ This call shows strong scam indicators! HANG UP immediately."
+            elif result['score'] >= 25:
+                result['message'] = "⚠️ This call has suspicious elements. Verify through official channels."
+            else:
+                result['message'] = "✓ No scam patterns detected, but always exercise caution."
+        
+        # In detect_call() view, ensure it saves like this:
         if MODELS_AVAILABLE and ScamReport.objects:
             try:
                 ScamReport.objects.create(
-                    report_type='CALL',
+                    report_type='CALL',  # Make sure this is 'CALL'
                     content=transcript[:500],
-                    risk_score=result.get('combined_score', result.get('score', 0)),
-                    risk_level=result['risk_level'].split(' - ')[0] if ' - ' in result['risk_level'] else result['risk_level'],
+                    risk_score=result.get('score', 0),
+                    risk_level=result.get('risk_level_display', result.get('risk_level', 'LOW')),
                     reported_by=request.META.get('REMOTE_ADDR', 'anonymous')
                 )
                 print(f"✅ Call detection saved to database with score: {result.get('score', 0)}")
             except Exception as e:
                 print(f"Database save error (non-critical): {e}")
-        
         return JsonResponse(result)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
-
 
 # PHONE NUMBER CHECK ENDPOINT
 @csrf_exempt
@@ -1194,14 +1339,229 @@ def report_scam_call(request):
 
 
 # STATISTICS ENDPOINT
+# detector/views.py - Add/Replace this get_stats function
+
+from django.views.decorators.cache import cache_page
+from django.core.cache import cache
+from datetime import datetime, timedelta
+from django.db.models import Avg, Count, Q
+from django.utils import timezone
+import json
+
 @csrf_exempt
 @require_http_methods(["GET"])
+#@cache_page(60)  # Cache for 60 seconds to improve performance
 def get_stats(request):
+    """
+    Get enhanced dashboard statistics with caching
+    Returns: Comprehensive stats for dashboard charts
+    """
     try:
+        # Check if models are available
         if not MODELS_AVAILABLE or not ScamReport.objects:
+            # Return empty stats structure
             return JsonResponse({
+                'success': True,
+                'stats': {
+                    'total_reports': 0,
+                    'high_risk_count': 0,
+                    'medium_risk_count': 0,
+                    'low_risk_count': 0,
+                    'sms_count': 0,
+                    'email_count': 0,
+                    'whatsapp_count': 0,
+                    'screenshot_count': 0,
+                    'url_count': 0,
+                    'call_count': 0,
+                    'average_risk_score': 0,
+                    'risk_distribution': {'high': 0, 'medium': 0, 'low': 0},
+                    'weekly_trend': [0, 0, 0, 0, 0, 0, 0],
+                    'monthly_trend': [],
+                    'recent_scams': [],
+                    'top_scam_types': [],
+                    'today_count': 0,
+                    'this_week_count': 0,
+                    'this_month_count': 0
+                },
+                'status': 'success'
+            })
+        
+        # ============ BASIC COUNTS ============
+        total_reports = ScamReport.objects.count()
+        today = timezone.now().date()
+        week_ago = today - timedelta(days=7)
+        month_ago = today - timedelta(days=30)
+        
+        # Today's reports
+        today_count = ScamReport.objects.filter(
+            date_reported__date=today
+        ).count()
+        
+        # This week's reports
+        this_week_count = ScamReport.objects.filter(
+            date_reported__date__gte=week_ago
+        ).count()
+        
+        # This month's reports
+        this_month_count = ScamReport.objects.filter(
+            date_reported__date__gte=month_ago
+        ).count()
+        
+        # ============ RISK LEVEL COUNTS ============
+        high_risk_count = ScamReport.objects.filter(risk_score__gte=70).count()
+        medium_risk_count = ScamReport.objects.filter(risk_score__gte=40, risk_score__lt=70).count()
+        low_risk_count = ScamReport.objects.filter(risk_score__lt=40).count()
+        
+        # ============ TYPE BREAKDOWN ============
+        type_counts = {
+            'sms': ScamReport.objects.filter(report_type='SMS').count(),
+            'email': ScamReport.objects.filter(report_type='EMAIL').count(),
+            'whatsapp': ScamReport.objects.filter(report_type='WHATSAPP').count(),
+            'screenshot': ScamReport.objects.filter(report_type='SCREENSHOT').count(),
+            'url': ScamReport.objects.filter(report_type='URL').count(),
+            'call': ScamReport.objects.filter(report_type='CALL').count(),
+        }
+        
+        # ============ AVERAGE SCORE ============
+        avg_result = ScamReport.objects.aggregate(avg_score=Avg('risk_score'))
+        average_risk_score = round(avg_result.get('avg_score', 0) or 0, 1)
+        
+        # ============ RISK DISTRIBUTION ============
+        risk_distribution = {
+            'high': high_risk_count,
+            'medium': medium_risk_count,
+            'low': low_risk_count
+        }
+        
+        # ============ WEEKLY TREND (Last 7 days) ============
+        weekly_trend = []
+        weekly_labels = []
+        for i in range(6, -1, -1):
+            date = today - timedelta(days=i)
+            count = ScamReport.objects.filter(date_reported__date=date).count()
+            weekly_trend.append(count)
+            weekly_labels.append(date.strftime('%a'))  # Mon, Tue, Wed, etc.
+        
+        # ============ MONTHLY TREND (Last 30 days by week) ============
+        monthly_trend = []
+        monthly_labels = []
+        for i in range(3, -1, -1):
+            week_start = today - timedelta(days=(i * 7 + 7))
+            week_end = today - timedelta(days=(i * 7))
+            count = ScamReport.objects.filter(
+                date_reported__date__gte=week_start,
+                date_reported__date__lt=week_end
+            ).count()
+            monthly_trend.append(count)
+            monthly_labels.append(f'Week {4-i}')
+        
+        # ============ TOP SCAM TYPES (Most frequent keywords) ============
+        # Analyze recent scam reports for common keywords
+        recent_for_keywords = ScamReport.objects.filter(
+            risk_score__gte=50
+        ).order_by('-date_reported')[:50]
+        
+        keyword_counts = {}
+        scam_keywords = [
+            'mpesa', 'safaricom', 'urgent', 'suspended', 'bank', 'kcb', 
+            'equity', 'winner', 'prize', 'loan', 'fuliza', 'm-shwari'
+        ]
+        
+        for report in recent_for_keywords:
+            if report.content:
+                content_lower = report.content.lower()
+                for keyword in scam_keywords:
+                    if keyword in content_lower:
+                        keyword_counts[keyword] = keyword_counts.get(keyword, 0) + 1
+        
+        top_scam_types = sorted(
+            [{'type': k, 'count': v} for k, v in keyword_counts.items()],
+            key=lambda x: x['count'],
+            reverse=True
+        )[:5]
+        
+        # ============ RECENT SCAMS ============
+        recent_scams = ScamReport.objects.order_by('-date_reported')[:20]
+        recent_data = []
+        for r in recent_scams:
+            recent_data.append({
+                'id': r.id,
+                'type': r.report_type,
+                'score': r.risk_score,
+                'level': 'HIGH' if r.risk_score >= 70 else 'MEDIUM' if r.risk_score >= 40 else 'LOW',
+                'date': r.date_reported.strftime('%Y-%m-%d %H:%M'),
+                'date_relative': get_relative_time(r.date_reported),
+                'content': r.content[:150] + '...' if r.content and len(r.content) > 150 else r.content or 'No content',
+                'preview': (r.content[:80] + '...') if r.content and len(r.content) > 80 else r.content
+            })
+        
+        # ============ HOURLY DISTRIBUTION (When scams are reported) ============
+        hourly_distribution = [0] * 24
+        last_day_reports = ScamReport.objects.filter(
+            date_reported__date__gte=today - timedelta(days=30)
+        )
+        for report in last_day_reports:
+            hour = report.date_reported.hour
+            hourly_distribution[hour] += 1
+        
+        # ============ RESPONSE ============
+        return JsonResponse({
+            'success': True,
+            'stats': {
+                # Basic counts
+                'total_reports': total_reports,
+                'today_count': today_count,
+                'this_week_count': this_week_count,
+                'this_month_count': this_month_count,
+                
+                # Risk counts
+                'high_risk_count': high_risk_count,
+                'medium_risk_count': medium_risk_count,
+                'low_risk_count': low_risk_count,
+                
+                # Type breakdown
+                'sms_count': type_counts['sms'],
+                'email_count': type_counts['email'],
+                'whatsapp_count': type_counts['whatsapp'],
+                'screenshot_count': type_counts['screenshot'],
+                'url_count': type_counts['url'],
+                'call_count': type_counts['call'],
+                
+                # Averages
+                'average_risk_score': average_risk_score,
+                
+                # Distributions
+                'risk_distribution': risk_distribution,
+                
+                # Trends
+                'weekly_trend': weekly_trend,
+                'weekly_labels': weekly_labels,
+                'monthly_trend': monthly_trend,
+                'monthly_labels': monthly_labels,
+                'hourly_distribution': hourly_distribution,
+                
+                # Top scams
+                'top_scam_types': top_scam_types,
+                
+                # Recent scams
+                'recent_scams': recent_data,
+            },
+            'timestamp': datetime.now().isoformat(),
+            'status': 'success'
+        })
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        
+        # Return safe fallback
+        return JsonResponse({
+            'success': False,
+            'stats': {
                 'total_reports': 0,
                 'high_risk_count': 0,
+                'medium_risk_count': 0,
+                'low_risk_count': 0,
                 'sms_count': 0,
                 'email_count': 0,
                 'whatsapp_count': 0,
@@ -1211,83 +1571,38 @@ def get_stats(request):
                 'average_risk_score': 0,
                 'risk_distribution': {'high': 0, 'medium': 0, 'low': 0},
                 'weekly_trend': [0, 0, 0, 0, 0, 0, 0],
+                'weekly_labels': ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                'monthly_trend': [0, 0, 0, 0],
+                'monthly_labels': ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+                'hourly_distribution': [0] * 24,
+                'top_scam_types': [],
                 'recent_scams': [],
-                'status': 'success'
-            })
-        
-        total_reports = ScamReport.objects.count()
-        high_risk_count = ScamReport.objects.filter(risk_level__icontains='HIGH').count()
-        sms_count = ScamReport.objects.filter(report_type='SMS').count()
-        email_count = ScamReport.objects.filter(report_type='EMAIL').count()
-        whatsapp_count = ScamReport.objects.filter(report_type='WHATSAPP').count()
-        screenshot_count = ScamReport.objects.filter(report_type='SCREENSHOT').count()
-        url_count = ScamReport.objects.filter(report_type='URL').count()
-        call_count = ScamReport.objects.filter(report_type='CALL').count()
-        
-        from django.db.models import Avg
-        avg_result = ScamReport.objects.aggregate(avg_score=Avg('risk_score'))
-        avg_score = avg_result.get('avg_score', 0) or 0
-        
-        risk_distribution = {
-            'high': ScamReport.objects.filter(risk_score__gte=70).count(),
-            'medium': ScamReport.objects.filter(risk_score__gte=40, risk_score__lt=70).count(),
-            'low': ScamReport.objects.filter(risk_score__lt=40).count()
-        }
-        
-        from django.utils import timezone
-        weekly_trend = []
-        for i in range(6, -1, -1):
-            date = timezone.now().date() - timedelta(days=i)
-            count = ScamReport.objects.filter(date_reported__date=date).count()
-            weekly_trend.append(count)
-        
-        recent_scams = ScamReport.objects.order_by('-date_reported')[:20]
-        recent_data = []
-        for r in recent_scams:
-            recent_data.append({
-                'type': r.report_type,
-                'score': r.risk_score,
-                'level': r.risk_level,
-                'date': r.date_reported.strftime('%Y-%m-%d %H:%M'),
-                'content': r.content[:100] if r.content else 'No content'
-            })
-        
-        return JsonResponse({
-            'total_reports': total_reports,
-            'high_risk_count': high_risk_count,
-            'sms_count': sms_count,
-            'email_count': email_count,
-            'whatsapp_count': whatsapp_count,
-            'screenshot_count': screenshot_count,
-            'url_count': url_count,
-            'call_count': call_count,
-            'average_risk_score': round(avg_score, 1),
-            'risk_distribution': risk_distribution,
-            'weekly_trend': weekly_trend,
-            'recent_scams': recent_data,
-            'status': 'success'
-        })
-        
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
-        return JsonResponse({
-            'total_reports': 0,
-            'high_risk_count': 0,
-            'sms_count': 0,
-            'email_count': 0,
-            'whatsapp_count': 0,
-            'screenshot_count': 0,
-            'url_count': 0,
-            'call_count': 0,
-            'average_risk_score': 0,
-            'risk_distribution': {'high': 0, 'medium': 0, 'low': 0},
-            'weekly_trend': [0, 0, 0, 0, 0, 0, 0],
-            'recent_scams': [],
-            'status': 'error',
-            'message': str(e)
+                'today_count': 0,
+                'this_week_count': 0,
+                'this_month_count': 0
+            },
+            'error': str(e),
+            'status': 'error'
         })
 
+
+def get_relative_time(date):
+    """Convert datetime to relative time string (e.g., '2 hours ago')"""
+    now = timezone.now()
+    diff = now - date
+    
+    if diff.days > 7:
+        return date.strftime('%b %d')
+    elif diff.days > 0:
+        return f"{diff.days} day{'s' if diff.days > 1 else ''} ago"
+    elif diff.seconds > 3600:
+        hours = diff.seconds // 3600
+        return f"{hours} hour{'s' if hours > 1 else ''} ago"
+    elif diff.seconds > 60:
+        minutes = diff.seconds // 60
+        return f"{minutes} minute{'s' if minutes > 1 else ''} ago"
+    else:
+        return "Just now"
 
 # OTHER ENDPOINTS
 @csrf_exempt
@@ -1347,6 +1662,9 @@ def detect_screenshot(request):
 @csrf_exempt
 @require_http_methods(["POST"])
 def detect_web(request):
+    """
+    Detect scams in web page content - Called by Chrome extension
+    """
     try:
         data = json.loads(request.body)
         url = data.get('url', '')
@@ -1355,22 +1673,55 @@ def detect_web(request):
         forms = data.get('forms', 0)
         title = data.get('title', '')
         
+        # Use existing SMS detector for page content
         result = detect_sms_scam(content)
+        
+        # Add web-specific fields
         result['type'] = 'WEB'
         result['url'] = url
         result['title'] = title
         result['forms_found'] = forms
         result['links_found'] = len(links)
         
+        # Additional web-specific warnings
         if forms > 0 and result['score'] > 30:
             result['warnings'].append("📝 Page contains forms that could steal your information")
         
         if len(links) > 20:
             result['warnings'].append("🔗 Unusually high number of external links")
         
+        # Check for suspicious URL patterns
+        suspicious_url_patterns = ['secure-', 'verify-', 'login-', 'update-', 'confirm-']
+        if any(pattern in url.lower() for pattern in suspicious_url_patterns):
+            result['score'] = min(100, result['score'] + 20)
+            result['warnings'].append("⚠️ URL contains suspicious keywords")
+            if result['score'] >= 70:
+                result['risk_level'] = 'HIGH RISK'
+        
+        # Normalize score to 0-100
+        result['score'] = min(100, max(0, result['score']))
+        
+        # Ensure risk_level is set
+        if 'risk_level' not in result:
+            if result['score'] >= 70:
+                result['risk_level'] = 'HIGH RISK'
+            elif result['score'] >= 40:
+                result['risk_level'] = 'MEDIUM RISK'
+            elif result['score'] >= 15:
+                result['risk_level'] = 'LOW RISK'
+            else:
+                result['risk_level'] = 'SAFE'
+        
         return JsonResponse(result)
+        
     except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500)
+        return JsonResponse({
+            'error': str(e),
+            'score': 0,
+            'risk_level': 'ERROR',
+            'warnings': [f'Analysis error: {str(e)}'],
+            'type': 'WEB'
+        }, status=500)
 
 
 @csrf_exempt
@@ -1432,6 +1783,117 @@ def submit_feedback(request):
 @csrf_exempt
 @require_http_methods(["GET"])
 def get_scam_alerts(request):
+    alerts = [
+        {'type': 'M-Pesa Scam', 'description': 'Fake M-Pesa suspension messages circulating', 'date': '2026-04-25', 'severity': 'HIGH'},
+        {'type': 'Fake Loan Offers', 'description': 'Scammers offering loans with advance fees', 'date': '2026-04-24', 'severity': 'MEDIUM'},
+        {'type': 'Safaricom Promotion', 'description': 'Fake "You won iPhone" messages', 'date': '2026-04-23', 'severity': 'HIGH'},
+        {'type': 'KRA Tax Refund', 'description': 'Fake tax refund SMS asking for personal info', 'date': '2026-04-22', 'severity': 'HIGH'},
+        {'type': 'WhatsApp Job Scam', 'description': '"Work from home" scams on WhatsApp', 'date': '2026-04-21', 'severity': 'MEDIUM'},
+    ]
+    return JsonResponse({'alerts': alerts, 'count': len(alerts)})
+
+# Add to views.py
+
+
+from .unified_risk_engine import risk_engine, UnifiedRiskEngine
+from .threat_intel import ThreatIntelligence
+
+# Initialize global instances
+risk_engine = UnifiedRiskEngine(use_ml=True)
+threat_intel = ThreatIntelligence()
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def unified_detect(request):
+    """
+    Unified detection endpoint - handles all input types
+    Expected JSON: {"type": "sms|email|url|phone|whatsapp", "content": "..."}
+    """
+    try:
+        data = json.loads(request.body)
+        detection_type = data.get('type', '').lower()
+        content = data.get('content', '')
+        
+        if not content:
+            return JsonResponse({'error': 'No content provided'}, status=400)
+        
+        # Route to appropriate detector
+        if detection_type == 'sms':
+            result = risk_engine.analyze_sms(content)
+        elif detection_type == 'email':
+            result = risk_engine.analyze_email(content)
+        elif detection_type == 'url':
+            # Also check threat intel
+            threat_result = threat_intel.check_url(content)
+            result = risk_engine.analyze_url(content)
+            result['threat_intel'] = threat_result
+        elif detection_type == 'phone':
+            result = risk_engine.analyze_phone(content)
+        elif detection_type == 'whatsapp':
+            result = risk_engine.analyze_whatsapp(content)
+        else:
+            # Auto-detect type
+            result = auto_detect_and_analyze(content, risk_engine)
+        
+        return JsonResponse({
+            'success': True,
+            'result': result,
+            'timestamp': datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+
+def auto_detect_and_analyze(content, engine):
+    """Auto-detect content type and analyze"""
+    # Check if looks like URL
+    if content.startswith(('http://', 'https://', 'www.')):
+        return engine.analyze_url(content)
+    
+    # Check if looks like phone number
+    if re.match(r'^\+?[\d\s\-\(\)]{10,15}$', content):
+        return engine.analyze_phone(content)
+    
+    # Check if email-like
+    if '@' in content and '.' in content:
+        return engine.analyze_email(content)
+    
+    # Default to SMS
+    return engine.analyze_sms(content)
+
+
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def train_ml(request):
+    """Trigger ML training from existing reports"""
+    try:
+        # Train SMS model
+        if risk_engine.ml_enhanced_sms:
+            risk_engine.ml_enhanced_sms.train_from_existing_data(None)
+            risk_engine.ml_enhanced_sms.save_model()
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'ML models trained successfully',
+            'metrics': risk_engine.ml_enhanced_sms.model_metrics if risk_engine.ml_enhanced_sms else {}
+        })
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+        
+@csrf_exempt
+@require_http_methods(["GET"])
+def get_scam_alerts(request):
+    """API endpoint for live alerts - used by the template"""
     alerts = [
         {'type': 'M-Pesa Scam', 'description': 'Fake M-Pesa suspension messages circulating', 'date': '2026-04-25', 'severity': 'HIGH'},
         {'type': 'Fake Loan Offers', 'description': 'Scammers offering loans with advance fees', 'date': '2026-04-24', 'severity': 'MEDIUM'},

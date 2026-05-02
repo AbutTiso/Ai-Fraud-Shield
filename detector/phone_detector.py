@@ -163,21 +163,21 @@ class PhoneScamDetector:
         # ============ ML-INSPIRED WEIGHTING FACTORS ============
         self.weights = {
             'critical_multiplier': 1.5,
-            'repetition_penalty': 0.3,  # Reduce score if same scam type repeated
-            'legitimate_correction': 0.4,  # Reduce score if legitimate indicators found
+            'repetition_penalty': 0.3,
+            'legitimate_correction': 0.4,
         }
         
-        # ============ KNOWN SCAM NUMBERS DATABASE (REPORTED) ============
+        # ============ KNOWN SCAM NUMBERS DATABASE ============
         self.reported_scam_numbers = self._load_reported_scams()
-        
-        # ============ PATTERN MEMORY (for detecting repeat offenders) ============
-        self.pattern_memory = {}
-        
+        self.pattern_memory = self._load_pattern_memory()
+    
     def _load_reported_scams(self) -> set:
-        """Load reported scam numbers from file (if exists)"""
+        """Load reported scam numbers from file"""
         reported = set()
         try:
-            scam_file = os.path.join(os.path.dirname(__file__), 'data', 'reported_scams.json')
+            data_dir = os.path.join(os.path.dirname(__file__), 'data')
+            os.makedirs(data_dir, exist_ok=True)
+            scam_file = os.path.join(data_dir, 'reported_scams.json')
             if os.path.exists(scam_file):
                 with open(scam_file, 'r') as f:
                     data = json.load(f)
@@ -186,13 +186,38 @@ class PhoneScamDetector:
             pass
         return reported
     
+    def _load_pattern_memory(self) -> dict:
+        """Load pattern memory from file"""
+        memory = {}
+        try:
+            data_dir = os.path.join(os.path.dirname(__file__), 'data')
+            memory_file = os.path.join(data_dir, 'pattern_memory.json')
+            if os.path.exists(memory_file):
+                with open(memory_file, 'r') as f:
+                    memory = json.load(f)
+        except Exception:
+            pass
+        return memory
+    
     def _save_reported_scams(self):
         """Save reported scam numbers to file"""
         try:
-            os.makedirs(os.path.dirname(__file__) + '/data', exist_ok=True)
-            scam_file = os.path.join(os.path.dirname(__file__), 'data', 'reported_scams.json')
+            data_dir = os.path.join(os.path.dirname(__file__), 'data')
+            os.makedirs(data_dir, exist_ok=True)
+            scam_file = os.path.join(data_dir, 'reported_scams.json')
             with open(scam_file, 'w') as f:
                 json.dump({'numbers': list(self.reported_scam_numbers), 'last_updated': datetime.now().isoformat()}, f)
+        except Exception:
+            pass
+    
+    def _save_pattern_memory(self):
+        """Save pattern memory to file"""
+        try:
+            data_dir = os.path.join(os.path.dirname(__file__), 'data')
+            os.makedirs(data_dir, exist_ok=True)
+            memory_file = os.path.join(data_dir, 'pattern_memory.json')
+            with open(memory_file, 'w') as f:
+                json.dump(self.pattern_memory, f)
         except Exception:
             pass
     
@@ -214,7 +239,8 @@ class PhoneScamDetector:
                 'message': f"✓ Legitimate: {self.legitimate_numbers[cleaned]}",
                 'warnings': [],
                 'risk_factors': ['Verified legitimate number'],
-                'category': 'legitimate'
+                'category': 'legitimate',
+                'type': 'PHONE_NUMBER'
             }
         
         # Check reported scam numbers
@@ -245,12 +271,6 @@ class PhoneScamDetector:
         if len(cleaned) == 12 and cleaned.startswith('254'):
             score += 5
             risk_factors.append('International format - possible spoof')
-        
-        # Check for number spoofing indicators
-        if len(cleaned) == 10 and cleaned.startswith('0'):
-            if cleaned[1:3] in ['71', '72', '73', '74', '75', '76', '77', '78', '79']:
-                # This is a valid Kenyan mobile prefix, but could still be spoofed
-                pass
         
         score = min(100, score)
         
@@ -285,11 +305,12 @@ class PhoneScamDetector:
             'warnings': warnings[:5],
             'risk_factors': risk_factors[:5],
             'category': category,
-            'cleaned_number': cleaned
+            'cleaned_number': cleaned,
+            'type': 'PHONE_NUMBER'
         }
     
     def analyze_call_transcript(self, transcript: str, caller_number: str = None) -> Dict:
-        """Enhanced call transcript analysis with weighted scoring and context awareness"""
+        """Enhanced call transcript analysis with consistent output"""
         
         if not transcript or not transcript.strip():
             return {
@@ -301,7 +322,11 @@ class PhoneScamDetector:
                 'warnings': ['Please provide call transcript for analysis'],
                 'recommendations': ['Paste what the caller said during the conversation'],
                 'detected_categories': [],
-                'confidence': 0
+                'impersonations': [],
+                'transcript_length': 0,
+                'confidence': 0,
+                'type': 'CALL',
+                'phrase_matches': []
             }
         
         text_lower = transcript.lower()
@@ -311,7 +336,7 @@ class PhoneScamDetector:
         detected_impersonations = []
         phrase_matches = []
         
-        # ============ CRITICAL PATTERN DETECTION (Highest Priority) ============
+        # ============ CRITICAL PATTERN DETECTION ============
         for pattern, description, points in self.scam_phrases['critical']:
             matches = re.findall(pattern, text_lower)
             if matches:
@@ -320,28 +345,25 @@ class PhoneScamDetector:
                 warnings.append(f"🔴🔴 {description}")
                 detected_categories.append('critical')
                 phrase_matches.append({'pattern': pattern, 'description': description, 'severity': 'critical'})
-                break  # Only add one critical match to avoid overwhelming
+                break
         
         # ============ HIGH RISK PATTERNS ============
         for pattern, description, points in self.scam_phrases['high_risk']:
             if re.search(pattern, text_lower):
-                # Check if this is a duplicate category
-                if description not in [w.replace('🔴 ', '') for w in warnings]:
+                if description not in [w.replace('🔴 ', '') for w in warnings if w.startswith('🔴')]:
                     score += points
                     warnings.append(f"🔴 {description}")
                     detected_categories.append('high_risk')
                     phrase_matches.append({'pattern': pattern, 'description': description, 'severity': 'high'})
-                break
         
         # ============ MEDIUM RISK PATTERNS ============
         for pattern, description, points in self.scam_phrases['medium_risk']:
             if re.search(pattern, text_lower):
-                if description not in [w.replace('🟡 ', '') for w in warnings]:
+                if description not in [w.replace('🟡 ', '') for w in warnings if w.startswith('🟡')]:
                     score += points
                     warnings.append(f"🟡 {description}")
                     detected_categories.append('medium_risk')
                     phrase_matches.append({'pattern': pattern, 'description': description, 'severity': 'medium'})
-                break
         
         # ============ IMPERSONATION DETECTION ============
         for pattern, description, points in self.scam_phrases['impersonation']:
@@ -363,7 +385,7 @@ class PhoneScamDetector:
         
         # ============ CONTEXTUAL ANALYSIS ============
         
-        # Check for pressure tactics combination
+        # Check for pressure tactics
         urgency_count = sum(1 for w in ['urgent', 'immediately', 'asap', 'now', 'today'] if w in text_lower)
         if urgency_count >= 2:
             score += 12
@@ -377,14 +399,14 @@ class PhoneScamDetector:
         # Check for request to stay on line
         if re.search(r'don\'t hang up|stay on the line|don\'t disconnect|stay with me', text_lower):
             score += 12
-            warnings.append("📞 Caller trying to isolate you - common scam tactic to prevent verification")
+            warnings.append("📞 Caller trying to isolate you - common scam tactic")
         
-        # Check for sense of urgency + money combination
+        # Check for urgency + money combination
         if ('urgent' in text_lower or 'immediately' in text_lower) and ('send' in text_lower or 'pay' in text_lower):
             score += 10
             warnings.append("⏰💰 Urgency + Money request - scammer creating false urgency")
         
-        # Check for "press 1" or automated system scams
+        # Check for automated system
         if re.search(r'press \d|choose an option|for english', text_lower):
             score += 8
             warnings.append("📞 Automated system prompt - often used in vishing scams")
@@ -394,7 +416,7 @@ class PhoneScamDetector:
             score += 15
             warnings.append("🤐 Caller asking for secrecy - major scam indicator")
         
-        # ============ LEGITIMATE INDICATORS (Reduce Score) ============
+        # ============ LEGITIMATE INDICATORS ============
         legitimate_indicators = [
             r'thank you for calling', r'customer service', r'how may I help you',
             r'your call is important', r'please hold', r'we value your business'
@@ -403,12 +425,12 @@ class PhoneScamDetector:
         for indicator in legitimate_indicators:
             if re.search(indicator, text_lower):
                 score = max(0, score - 10)
-                warnings.append(f"✓ Legitimate indicator detected: '{indicator[:30]}...'")
+                warnings.append("✓ Legitimate indicator detected")
         
         # ============ CONFIDENCE SCORE ============
         confidence = min(100, (score / 100) * 100) if score > 0 else 0
         
-        score = min(100, score)
+        score = min(100, round(score, 1))
         
         # ============ INTELLIGENT RECOMMENDATIONS ============
         recommendations = []
@@ -421,7 +443,7 @@ class PhoneScamDetector:
             recommendations.append("❌ DO NOT send any money or share any personal information")
         elif score >= 30:
             recommendations.append("⚠️ Verify the caller's identity through official channels")
-            recommendations.append("📞 Hang up and call back using official numbers from their website")
+            recommendations.append("📞 Hang up and call back using official numbers")
         else:
             recommendations.append("✅ Always verify unexpected calls through official channels")
         
@@ -437,7 +459,6 @@ class PhoneScamDetector:
         
         recommendations.append("📞 Report scam calls to your service provider by forwarding the number to 333 (Safaricom) or 3333 (Airtel)")
         
-        # Remove duplicates
         recommendations = list(dict.fromkeys(recommendations))[:6]
         
         # ============ DETERMINE RISK LEVEL ============
@@ -463,7 +484,7 @@ class PhoneScamDetector:
             message = "✓ No scam patterns detected, but always exercise caution with unexpected calls."
         
         return {
-            'score': round(score, 1),
+            'score': score,
             'risk_level': risk_level,
             'color': color,
             'emoji': emoji,
@@ -473,7 +494,7 @@ class PhoneScamDetector:
             'detected_categories': list(set(detected_categories)),
             'impersonations': detected_impersonations[:3],
             'transcript_length': len(transcript),
-            'confidence': round(confidence, 1),
+            'confidence': confidence,
             'type': 'CALL',
             'phrase_matches': phrase_matches[:5]
         }
@@ -488,13 +509,14 @@ class PhoneScamDetector:
             # Update pattern memory
             if cleaned not in self.pattern_memory:
                 self.pattern_memory[cleaned] = {'reports': 0, 'first_seen': datetime.now().isoformat()}
-            self.pattern_memory[cleaned]['reports'] += 1
+            self.pattern_memory[cleaned]['reports'] = self.pattern_memory[cleaned].get('reports', 0) + 1
             self.pattern_memory[cleaned]['last_reported'] = datetime.now().isoformat()
             if description:
                 self.pattern_memory[cleaned]['description'] = description[:200]
             
             # Save to persistent storage
             self._save_reported_scams()
+            self._save_pattern_memory()
             
             return {
                 'status': 'success',
@@ -518,6 +540,7 @@ class PhoneScamDetector:
             'last_updated': datetime.now().isoformat()
         }
 
+
 # Create singleton instance
 phone_detector = PhoneScamDetector()
 
@@ -533,7 +556,7 @@ def detect_call_scam(transcript: str, phone_number: str = None) -> Dict:
         # Combine scores with weighted average
         combined_score = (result['score'] * 0.7) + (number_analysis['score'] * 0.3)
         result['combined_score'] = round(combined_score, 1)
-        result['score'] = round(combined_score, 1)  # Use combined score as primary
+        result['score'] = round(combined_score, 1)
         
         # Adjust risk level based on combined score
         if combined_score >= 70:
@@ -545,6 +568,7 @@ def detect_call_scam(transcript: str, phone_number: str = None) -> Dict:
             result['risk_level'] = "HIGH RISK - SCAM CALL DETECTED"
             result['color'] = "danger"
             result['emoji'] = "🔴🚨"
+            result['message'] = "⚠️ This call shows strong scam indicators! HANG UP immediately!"
     
     return result
 

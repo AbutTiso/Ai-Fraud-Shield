@@ -49,7 +49,8 @@ urlpatterns = [
     # Phone calls detection
     #==========================
     # Add to urlpatterns in detector/urls.py
-path('api/detect-call/', views.detect_call, name='detect_call'),
-path('api/check-phone/', views.check_phone, name='check_phone'),
-path('api/report-scam-call/', views.report_scam_call, name='report_scam_call'),
+    path('api/detect-call/', views.detect_call, name='detect_call'),
+    path('api/check-phone/', views.check_phone, name='check_phone'),
+    path('api/report-scam-call/', views.report_scam_call, name='report_scam_call'),
+    path('api/detect-web/', views.detect_web, name='detect_web'),
 ]

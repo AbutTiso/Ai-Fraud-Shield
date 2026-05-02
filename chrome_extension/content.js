@@ -7,176 +7,122 @@ function applyHighContrastTheme() {
     
     // Ultra high contrast colors - WCAG AAA compliant
     const colors = {
-        bg: '#000000',           // Pure black for max contrast
-        card: '#0a0a0a',         // Almost black
-        text: '#ffffff',         // Pure white
-        textMuted: '#d4d4d4',    // Light gray (still high contrast)
-        accent: '#3b82f6',       // Bright blue
-        accentHover: '#60a5fa',  // Lighter blue
-        border: '#2a2a2a',       // Dark gray border
-        input: '#1a1a1a'         // Dark input background
+        bg: '#000000',
+        card: '#0a0a0a',
+        text: '#ffffff',
+        textMuted: '#d4d4d4',
+        accent: '#3b82f6',
+        accentHover: '#60a5fa',
+        border: '#2a2a2a',
+        input: '#1a1a1a'
     };
     
     // ChatGPT theme with maximum contrast
     if (hostname.includes('chat.openai.com') || hostname.includes('chatgpt.com')) {
         styleContent = `
-            /* Force dark background on all elements */
             body, html, #__next, main, .flex.h-full, .overflow-hidden,
             .bg-white, .dark\\:bg-gray-800, .bg-gray-50, .bg-gray-100,
             .bg-gray-200, .bg-gray-900, .flex-shrink-0 {
                 background-color: ${colors.bg} !important;
             }
-            
-            /* Force white text on all text elements */
             body, p, span, div, h1, h2, h3, h4, h5, h6, li, a,
             .text-gray-600, .text-gray-700, .text-gray-800, .text-gray-900,
             .text-base, .text-sm, .text-xs, .text-lg, .text-xl,
             .prose, .markdown, .message, .text-token-text-primary {
                 color: ${colors.text} !important;
             }
-            
-            /* Muted text gets light gray (still readable) */
             .text-gray-400, .text-gray-500, .text-token-text-secondary {
                 color: ${colors.textMuted} !important;
             }
-            
-            /* Buttons and interactive elements */
             button, .btn, .rounded-full, [role="button"] {
                 background-color: ${colors.input} !important;
                 color: ${colors.text} !important;
                 border: 1px solid ${colors.border} !important;
             }
-            
             button:hover, .btn:hover {
                 background-color: ${colors.accent} !important;
                 color: ${colors.text} !important;
                 border-color: ${colors.accentHover} !important;
             }
-            
-            /* Input fields */
             input, textarea, .ProseMirror, [contenteditable="true"] {
                 background-color: ${colors.input} !important;
                 color: ${colors.text} !important;
                 border: 1px solid ${colors.border} !important;
             }
-            
             input:focus, textarea:focus {
                 border-color: ${colors.accent} !important;
                 outline: none !important;
             }
-            
-            /* Code blocks */
             pre, code, .code-block {
                 background-color: ${colors.bg} !important;
                 color: #fbbf24 !important;
                 border: 1px solid ${colors.border} !important;
             }
-            
-            /* Links */
             a, a:visited {
                 color: ${colors.accentHover} !important;
                 text-decoration: underline !important;
             }
-            
             a:hover {
                 color: ${colors.accent} !important;
             }
-            
-            /* Sidebar and panels */
             .dark\\:bg-gray-800, .sidebar, .nav, aside {
                 background-color: ${colors.card} !important;
                 border-right: 1px solid ${colors.border} !important;
             }
-            
-            /* Scrollbar */
-            ::-webkit-scrollbar {
-                width: 10px;
-                background: ${colors.bg};
-            }
-            ::-webkit-scrollbar-track {
-                background: ${colors.card};
-            }
-            ::-webkit-scrollbar-thumb {
-                background: ${colors.accent};
-                border-radius: 5px;
-            }
-            ::-webkit-scrollbar-thumb:hover {
-                background: ${colors.accentHover};
-            }
-            
-            /* Selection highlight */
-            ::selection {
-                background: ${colors.accent};
-                color: ${colors.text};
-            }
+            ::-webkit-scrollbar { width: 10px; background: ${colors.bg}; }
+            ::-webkit-scrollbar-track { background: ${colors.card}; }
+            ::-webkit-scrollbar-thumb { background: ${colors.accent}; border-radius: 5px; }
+            ::-webkit-scrollbar-thumb:hover { background: ${colors.accentHover}; }
+            ::selection { background: ${colors.accent}; color: ${colors.text}; }
         `;
     }
     
     // DeepSeek theme with maximum contrast
     else if (hostname.includes('chat.deepseek.com')) {
         styleContent = `
-            /* Force dark background everywhere */
             body, .app-container, .chat-container, main, .sidebar,
             .history-panel, .message-list, .input-area {
                 background-color: ${colors.bg} !important;
             }
-            
-            /* Cards and panels */
             .sidebar, .history-panel, .settings-panel {
                 background-color: ${colors.card} !important;
                 border-right: 1px solid ${colors.border} !important;
             }
-            
-            /* Messages */
             .message, .user-message, .assistant-message,
             .message-content, .bubble {
                 background-color: ${colors.card} !important;
                 color: ${colors.text} !important;
                 border: 1px solid ${colors.border} !important;
             }
-            
-            /* User messages stand out with accent color */
             .user-message, [class*="user"] {
                 background-color: ${colors.accent} !important;
                 color: ${colors.text} !important;
             }
-            
-            /* All text elements */
             p, span, div, h1, h2, h3, h4, h5, h6, li,
             .text, .message-text, .chat-text {
                 color: ${colors.text} !important;
             }
-            
-            /* Secondary text */
             .text-muted, .timestamp, .secondary {
                 color: ${colors.textMuted} !important;
             }
-            
-            /* Input fields */
             textarea, input, .input-box {
                 background-color: ${colors.input} !important;
                 color: ${colors.text} !important;
                 border: 1px solid ${colors.border} !important;
             }
-            
             textarea:focus, input:focus {
                 border-color: ${colors.accent} !important;
                 outline: none !important;
             }
-            
-            /* Buttons */
             button, .btn {
                 background-color: ${colors.input} !important;
                 color: ${colors.text} !important;
                 border: 1px solid ${colors.border} !important;
             }
-            
             button:hover, .btn:hover {
                 background-color: ${colors.accent} !important;
                 color: ${colors.text} !important;
             }
-            
-            /* Code blocks */
             pre, code {
                 background-color: ${colors.bg} !important;
                 color: #fbbf24 !important;
@@ -200,7 +146,10 @@ function removeHighContrastTheme() {
     if (existingStyle) existingStyle.remove();
 }
 
-// ============ SCAM WARNING DETECTION ============
+// ============ SCAM WARNING DETECTION - AUTO DISMISS ============
+// FIXED: Global variable to track if warning was already shown on this page
+let warningAlreadyShown = false;
+
 function checkAndDisplayScamWarning() {
     const pageText = document.body.innerText.toLowerCase();
     let scamScore = 0;
@@ -253,117 +202,169 @@ function checkAndDisplayScamWarning() {
     
     scamScore = Math.min(100, scamScore);
     
-    // Show warning if high risk
-    if (scamScore > 35 && !document.getElementById('ai-fraud-warning')) {
-        const warningDiv = document.createElement('div');
-        warningDiv.id = 'ai-fraud-warning';
-        warningDiv.style.cssText = `
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            background: #000000;
-            color: #ffffff;
-            text-align: center;
-            padding: 14px;
-            z-index: 999999;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            font-size: 14px;
-            font-weight: 500;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-            border-bottom: 2px solid #ef4444;
-        `;
-        
-        let riskColor = '#f59e0b';
-        let riskText = 'SUSPICIOUS';
-        if (scamScore >= 70) {
-            riskColor = '#ef4444';
-            riskText = 'HIGH RISK - SCAM DETECTED';
-        } else if (scamScore >= 50) {
-            riskColor = '#f59e0b';
-            riskText = 'ELEVATED RISK';
-        } else {
-            riskColor = '#fbbf24';
-            riskText = 'CAUTION ADVISED';
-        }
-        
-        warningDiv.innerHTML = `
-            <div style="max-width: 900px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-                <div style="display: flex; align-items: center; gap: 12px;">
-                    <span style="font-size: 24px; background: ${riskColor}; border-radius: 50%; width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center;">⚠️</span>
-                    <div style="text-align: left;">
-                        <strong style="color: ${riskColor};">AI Fraud Shield Alert</strong>
-                        <span style="color: #d4d4d4;"> | ${riskText}</span>
-                        <span style="margin-left: 8px; background: ${riskColor}; color: #000; padding: 2px 8px; border-radius: 20px; font-size: 12px; font-weight: bold;">Risk: ${scamScore}%</span>
-                    </div>
-                </div>
-                <div style="display: flex; gap: 8px;">
-                    <button id="learnMoreWarning" style="background: #1f2937; color: white; border: 1px solid #374151; padding: 6px 16px; border-radius: 20px; cursor: pointer; font-weight: 500; font-size: 12px;">📋 Details</button>
-                    <button id="closeWarning" style="background: ${riskColor}; color: #000; border: none; padding: 6px 16px; border-radius: 20px; cursor: pointer; font-weight: bold; font-size: 12px;">✕ Close</button>
+    // FIXED: Don't show if already dismissed on this page or score too low
+    if (scamScore < 35 || warningAlreadyShown || document.getElementById('ai-fraud-warning')) {
+        return { score: scamScore, keywords: foundKeywords, isScam: scamScore > 40 };
+    }
+    
+    warningAlreadyShown = true;
+    
+    // ============ CREATE WARNING BANNER ============
+    const warningDiv = document.createElement('div');
+    warningDiv.id = 'ai-fraud-warning';
+    warningDiv.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        background: #000000;
+        color: #ffffff;
+        text-align: center;
+        padding: 14px;
+        z-index: 999999;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        font-size: 14px;
+        font-weight: 500;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        border-bottom: 2px solid #ef4444;
+        animation: slideDown 0.4s ease;
+        transition: opacity 0.5s ease, transform 0.4s ease;
+    `;
+    
+    let riskColor = '#f59e0b';
+    let riskText = 'SUSPICIOUS';
+    if (scamScore >= 70) {
+        riskColor = '#ef4444';
+        riskText = 'HIGH RISK - SCAM DETECTED';
+    } else if (scamScore >= 50) {
+        riskColor = '#f59e0b';
+        riskText = 'ELEVATED RISK';
+    } else {
+        riskColor = '#fbbf24';
+        riskText = 'CAUTION ADVISED';
+    }
+    
+    warningDiv.innerHTML = `
+        <div style="max-width: 900px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <span style="font-size: 24px; background: ${riskColor}; border-radius: 50%; width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;">⚠️</span>
+                <div style="text-align: left;">
+                    <strong style="color: ${riskColor};">AI Fraud Shield Alert</strong>
+                    <span style="color: #d4d4d4;"> | ${riskText}</span>
+                    <span style="margin-left: 8px; background: ${riskColor}; color: #000; padding: 2px 8px; border-radius: 20px; font-size: 12px; font-weight: bold;">Risk: ${scamScore}%</span>
                 </div>
             </div>
+            <div style="display: flex; gap: 8px;">
+                <button id="learnMoreWarning" style="background: #1f2937; color: white; border: 1px solid #374151; padding: 6px 16px; border-radius: 20px; cursor: pointer; font-weight: 500; font-size: 12px; white-space: nowrap;">📋 Details</button>
+                <button id="closeWarning" style="background: ${riskColor}; color: #000; border: none; padding: 6px 16px; border-radius: 20px; cursor: pointer; font-weight: bold; font-size: 12px; white-space: nowrap;">✕ Close</button>
+            </div>
+        </div>
+    `;
+    document.body.insertBefore(warningDiv, document.body.firstChild);
+    
+    // ============================================================
+    // FIXED: AUTO-DISMISS AFTER 8 SECONDS (between 5-10 seconds)
+    // ============================================================
+    let autoDismissTimeout = setTimeout(() => {
+        dismissWarning(warningDiv);
+    }, 500); // 8 seconds - adjust this number (5000=5s, 10000=10s)
+    
+    // ============ CLOSE BUTTON - Manual dismiss ============
+    document.getElementById('closeWarning')?.addEventListener('click', () => {
+        clearTimeout(autoDismissTimeout); // Cancel auto-dismiss since user clicked
+        dismissWarning(warningDiv);
+    });
+    
+    // ============ DETAILS BUTTON ============
+    document.getElementById('learnMoreWarning')?.addEventListener('click', () => {
+        // Remove existing details if any
+        const existingDetails = document.getElementById('warning-details');
+        if (existingDetails) existingDetails.remove();
+        
+        const detailsDiv = document.createElement('div');
+        detailsDiv.id = 'warning-details';
+        detailsDiv.style.cssText = `
+            position: fixed;
+            top: 70px;
+            left: 20px;
+            right: 20px;
+            max-width: 500px;
+            margin: 0 auto;
+            background: #0a0a0a;
+            border: 1px solid #ef4444;
+            border-radius: 12px;
+            padding: 16px;
+            z-index: 999999;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.5);
+            animation: slideDown 0.3s ease;
         `;
-        document.body.insertBefore(warningDiv, document.body.firstChild);
+        detailsDiv.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <strong style="color: #ef4444;">⚠️ Scam Indicators Found</strong>
+                <button id="closeDetails" style="background: none; border: none; color: white; font-size: 20px; cursor: pointer; padding: 4px 8px;">✕</button>
+            </div>
+            <div style="color: #d4d4d4; font-size: 13px; margin-bottom: 12px;">
+                <strong>Risk Score: ${scamScore}/100</strong>
+                <div style="background: #1f2937; border-radius: 4px; height: 8px; margin: 8px 0;">
+                    <div style="background: ${riskColor}; width: ${scamScore}%; height: 8px; border-radius: 4px; transition: width 0.3s ease;"></div>
+                </div>
+            </div>
+            <div style="color: #d4d4d4; font-size: 12px;">
+                <strong>Suspicious keywords found:</strong>
+                <ul style="margin: 8px 0 0 20px; color: #fbbf24;">
+                    ${foundKeywords.slice(0, 8).map(kw => `<li>${kw}</li>`).join('')}
+                </ul>
+                ${suspiciousLinks.length > 0 ? `<p style="margin-top: 10px;"><strong>🔗 Suspicious links:</strong> ${suspiciousLinks.length} found</p>` : ''}
+                ${sensitiveInputs.length > 0 ? `<p><strong>🔐 Sensitive form fields:</strong> ${sensitiveInputs.length} found</p>` : ''}
+            </div>
+            <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #2a2a2a; color: #fca5a5; font-size: 11px;">
+                ⚠️ Never share passwords, PINs, OTPs, or send money to unknown sites
+            </div>
+        `;
+        document.body.appendChild(detailsDiv);
         
-        document.getElementById('closeWarning')?.addEventListener('click', () => {
-            warningDiv.remove();
-        });
+        // Auto-dismiss details after 10 seconds
+        let detailsTimeout = setTimeout(() => {
+            dismissDetails(detailsDiv);
+        }, 10000);
         
-        document.getElementById('learnMoreWarning')?.addEventListener('click', () => {
-            const detailsDiv = document.createElement('div');
-            detailsDiv.id = 'warning-details';
-            detailsDiv.style.cssText = `
-                position: fixed;
-                top: 70px;
-                left: 20px;
-                right: 20px;
-                max-width: 500px;
-                margin: 0 auto;
-                background: #0a0a0a;
-                border: 1px solid #ef4444;
-                border-radius: 12px;
-                padding: 16px;
-                z-index: 999999;
-                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-                box-shadow: 0 8px 25px rgba(0,0,0,0.5);
-            `;
-            detailsDiv.innerHTML = `
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                    <strong style="color: #ef4444;">⚠️ Scam Indicators Found</strong>
-                    <button id="closeDetails" style="background: none; border: none; color: white; font-size: 20px; cursor: pointer;">✕</button>
-                </div>
-                <div style="color: #d4d4d4; font-size: 13px; margin-bottom: 12px;">
-                    <strong>Risk Score: ${scamScore}/100</strong>
-                    <div style="background: #1f2937; border-radius: 4px; height: 8px; margin: 8px 0;">
-                        <div style="background: ${riskColor}; width: ${scamScore}%; height: 8px; border-radius: 4px;"></div>
-                    </div>
-                </div>
-                <div style="color: #d4d4d4; font-size: 12px;">
-                    <strong>Suspicious keywords found:</strong>
-                    <ul style="margin: 8px 0 0 20px; color: #fbbf24;">
-                        ${foundKeywords.slice(0, 8).map(kw => `<li>${kw}</li>`).join('')}
-                    </ul>
-                    ${suspiciousLinks.length > 0 ? `<p style="margin-top: 10px;"><strong>🔗 Suspicious links:</strong> ${suspiciousLinks.length} found</p>` : ''}
-                    ${sensitiveInputs.length > 0 ? `<p><strong>🔐 Sensitive form fields:</strong> ${sensitiveInputs.length} found</p>` : ''}
-                </div>
-                <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #2a2a2a; color: #fca5a5; font-size: 11px;">
-                    ⚠️ Never share passwords, PINs, OTPs, or send money to unknown sites
-                </div>
-            `;
-            document.body.appendChild(detailsDiv);
-            
-            document.getElementById('closeDetails')?.addEventListener('click', () => {
-                detailsDiv.remove();
-            });
+        document.getElementById('closeDetails')?.addEventListener('click', () => {
+            clearTimeout(detailsTimeout);
+            dismissDetails(detailsDiv);
         });
-    }
+    });
     
     return { score: scamScore, keywords: foundKeywords, isScam: scamScore > 40 };
 }
 
+// FIXED: Smooth dismiss function for warning banner
+function dismissWarning(warningDiv) {
+    if (!warningDiv || !warningDiv.parentNode) return;
+    warningDiv.style.opacity = '0';
+    warningDiv.style.transform = 'translateY(-100%)';
+    setTimeout(() => {
+        if (warningDiv && warningDiv.parentNode) {
+            warningDiv.remove();
+        }
+    }, 500);
+}
+
+// FIXED: Smooth dismiss function for details panel
+function dismissDetails(detailsDiv) {
+    if (!detailsDiv || !detailsDiv.parentNode) return;
+    detailsDiv.style.opacity = '0';
+    detailsDiv.style.transform = 'translateY(-10px)';
+    detailsDiv.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+    setTimeout(() => {
+        if (detailsDiv && detailsDiv.parentNode) {
+            detailsDiv.remove();
+        }
+    }, 300);
+}
+
 // ============ PAGE CONTENT EXTRACTION ============
 function extractPageContent() {
-    // Get visible text only
     const visibleText = Array.from(document.querySelectorAll('body *'))
         .filter(el => {
             const style = window.getComputedStyle(el);
@@ -375,45 +376,29 @@ function extractPageContent() {
         .join(' ')
         .substring(0, 10000);
     
-    // Get all links
     const links = Array.from(document.querySelectorAll('a'))
         .map(a => a.href)
         .filter(href => href && !href.startsWith('javascript:'))
         .slice(0, 100);
     
-    // Get form count
     const forms = document.querySelectorAll('form').length;
-    
-    // Get page title
     const title = document.title;
     
-    return {
-        text: visibleText,
-        links: links,
-        forms: forms,
-        title: title
-    };
+    return { text: visibleText, links: links, forms: forms, title: title };
 }
 
 // ============ MESSAGE HANDLERS ============
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    // Analyze page for scam indicators
     if (request.action === "analyzePage") {
         const pageContent = extractPageContent();
-        
-        sendResponse({
-            content: pageContent,
-            url: window.location.href
-        });
+        sendResponse({ content: pageContent, url: window.location.href });
     }
     
-    // Check page safety (returns score)
     if (request.action === "checkPageSafety") {
         const result = checkAndDisplayScamWarning();
         sendResponse({ score: result.score, isScam: result.isScam });
     }
     
-    // Toggle dark mode / high contrast
     if (request.action === "toggleDarkMode") {
         const existingStyle = document.getElementById('ai-fraud-shield-theme');
         if (existingStyle) {
@@ -424,20 +409,25 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         sendResponse({ success: true });
     }
     
-    // Get current page risk score
     if (request.action === "getRiskScore") {
         const result = checkAndDisplayScamWarning();
-        sendResponse({ 
-            score: result.score, 
-            isScam: result.isScam,
-            keywords: result.keywords 
-        });
+        sendResponse({ score: result.score, isScam: result.isScam, keywords: result.keywords });
     }
     
     return true;
 });
 
 // ============ INITIALIZATION ============
+// Add animations
+const animationStyle = document.createElement('style');
+animationStyle.textContent = `
+    @keyframes slideDown {
+        from { opacity: 0; transform: translateY(-30px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+`;
+document.head.appendChild(animationStyle);
+
 // Load settings and apply theme
 chrome.storage.sync.get(['darkModeEnabled'], (settings) => {
     if (settings.darkModeEnabled) {
@@ -445,17 +435,13 @@ chrome.storage.sync.get(['darkModeEnabled'], (settings) => {
     }
 });
 
-// Check for scam indicators after page loads (delayed to ensure DOM is ready)
+// Check for scam indicators after page loads
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
-        setTimeout(() => {
-            checkAndDisplayScamWarning();
-        }, 1500);
+        setTimeout(() => checkAndDisplayScamWarning(), 1500);
     });
 } else {
-    setTimeout(() => {
-        checkAndDisplayScamWarning();
-    }, 1500);
+    setTimeout(() => checkAndDisplayScamWarning(), 1500);
 }
 
 // Also check on URL changes (for SPAs)
@@ -464,11 +450,9 @@ new MutationObserver(() => {
     const url = location.href;
     if (url !== lastUrl) {
         lastUrl = url;
-        setTimeout(() => {
-            checkAndDisplayScamWarning();
-        }, 1000);
+        warningAlreadyShown = false; // Reset for new page
+        setTimeout(() => checkAndDisplayScamWarning(), 1000);
     }
 }).observe(document, { subtree: true, childList: true });
 
-// Log that content script is loaded
 console.log('🛡️ AI Fraud Shield: Content script loaded');

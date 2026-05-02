@@ -3,45 +3,472 @@
 
 {% block title %}Latest Scam Alerts - AI Fraud Shield{% endblock %}
 
+{% block extra_css %}
+<style>
+    /* Enhanced Styling */
+    .scam-item {
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        border-left: 4px solid #dc3545;
+        padding: 15px;
+        margin-bottom: 15px;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+    
+    .scam-item:hover {
+        transform: translateX(5px);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    }
+    
+    .badge-high {
+        background: #dc3545;
+        color: white;
+        animation: pulse 1.5s infinite;
+    }
+    
+    .badge-medium {
+        background: #ffc107;
+        color: #333;
+    }
+    
+    .badge-low {
+        background: #0d6efd;
+        color: white;
+    }
+    
+    .stat-card {
+        background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+        border-radius: 12px;
+        padding: 20px;
+        text-align: center;
+        transition: transform 0.3s;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: bold;
+        color: #60a5fa;
+    }
+    
+    .stat-label {
+        color: #9ca3af;
+        font-size: 0.9rem;
+    }
+    
+    .alert-ticker {
+        animation: pulse 2s infinite;
+        background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+    }
+    
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.85; }
+    }
+    
+    .loading-spinner {
+        display: none;
+        text-align: center;
+        padding: 20px;
+    }
+    
+    .loading-spinner.active {
+        display: block;
+    }
+    
+    .spinner {
+        border: 3px solid #374151;
+        border-top: 3px solid #3b82f6;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+        margin: 0 auto;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    .chart-container {
+        background: #111827;
+        border-radius: 12px;
+        padding: 15px;
+        margin-bottom: 20px;
+        border: 1px solid #374151;
+    }
+    
+    .refresh-btn {
+        background: #3b82f6;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+    
+    .refresh-btn:hover {
+        background: #60a5fa;
+        transform: scale(1.02);
+    }
+    
+    .last-updated {
+        font-size: 11px;
+        color: #6b7280;
+        text-align: right;
+        margin-top: 10px;
+    }
+</style>
+<!-- Chart.js for graphs -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+{% endblock %}
+
 {% block content %}
 <div class="container mt-4">
-    <div class="main-card">
-        <div class="header">
-            <h1><i class="fas fa-bell"></i> Latest Scam Alerts</h1>
-            <p>Stay informed about the latest scams targeting Kenyans</p>
+    <!-- Header with Refresh -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h1><i class="fas fa-bell"></i> Live Scam Intelligence</h1>
+            <p>Real-time scam alerts and analytics for Kenya</p>
         </div>
-        <div class="content p-4">
-            <div class="alert alert-danger">
-                <i class="fas fa-exclamation-triangle"></i> <strong>Current Alerts:</strong>
-                <ul class="mt-2 mb-0">
-                    <li>⚠️ Fake M-Pesa suspension messages circulating</li>
-                    <li>⚠️ Fraudulent KCB loan offers asking for processing fees</li>
-                    <li>⚠️ "You won an iPhone" WhatsApp scams</li>
-                    <li>⚠️ Fake KRA tax refund emails</li>
-                </ul>
+        <div>
+            <button class="refresh-btn" onclick="refreshAllData()">
+                <i class="fas fa-sync-alt"></i> Refresh Data
+            </button>
+        </div>
+    </div>
+    
+    <!-- Statistics Cards -->
+    <div class="row mb-4" id="statsCards">
+        <div class="col-md-3 mb-3">
+            <div class="stat-card">
+                <div class="stat-number" id="totalScams">--</div>
+                <div class="stat-label">Total Scams Reported</div>
             </div>
-            
-            <h4>Recent Scam Reports</h4>
-            <div id="recentAlerts">
-                {% if recent_scams %}
-                    {% for scam in recent_scams %}
-                    <div class="scam-item">
-                        <strong><i class="fas fa-{{ scam.type|lower }}"></i> [{{ scam.type }}]</strong>
-                        <span class="badge bg-danger">Score: {{ scam.score }}/100</span>
-                        <p class="mt-2 mb-1">{{ scam.content|truncatechars:200 }}</p>
-                        <small class="text-muted">{{ scam.date }}</small>
-                    </div>
-                    {% endfor %}
-                {% else %}
-                    <p class="text-muted">No scam reports yet. Check back later.</p>
-                {% endif %}
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="stat-card">
+                <div class="stat-number" id="highRiskScams">--</div>
+                <div class="stat-label">High Risk Scams</div>
             </div>
-            
-            <div class="alert alert-warning mt-4">
-                <strong><i class="fas fa-phone-alt"></i> See a scam? Report it!</strong><br>
-                Forward scam messages to <strong>333</strong> (Safaricom) or <strong>3333</strong> (Airtel)
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="stat-card">
+                <div class="stat-number" id="todayScams">--</div>
+                <div class="stat-label">Reported Today</div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="stat-card">
+                <div class="stat-number" id="avgScore">--</div>
+                <div class="stat-label">Average Risk Score</div>
             </div>
         </div>
     </div>
+    
+    <!-- Charts Row -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="chart-container">
+                <canvas id="weeklyTrendChart"></canvas>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="chart-container">
+                <canvas id="riskDistributionChart"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="chart-container">
+                <canvas id="scamTypeChart"></canvas>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="chart-container">
+                <canvas id="hourlyHeatmapChart"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Dynamic Alerts -->
+    <div class="alert alert-danger alert-ticker" id="liveAlertsContainer">
+        <i class="fas fa-exclamation-triangle"></i> <strong>⚠️ LIVE ALERTS:</strong>
+        <ul class="mt-2 mb-0" id="liveAlertsList">
+            <li><i class="fas fa-spinner fa-spin"></i> Loading alerts...</li>
+        </ul>
+    </div>
+    
+    <!-- Recent Scams Section -->
+    <div class="d-flex justify-content-between align-items-center mt-4 mb-3">
+        <h4><i class="fas fa-list"></i> Recent Scam Reports</h4>
+        <small class="text-muted" id="lastUpdated">Last updated: Just now</small>
+    </div>
+    
+    <!-- Loading Spinner -->
+    <div id="loadingSpinner" class="loading-spinner">
+        <div class="spinner"></div>
+        <p class="mt-2">Loading latest scams...</p>
+    </div>
+    
+    <!-- Scams List -->
+    <div id="recentScamsList">
+        {% if recent_scams %}
+            {% for scam in recent_scams %}
+            <div class="scam-item" data-score="{{ scam.score }}">
+                <div class="d-flex justify-content-between align-items-center">
+                    <strong>
+                        <i class="fas fa-{% if scam.type == 'SMS' %}envelope{% elif scam.type == 'CALL' %}phone{% elif scam.type == 'WHATSAPP' %}comment{% else %}flag{% endif %}"></i>
+                        [{{ scam.type }}]
+                    </strong>
+                    <span class="badge 
+                        {% if scam.score >= 70 %}badge-high{% elif scam.score >= 40 %}badge-medium{% else %}badge-low{% endif %}">
+                        Risk: {{ scam.score }}/100
+                    </span>
+                </div>
+                <p class="mt-2 mb-1 text-light">{{ scam.content|truncatechars:200 }}</p>
+                <div class="d-flex justify-content-between align-items-center">
+                    <small class="text-muted">
+                        <i class="fas fa-calendar-alt"></i> {{ scam.date }}
+                    </small>
+                    <small class="text-warning" style="cursor:pointer" onclick="reportScam(this)">
+                        <i class="fas fa-flag"></i> Report this scam
+                    </small>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="text-center p-5">
+                <i class="fas fa-shield-alt fa-3x text-muted mb-3"></i>
+                <p class="text-muted">No scam reports yet. Be the first to report!</p>
+                <a href="{% url 'report_scam' %}" class="btn btn-primary">Report a Scam</a>
+            </div>
+        {% endif %}
+    </div>
+    
+    <!-- Safety Tips -->
+    <div class="alert alert-warning mt-4">
+        <strong><i class="fas fa-shield-alt"></i> 🛡️ Protect Yourself:</strong>
+        <ul class="mt-2 mb-0">
+            <li>🔐 Never share your PIN, password, or M-Pesa code</li>
+            <li>📞 Verify calls by hanging up and calling official numbers</li>
+            <li>🔗 Don't click suspicious links - hover first to see destination</li>
+            <li>📱 Forward scam messages to <strong>333</strong> (Safaricom) or <strong>3333</strong> (Airtel)</li>
+        </ul>
+    </div>
 </div>
+
+<script>
+// Global chart variables
+let weeklyChart, riskChart, typeChart, hourlyChart;
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    loadStats();
+    loadCharts();
+    loadLiveAlerts();
+    startAutoRefresh();
+});
+
+// Auto refresh every 30 seconds
+function startAutoRefresh() {
+    setInterval(function() {
+        refreshAllData();
+    }, 30000);
+}
+
+// Refresh all data
+function refreshAllData() {
+    loadStats();
+    loadCharts();
+    loadLiveAlerts();
+    updateLastUpdated();
+}
+
+// Update last updated timestamp
+function updateLastUpdated() {
+    const now = new Date();
+    const timeString = now.toLocaleTimeString();
+    document.getElementById('lastUpdated').textContent = `Last updated: ${timeString}`;
+}
+
+// Load statistics
+async function loadStats() {
+    try {
+        const response = await fetch('/api/stats/');
+        const data = await response.json();
+        
+        if (data.success && data.stats) {
+            document.getElementById('totalScams').textContent = data.stats.total_reports || 0;
+            document.getElementById('highRiskScams').textContent = data.stats.high_risk_count || 0;
+            document.getElementById('todayScams').textContent = data.stats.today_count || 0;
+            document.getElementById('avgScore').textContent = (data.stats.average_risk_score || 0) + '%';
+        }
+    } catch (error) {
+        console.error('Error loading stats:', error);
+    }
+}
+
+// Load all charts
+async function loadCharts() {
+    try {
+        const response = await fetch('/api/stats/');
+        const data = await response.json();
+        
+        if (data.success && data.stats) {
+            // Weekly Trend Chart
+            if (weeklyChart) weeklyChart.destroy();
+            weeklyChart = createLineChart('weeklyTrendChart', data.stats.weekly_labels || ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'], data.stats.weekly_trend || [0,0,0,0,0,0,0]);
+            
+            // Risk Distribution Pie Chart
+            if (riskChart) riskChart.destroy();
+            const riskDist = data.stats.risk_distribution || {high: 0, medium: 0, low: 0};
+            riskChart = createPieChart('riskDistributionChart', [riskDist.high, riskDist.medium, riskDist.low], ['High Risk', 'Medium Risk', 'Low Risk']);
+            
+            // Scam Type Bar Chart
+            if (typeChart) typeChart.destroy();
+            typeChart = createBarChart('scamTypeChart', 
+                ['SMS', 'Email', 'WhatsApp', 'Call', 'URL'], 
+                [
+                    data.stats.sms_count || 0,
+                    data.stats.email_count || 0,
+                    data.stats.whatsapp_count || 0,
+                    data.stats.call_count || 0,
+                    data.stats.url_count || 0
+                ]
+            );
+            
+            // Hourly Distribution
+            if (hourlyChart) hourlyChart.destroy();
+            const hours = Array.from({length: 24}, (_, i) => i + ':00');
+            hourlyChart = createLineChart('hourlyHeatmapChart', hours, data.stats.hourly_distribution || Array(24).fill(0));
+        }
+    } catch (error) {
+        console.error('Error loading charts:', error);
+    }
+}
+
+// Create Line Chart
+function createLineChart(canvasId, labels, data) {
+    const ctx = document.getElementById(canvasId).getContext('2d');
+    return new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Scam Reports',
+                data: data,
+                borderColor: '#3b82f6',
+                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: { labels: { color: '#f3f4f6' } }
+            },
+            scales: {
+                y: { ticks: { color: '#9ca3af' }, grid: { color: '#374151' } },
+                x: { ticks: { color: '#9ca3af' }, grid: { color: '#374151' } }
+            }
+        }
+    });
+}
+
+// Create Pie Chart
+function createPieChart(canvasId, data, labels) {
+    const ctx = document.getElementById(canvasId).getContext('2d');
+    return new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: data,
+                backgroundColor: ['#ef4444', '#f59e0b', '#10b981'],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { position: 'bottom', labels: { color: '#f3f4f6' } }
+            }
+        }
+    });
+}
+
+// Create Bar Chart
+function createBarChart(canvasId, labels, data) {
+    const ctx = document.getElementById(canvasId).getContext('2d');
+    return new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Number of Reports',
+                data: data,
+                backgroundColor: '#3b82f6',
+                borderRadius: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { labels: { color: '#f3f4f6' } }
+            },
+            scales: {
+                y: { ticks: { color: '#9ca3af' }, grid: { color: '#374151' } },
+                x: { ticks: { color: '#9ca3af' }, grid: { color: '#374151' } }
+            }
+        }
+    });
+}
+
+// Load live alerts
+async function loadLiveAlerts() {
+    try {
+        const response = await fetch('/api/scam-alerts/');
+        const data = await response.json();
+        
+        const alertsList = document.getElementById('liveAlertsList');
+        if (data.alerts && data.alerts.length > 0) {
+            alertsList.innerHTML = data.alerts.map(alert => 
+                `<li>⚠️ ${alert.description} <small class="text-muted">(${alert.date})</small></li>`
+            ).join('');
+        } else {
+            alertsList.innerHTML = '<li>ℹ️ No active alerts at this moment. Stay vigilant!</li>';
+        }
+    } catch (error) {
+        console.error('Error loading alerts:', error);
+    }
+}
+
+// Report a scam (quick action)
+function reportScam(element) {
+    const scamItem = element.closest('.scam-item');
+    const content = scamItem.querySelector('p').innerText;
+    
+    if (confirm('Report this as a scam? This helps others stay safe.')) {
+        fetch('/api/submit-feedback/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ content: content, type: 'user_report' })
+        })
+        .then(() => {
+            alert('Thank you for reporting! This scam has been recorded.');
+            element.innerHTML = '<i class="fas fa-check"></i> Reported';
+        });
+    }
+}
+</script>
 {% endblock %}

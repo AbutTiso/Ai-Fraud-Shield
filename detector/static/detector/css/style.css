@@ -764,3 +764,65 @@ button, .btn-analyze, .btn-export, .example-btn, .tab-btn {
 ::-webkit-scrollbar-thumb:hover {
     background: #eab308;
 }
+  .stats-card {
+        background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+        border-radius: 12px;
+        padding: 15px;
+        text-align: center;
+        transition: transform 0.3s;
+        color: white;
+        cursor: pointer;
+    }
+    .stats-card:hover { transform: translateY(-5px); }
+    .stats-number { font-size: 2rem; font-weight: bold; color: #60a5fa; }
+    .danger-gradient { background: linear-gradient(135deg, #dc2626, #991b1b) !important; }
+    .success-gradient { background: linear-gradient(135deg, #10b981, #047857) !important; }
+    .chart-card { background: #111827; border-radius: 12px; padding: 15px; margin-bottom: 20px; border: 1px solid #374151; }
+    .chart-card h5 { color: #f3f4f6; margin-bottom: 15px; }
+    .tab-buttons { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 25px; }
+    .tab-btn { background: #1f2937; color: #f3f4f6; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; transition: all 0.3s; }
+    .tab-btn.active, .tab-btn:hover { background: #3b82f6; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    .btn-analyze { background: #3b82f6; color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: bold; }
+    .btn-analyze:hover { background: #60a5fa; }
+    .result-card { margin-top: 20px; display: none; }
+    .result-card.show { display: block; }
+    .result-header { padding: 15px; border-radius: 10px 10px 0 0; }
+    .result-header.danger { background: #dc3545; color: white; }
+    .result-header.warning { background: #ffc107; color: #333; }
+    .result-header.success { background: #28a745; color: white; }
+    .result-body { background: #1f2937; padding: 20px; border-radius: 0 0 10px 10px; }
+    .spinner { display: none; text-align: center; padding: 20px; }
+    .spinner.show { display: block; }
+    .reason-item { padding: 8px; margin: 5px 0; background: #374151; border-left: 3px solid; border-radius: 4px; color: #f3f4f6; }
+    .example-btn { background: #374151; color: #f3f4f6; border: none; padding: 5px 12px; border-radius: 20px; margin: 3px; cursor: pointer; font-size: 12px; }
+    .example-btn:hover { background: #3b82f6; }
+    .drop-zone { border: 2px dashed #667eea; border-radius: 12px; padding: 40px; text-align: center; cursor: pointer; margin-bottom: 20px; }
+    .btn-export { background: #3b82f6; color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; }
+    .btn-export:hover { background: #60a5fa; }
+    .safe-analysis-badge { background: #10b981; color: white; padding: 10px; border-radius: 8px; margin-bottom: 20px; text-align: center; }
+    .badge { padding: 4px 8px; border-radius: 20px; font-size: 12px; }
+    .bg-danger { background: #dc3545; color: white; }
+    .bg-warning { background: #ffc107; color: #333; }
+    .bg-success { background: #28a745; color: white; }
+    .bg-secondary { background: #6c757d; color: white; }
+    .text-muted { color: #9ca3af !important; }
+    .form-control { background: #374151; border: 1px solid #4b5563; color: #f3f4f6; border-radius: 8px; padding: 10px; width: 100%; }
+    .form-control:focus { outline: none; border-color: #3b82f6; }
+    .card { background: #1f2937; border-radius: 12px; padding: 15px; margin-bottom: 15px; border: 1px solid #374151; }
+    .alert { padding: 12px; border-radius: 8px; margin-bottom: 15px; }
+    .alert-primary { background: #1e3a8a; color: #93c5fd; }
+    .alert-warning { background: #78350f; color: #fde68a; }
+    .alert-danger { background: #7f1d1d; color: #fca5a5; }
+    .alert-success { background: #064e3b; color: #a7f3d0; }
+    .alert-info { background: #1e3a8a; color: #93c5fd; }
+    table { width: 100%; color: #f3f4f6; border-collapse: collapse; }
+    th, td { padding: 12px; text-align: left; border-bottom: 1px solid #374151; }
+    th { color: #9ca3af; }
+    .stats-updated { animation: pulse 0.5s ease; }
+    @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+    .transcript-line { background: #1e3a8a; margin: 5px 0; padding: 8px; border-radius: 6px; font-size: 13px; }
+    .scam-detected { background: #7f1d1d; border-left: 4px solid #ef4444; }
+    .live-badge { animation: blink 1s infinite; }
+    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }

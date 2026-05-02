@@ -1,4 +1,4 @@
-// detector/static/detector/js/main.js
+// detector/static/detector/js/main.js - COMPLETE UPDATED VERSION
 
 // Get CSRF token
 function getCSRFToken() {
@@ -15,6 +15,11 @@ function getCSRFToken() {
     }
     return cookieValue;
 }
+
+// Chart instances
+let scamTypeChart = null;
+let riskDistributionChart = null;
+let trendChart = null;
 
 // Show toast notification
 function showToast(message, type = 'success') {
@@ -97,62 +102,192 @@ function switchTab(tabName) {
     });
     
     if (tabName === 'stats') {
-        loadStats();
+        setTimeout(() => {
+            loadStats();
+            refreshCharts();
+        }, 100);
     }
 }
 
-// Load examples
-function loadExample(type, exampleType) {
-    const examples = {
-        sms: {
-            scam: 'URGENT: Your M-Pesa account has been suspended due to suspicious activity. Click http://mpesa-update.co.ke to verify your details immediately or your account will be deactivated.',
-            prize: 'CONGRATULATIONS! You have won Ksh 250,000 in our Safaricom promotion. Click https://bit.ly/claim-prize to claim your prize now!',
-            safe: 'Safaricom: Your M-Pesa transaction of Ksh 500 to John Mwangi on 25/04/2026 was successful. New balance: Ksh 2,450. Thank you for using M-Pesa.'
-        },
-        email: {
-            phishing: `From: "Safaricom Support" <no-reply@safaricom-secure.tk>
-Subject: ⚠️ URGENT: Your M-Pesa Account Has Been Suspended
+// Refresh charts (resize/update)
+function refreshCharts() {
+    if (scamTypeChart) scamTypeChart.update();
+    if (riskDistributionChart) riskDistributionChart.update();
+    if (trendChart) trendChart.update();
+}
 
-Dear Valued Customer,
-
-We detected unusual activity on your M-Pesa account. For security reasons, we have temporarily suspended your account.
-
-To verify your account and restore full access, click the link below:
-
-http://mpesa-verify.secure-login.com/verify-account
-
-Failure to verify within 24 hours will result in permanent account closure.
-
-Thank you,
-Safaricom Security Team`,
-            safe: `From: "Safaricom" <customercare@safaricom.com>
-Subject: Your M-Pesa Transaction Receipt
-
-Dear Customer,
-
-Your transaction has been completed successfully.
-
-Transaction Details:
-Date: 25/04/2026
-Amount: Ksh 500.00
-Sent to: John Mwangi (0712345678)
-Transaction ID: QK4L83XG1A
-Balance: Ksh 2,450.00
-
-Thank you for using M-Pesa.
-
-This is a system generated message.`
-        }
-    };
+// Create Scam Type Pie Chart
+function createScamTypeChart(stats) {
+    const ctx = document.getElementById('scamTypeChart');
+    if (!ctx) return;
     
-    const textarea = document.getElementById(`${type}Text`);
-    if (textarea && examples[type] && examples[type][exampleType]) {
-        textarea.value = examples[type][exampleType];
-        document.getElementById(`${type}Result`).classList.remove('show');
+    if (scamTypeChart) scamTypeChart.destroy();
+    
+    scamTypeChart = new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: ['SMS', 'Email', 'WhatsApp', 'Phone Calls', 'URLs'],
+            datasets: [{
+                data: [
+                    stats.sms_count || 0,
+                    stats.email_count || 0,
+                    stats.whatsapp_count || 0,
+                    stats.call_count || 0,
+                    stats.url_count || 0
+                ],
+                backgroundColor: ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6'],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: { position: 'bottom', labels: { color: '#f3f4f6' } }
+            }
+        }
+    });
+}
+
+// Create Risk Distribution Bar Chart
+function createRiskChart(stats) {
+    const ctx = document.getElementById('riskDistributionChart');
+    if (!ctx) return;
+    
+    if (riskDistributionChart) riskDistributionChart.destroy();
+    
+    riskDistributionChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['High Risk (70-100)', 'Medium Risk (40-69)', 'Low Risk (0-39)'],
+            datasets: [{
+                label: 'Number of Reports',
+                data: [
+                    stats.high_risk_count || 0,
+                    stats.medium_risk_count || 0,
+                    stats.low_risk_count || 0
+                ],
+                backgroundColor: ['#ef4444', '#f59e0b', '#10b981'],
+                borderRadius: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            scales: {
+                y: { beginAtZero: true, ticks: { color: '#9ca3af' }, grid: { color: '#374151' } },
+                x: { ticks: { color: '#9ca3af' }, grid: { color: '#374151' } }
+            },
+            plugins: {
+                legend: { labels: { color: '#f3f4f6' } }
+            }
+        }
+    });
+}
+
+// Create Weekly Trend Line Chart
+function createTrendChart(stats) {
+    const ctx = document.getElementById('trendChart');
+    if (!ctx) return;
+    
+    if (trendChart) trendChart.destroy();
+    
+    trendChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: stats.weekly_labels || ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+            datasets: [{
+                label: 'Scam Reports',
+                data: stats.weekly_trend || [0, 0, 0, 0, 0, 0, 0],
+                borderColor: '#3b82f6',
+                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: { labels: { color: '#f3f4f6' } }
+            },
+            scales: {
+                y: { beginAtZero: true, ticks: { color: '#9ca3af' }, grid: { color: '#374151' } },
+                x: { ticks: { color: '#9ca3af' }, grid: { color: '#374151' } }
+            }
+        }
+    });
+}
+
+// Update all charts with new data
+function updateCharts(stats) {
+    if (scamTypeChart) {
+        scamTypeChart.data.datasets[0].data = [
+            stats.sms_count || 0,
+            stats.email_count || 0,
+            stats.whatsapp_count || 0,
+            stats.call_count || 0,
+            stats.url_count || 0
+        ];
+        scamTypeChart.update();
+    } else {
+        createScamTypeChart(stats);
+    }
+    
+    if (riskDistributionChart) {
+        riskDistributionChart.data.datasets[0].data = [
+            stats.high_risk_count || 0,
+            stats.medium_risk_count || 0,
+            stats.low_risk_count || 0
+        ];
+        riskDistributionChart.update();
+    } else {
+        createRiskChart(stats);
+    }
+    
+    if (trendChart) {
+        trendChart.data.datasets[0].data = stats.weekly_trend || [0, 0, 0, 0, 0, 0, 0];
+        if (stats.weekly_labels) trendChart.data.labels = stats.weekly_labels;
+        trendChart.update();
+    } else {
+        createTrendChart(stats);
     }
 }
 
-// Load statistics
+// Update recent scams table
+function updateRecentScamsTable(recentScams) {
+    const tbody = document.getElementById('recentScamsBody');
+    if (!tbody) return;
+    
+    if (!recentScams || recentScams.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center">No scam reports yet</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = recentScams.map(scam => `
+        <tr>
+            <td>${escapeHtml(scam.date || '')}</td>
+            <td><span class="badge bg-secondary">${escapeHtml(scam.type || 'Unknown')}</span></td>
+            <td>${escapeHtml(scam.preview || scam.content || 'No content').substring(0, 80)}${(scam.preview || scam.content || '').length > 80 ? '...' : ''}</td>
+            <td><span class="badge ${getRiskBadgeClass(scam.score)}">${scam.score || 0}</span></td>
+            <td><span class="badge ${getRiskLevelClass(scam.level)}">${scam.level || 'Unknown'}</span></td>
+        </tr>
+    `).join('');
+}
+
+function getRiskBadgeClass(score) {
+    if (score >= 70) return 'bg-danger';
+    if (score >= 40) return 'bg-warning text-dark';
+    return 'bg-success';
+}
+
+function getRiskLevelClass(level) {
+    if (level === 'HIGH') return 'bg-danger';
+    if (level === 'MEDIUM') return 'bg-warning text-dark';
+    return 'bg-success';
+}
+
+// Load statistics (ENHANCED VERSION)
 async function loadStats() {
     try {
         const response = await fetch('/api/stats/', {
@@ -163,37 +298,88 @@ async function loadStats() {
         });
         const data = await response.json();
         
-        if (data.status === 'success') {
-            document.getElementById('totalReports').textContent = data.total_reports || 0;
-            document.getElementById('highRisk').textContent = data.high_risk_count || 0;
-            document.getElementById('smsCount').textContent = data.sms_count || 0;
-            document.getElementById('emailCount').textContent = data.email_count || 0;
-            document.getElementById('whatsappCount').textContent = data.whatsapp_count || 0;
-            document.getElementById('avgRiskScore').textContent = data.average_risk_score || 0;
-            
-            const recentDiv = document.getElementById('recentScams');
-            if (data.recent_scams && data.recent_scams.length === 0) {
+        // Check if we have the new stats structure (with success and stats objects)
+        let stats;
+        if (data.success && data.stats) {
+            stats = data.stats;
+        } else if (data.status === 'success') {
+            // Old format fallback
+            stats = data;
+        } else {
+            stats = data;
+        }
+        
+        // Update stats cards on main page (top row)
+        const totalReportsEl = document.getElementById('totalReports');
+        if (totalReportsEl) totalReportsEl.textContent = stats.total_reports || 0;
+        
+        const highRiskEl = document.getElementById('highRisk');
+        if (highRiskEl) highRiskEl.textContent = stats.high_risk_count || 0;
+        
+        const smsCountEl = document.getElementById('smsCount');
+        if (smsCountEl) smsCountEl.textContent = stats.sms_count || 0;
+        
+        const emailCountEl = document.getElementById('emailCount');
+        if (emailCountEl) emailCountEl.textContent = stats.email_count || 0;
+        
+        const whatsappCountEl = document.getElementById('whatsappCount');
+        if (whatsappCountEl) whatsappCountEl.textContent = stats.whatsapp_count || 0;
+        
+        const callCountEl = document.getElementById('callCount');
+        if (callCountEl) callCountEl.textContent = stats.call_count || 0;
+        
+        const avgRiskScoreEl = document.getElementById('avgRiskScore');
+        if (avgRiskScoreEl) avgRiskScoreEl.textContent = stats.average_risk_score || 0;
+        
+        // Update stats tab (Dashboard tab) cards
+        const statTotalReports = document.getElementById('statTotalReports');
+        if (statTotalReports) statTotalReports.textContent = stats.total_reports || 0;
+        
+        const statHighRisk = document.getElementById('statHighRisk');
+        if (statHighRisk) statHighRisk.textContent = stats.high_risk_count || 0;
+        
+        const statAvgScore = document.getElementById('statAvgScore');
+        if (statAvgScore) statAvgScore.textContent = stats.average_risk_score || 0;
+        
+        // Update recent scams list on main page (old location)
+        const recentDiv = document.getElementById('recentScams');
+        if (recentDiv) {
+            const recentScams = stats.recent_scams || [];
+            if (recentScams.length === 0) {
                 recentDiv.innerHTML = '<p class="text-muted">No reports yet. Start detecting scams!</p>';
-            } else if (data.recent_scams) {
-                recentDiv.innerHTML = data.recent_scams.map(scam => `
+            } else {
+                recentDiv.innerHTML = recentScams.map(scam => `
                     <div class="scam-item">
-                        <strong>[${scam.type}]</strong> 
+                        <strong>[${escapeHtml(scam.type)}]</strong> 
                         <span class="badge ${scam.score >= 70 ? 'bg-danger' : (scam.score >= 40 ? 'bg-warning' : 'bg-success')}">
                             Score: ${scam.score}/100
                         </span><br>
-                        <small>${scam.date}</small><br>
-                        <small class="text-muted">${escapeHtml(scam.content.substring(0, 80))}...</small>
+                        <small>${escapeHtml(scam.date)}</small><br>
+                        <small class="text-muted">${escapeHtml((scam.preview || scam.content || 'No content').substring(0, 80))}...</small>
                     </div>
                 `).join('');
             }
         }
+        
+        // Update recent scams table (in Dashboard tab)
+        if (stats.recent_scams) {
+            updateRecentScamsTable(stats.recent_scams);
+        }
+        
+        // Update charts
+        updateCharts(stats);
+        
     } catch (error) {
         console.error('Error loading stats:', error);
-        document.getElementById('recentScams').innerHTML = '<p class="text-danger">Error loading statistics. Make sure the server is running.</p>';
+        const recentDiv = document.getElementById('recentScams');
+        if (recentDiv) {
+            recentDiv.innerHTML = '<p class="text-danger">Error loading statistics. Make sure the server is running.</p>';
+        }
     }
 }
 
 function escapeHtml(text) {
+    if (!text) return '';
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
@@ -471,6 +657,58 @@ function displayResult(data, resultDivId, spinnerId) {
     }
 }
 
+// Load example texts
+function loadExample(type, exampleType) {
+    const examples = {
+        sms: {
+            scam: 'URGENT: Your M-Pesa account has been suspended due to suspicious activity. Click http://mpesa-update.co.ke to verify your details immediately or your account will be deactivated.',
+            prize: 'CONGRATULATIONS! You have won Ksh 250,000 in our Safaricom promotion. Click https://bit.ly/claim-prize to claim your prize now!',
+            safe: 'Safaricom: Your M-Pesa transaction of Ksh 500 to John Mwangi on 25/04/2026 was successful. New balance: Ksh 2,450. Thank you for using M-Pesa.'
+        },
+        email: {
+            phishing: `From: "Safaricom Support" <no-reply@safaricom-secure.tk>
+Subject: ⚠️ URGENT: Your M-Pesa Account Has Been Suspended
+
+Dear Valued Customer,
+
+We detected unusual activity on your M-Pesa account. For security reasons, we have temporarily suspended your account.
+
+To verify your account and restore full access, click the link below:
+
+http://mpesa-verify.secure-login.com/verify-account
+
+Failure to verify within 24 hours will result in permanent account closure.
+
+Thank you,
+Safaricom Security Team`,
+            safe: `From: "Safaricom" <customercare@safaricom.com>
+Subject: Your M-Pesa Transaction Receipt
+
+Dear Customer,
+
+Your transaction has been completed successfully.
+
+Transaction Details:
+Date: 25/04/2026
+Amount: Ksh 500.00
+Sent to: John Mwangi (0712345678)
+Transaction ID: QK4L83XG1A
+Balance: Ksh 2,450.00
+
+Thank you for using M-Pesa.
+
+This is a system generated message.`
+        }
+    };
+    
+    const textarea = document.getElementById(`${type}Text`);
+    if (textarea && examples[type] && examples[type][exampleType]) {
+        textarea.value = examples[type][exampleType];
+        const resultDiv = document.getElementById(`${type}Result`);
+        if (resultDiv) resultDiv.classList.remove('show');
+    }
+}
+
 // Initialize all event listeners when DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
     // SMS Form Handler
@@ -649,6 +887,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 const data = await response.json();
                 displayResult(data, 'urlResult', 'urlSpinner');
+                loadStats();
             } catch (error) {
                 showToast('Network error: ' + error.message, 'danger');
                 spinner.classList.remove('show');
@@ -725,6 +964,11 @@ document.addEventListener('DOMContentLoaded', function() {
             resultDiv.classList.remove('show');
             
             try {
+                // Check if Tesseract is loaded
+                if (typeof Tesseract === 'undefined') {
+                    throw new Error('Tesseract OCR library not loaded. Please refresh the page.');
+                }
+                
                 const worker = await Tesseract.createWorker('eng');
                 const { data: { text } } = await worker.recognize(currentImageFile);
                 await worker.terminate();
@@ -737,7 +981,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 const data = await response.json();
                 displayResult(data, 'screenshotResult', 'screenshotSpinner');
+                loadStats();
             } catch (error) {
+                console.error('OCR Error:', error);
                 resultDiv.innerHTML = `<div class="alert alert-danger">OCR failed: ${error.message}</div>`;
                 resultDiv.classList.add('show');
                 spinner.classList.remove('show');
@@ -768,13 +1014,200 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
+    // Call Monitor Functionality
+    const startCallMonitorBtn = document.getElementById('startCallMonitorBtn');
+    const stopCallMonitorBtn = document.getElementById('stopCallMonitorBtn');
+    const monitorStatus = document.getElementById('monitorStatus');
+    const realtimeAlerts = document.getElementById('realtimeAlerts');
+    const dangerAlert = document.getElementById('dangerAlert');
+    const liveTranscriptContainer = document.getElementById('liveTranscriptContainer');
+    
+    let recognition = null;
+    let isMonitoring = false;
+    
+    if (startCallMonitorBtn && 'webkitSpeechRecognition' in window) {
+        recognition = new webkitSpeechRecognition();
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        recognition.lang = 'en-US';
+        
+        recognition.onstart = () => {
+            isMonitoring = true;
+            monitorStatus.innerHTML = '<span class="badge bg-success">🔴 LIVE - Monitoring in progress</span>';
+            startCallMonitorBtn.disabled = true;
+            stopCallMonitorBtn.disabled = false;
+            if (realtimeAlerts) realtimeAlerts.innerHTML = '<div class="text-success">🎤 Listening... Speak during the call.</div>';
+        };
+        
+        recognition.onerror = (event) => {
+            console.error('Recognition error:', event.error);
+            if (realtimeAlerts) realtimeAlerts.innerHTML = `<div class="text-danger">Error: ${event.error}</div>`;
+        };
+        
+        recognition.onend = () => {
+            if (isMonitoring) {
+                isMonitoring = false;
+                monitorStatus.innerHTML = '<span class="badge bg-secondary">⚪ Not monitoring</span>';
+                startCallMonitorBtn.disabled = false;
+                stopCallMonitorBtn.disabled = true;
+            }
+        };
+        
+        recognition.onresult = (event) => {
+            let interimTranscript = '';
+            let finalTranscript = '';
+            
+            for (let i = event.resultIndex; i < event.results.length; i++) {
+                const transcript = event.results[i][0].transcript;
+                if (event.results[i].isFinal) {
+                    finalTranscript += transcript;
+                } else {
+                    interimTranscript += transcript;
+                }
+            }
+            
+            if (finalTranscript) {
+                // Show live transcript
+                if (liveTranscriptContainer) {
+                    liveTranscriptContainer.innerHTML = `
+                        <div class="alert alert-info mt-2">
+                            <small><i class="fas fa-microphone-alt"></i> Live: ${escapeHtml(finalTranscript)}</small>
+                        </div>
+                    `;
+                }
+                analyzeTranscriptForScams(finalTranscript);
+            }
+        };
+        
+        startCallMonitorBtn.addEventListener('click', () => {
+            try {
+                recognition.start();
+            } catch (e) {
+                console.error('Start error:', e);
+            }
+        });
+        
+        stopCallMonitorBtn.addEventListener('click', () => {
+            if (recognition) {
+                recognition.stop();
+                isMonitoring = false;
+                monitorStatus.innerHTML = '<span class="badge bg-secondary">⚪ Monitoring stopped</span>';
+                startCallMonitorBtn.disabled = false;
+                stopCallMonitorBtn.disabled = true;
+                if (liveTranscriptContainer) liveTranscriptContainer.innerHTML = '';
+            }
+        });
+    } else if (startCallMonitorBtn) {
+        startCallMonitorBtn.disabled = true;
+        startCallMonitorBtn.title = 'Speech recognition not supported in this browser';
+        if (monitorStatus) monitorStatus.innerHTML = '<span class="badge bg-warning">⚠️ Not supported in this browser. Use Chrome for call monitoring.</span>';
+    }
+    
+    async function analyzeTranscriptForScams(transcript) {
+        const lowerText = transcript.toLowerCase();
+        let isScam = false;
+        let alertMessage = '';
+        
+        const scamPatterns = [
+            { pattern: /pin|mpin|password|otp|code/, message: '❌ Asking for PIN/Password - HANG UP!' },
+            { pattern: /send money|tuma pesa/, message: '💰 Requesting money - Scam!' },
+            { pattern: /suspended|blocked|locked/, message: '🚫 Account suspension threat - Scam tactic!' },
+            { pattern: /urgent|immediately|asap/, message: '⏰ Urgency pressure - Classic scam!' },
+            { pattern: /mpesa|safaricom|bank/, message: '🏦 Impersonating company - Verify!' },
+            { pattern: /verify|confirm|update/, message: '🔐 Verification scam - Don\'t share info!' },
+            { pattern: /winner|prize|congratulations/, message: '🎁 Prize scam - You didn\'t win anything!' },
+            { pattern: /limited time|offer ends/, message: '⏳ Time pressure - Scare tactic!' }
+        ];
+        
+        for (const pattern of scamPatterns) {
+            if (pattern.pattern.test(lowerText)) {
+                isScam = true;
+                alertMessage = pattern.message;
+                break;
+            }
+        }
+        
+        if (isScam) {
+            if (dangerAlert) dangerAlert.style.display = 'block';
+            if (realtimeAlerts) {
+                realtimeAlerts.innerHTML = `<div class="alert alert-danger mt-2"><strong>⚠️ SCAM ALERT!</strong> ${alertMessage}</div>`;
+            }
+            if (monitorStatus) monitorStatus.innerHTML = '<span class="badge bg-danger">🔴 SCAM DETECTED - HANG UP!</span>';
+        } else {
+            if (dangerAlert) dangerAlert.style.display = 'none';
+            if (realtimeAlerts) {
+                realtimeAlerts.innerHTML = `<div class="alert alert-success mt-2"><strong>✅ No scam patterns detected</strong> - Stay vigilant.</div>`;
+            }
+        }
+    }
+    
+    const checkNumberBtn = document.getElementById('checkNumberBtn');
+    const callerNumber = document.getElementById('callerNumber');
+    const numberCheckResult = document.getElementById('numberCheckResult');
+    
+    if (checkNumberBtn) {
+        checkNumberBtn.addEventListener('click', async () => {
+            const number = callerNumber.value.trim();
+            if (!number) {
+                showToast('Please enter a phone number', 'warning');
+                return;
+            }
+            
+            numberCheckResult.innerHTML = '<div class="spinner-border text-primary spinner-border-sm"></div> Checking...';
+            
+            try {
+                const response = await fetch('/api/check-phone/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCSRFToken() },
+                    body: JSON.stringify({ phone_number: number })
+                });
+                const data = await response.json();
+                
+                if (data.is_known_scam) {
+                    numberCheckResult.innerHTML = `
+                        <div class="alert alert-danger mt-2">
+                            <strong>⚠️ SCAM NUMBER!</strong><br>
+                            Risk Score: ${data.risk_score}%<br>
+                            Reports: ${data.reports_count}<br>
+                            <strong>DO NOT ANSWER OR CALL BACK!</strong>
+                        </div>
+                    `;
+                } else if (data.risk_score > 30) {
+                    numberCheckResult.innerHTML = `
+                        <div class="alert alert-warning mt-2">
+                            <strong>⚠️ Suspicious Number</strong><br>
+                            Risk Score: ${data.risk_score}%<br>
+                            Reports: ${data.reports_count}<br>
+                            Exercise caution.
+                        </div>
+                    `;
+                } else {
+                    numberCheckResult.innerHTML = `
+                        <div class="alert alert-success mt-2">
+                            <strong>✅ Number appears safe</strong><br>
+                            Risk Score: ${data.risk_score || 0}%<br>
+                            Reports: ${data.reports_count || 0}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                numberCheckResult.innerHTML = `<div class="alert alert-danger mt-2">Error checking number. Please try again.</div>`;
+            }
+        });
+    }
+    
     // Load stats on page load
     loadStats();
     
     // Auto-refresh stats every 30 seconds
     setInterval(() => {
-        if (document.getElementById('statsTab') && document.getElementById('statsTab').classList.contains('active')) {
+        const statsTab = document.getElementById('statsTab');
+        if (statsTab && statsTab.classList.contains('active')) {
             loadStats();
         }
     }, 30000);
 });
+
+// Make functions globally available
+window.exportReports = exportReports;
+window.refreshStats = loadStats;
