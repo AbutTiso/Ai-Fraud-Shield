@@ -172,3 +172,5 @@ LOGGING = {
         },
     },
 }
+
+TELEGRAM_BOT_TOKEN = '8447775514:AAGlB5_Hq1zNTVsJYXax0gghmM9esdicGow'

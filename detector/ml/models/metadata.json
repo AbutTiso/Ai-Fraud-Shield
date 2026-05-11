@@ -1,0 +1,29 @@
+{
+  "model_name": "LogisticRegression",
+  "f1_score": 0.8747781319424321,
+  "num_samples": 123,
+  "num_scam": 66,
+  "num_legit": 57,
+  "all_results": [
+    [
+      "LogisticRegression",
+      0.8747781319424321
+    ],
+    [
+      "CalibratedSVC",
+      0.8653139409609997
+    ],
+    [
+      "MultinomialNB",
+      0.8443027898027898
+    ],
+    [
+      "SGDClassifier",
+      0.8051406649616368
+    ],
+    [
+      "GradientBoosting",
+      0.7010101010101009
+    ]
+  ]
+}

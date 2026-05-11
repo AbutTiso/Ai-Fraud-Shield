@@ -1077,9 +1077,34 @@ def detect_sms(request):
         if not sms_text or not sms_text.strip():
             return JsonResponse({'error': 'Please enter SMS text to analyze'}, status=400)
         
+        # Get keyword-based detection
         result = detect_sms_scam(sms_text)
         
-        # FIX: Normalize risk_level for frontend
+        # ============================================================
+        # ADD ML HYBRID SCORING
+        # ============================================================
+        try:
+            from .ml.inference.predict import predict_scam
+            ml_result = predict_scam(sms_text)
+            if ml_result:
+                keyword_score = result.get('score', 0)
+                ml_score = ml_result.get('ml_score', 0)
+                hybrid_score = round((keyword_score + ml_score) / 2, 1)
+                
+                result['ml_score'] = ml_score
+                result['hybrid_score'] = hybrid_score
+                result['ml_risk_level'] = ml_result.get('ml_risk_level')
+                result['ml_confidence'] = ml_result.get('ml_confidence')
+                result['model_name'] = ml_result.get('model_name')
+                result['uses_ml'] = True
+                
+                # Use hybrid score for final risk level
+                result['score'] = hybrid_score
+        except Exception as e:
+            result['uses_ml'] = False
+            print(f"⚠️ ML prediction unavailable: {e}")
+        
+        # Normalize risk_level for frontend
         if 'risk_level' in result:
             # Extract just the risk level without extra text
             if 'CRITICAL' in result['risk_level']:
@@ -1097,7 +1122,7 @@ def detect_sms(request):
             else:
                 result['risk_level'] = result['risk_level'].split(' - ')[0].strip()
         
-        # Add color mapping
+        # Add color mapping based on hybrid score
         if result['score'] >= 70:
             result['color'] = 'danger'
             result['badge_class'] = 'bg-danger'
@@ -1108,6 +1133,7 @@ def detect_sms(request):
             result['color'] = 'success'
             result['badge_class'] = 'bg-success'
         
+        # Save to database if models available
         if MODELS_AVAILABLE and ScamReport.objects:
             try:
                 ScamReport.objects.create(
@@ -1123,7 +1149,8 @@ def detect_sms(request):
         return JsonResponse(result)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
-
+    
+    
 # EMAIL DETECTION ENDPOINT
 @csrf_exempt
 @require_http_methods(["POST"])
@@ -1373,6 +1400,7 @@ def get_stats(request):
                     'screenshot_count': 0,
                     'url_count': 0,
                     'call_count': 0,
+                    'telegram_count': 0,
                     'average_risk_score': 0,
                     'risk_distribution': {'high': 0, 'medium': 0, 'low': 0},
                     'weekly_trend': [0, 0, 0, 0, 0, 0, 0],
@@ -1420,6 +1448,7 @@ def get_stats(request):
             'screenshot': ScamReport.objects.filter(report_type='SCREENSHOT').count(),
             'url': ScamReport.objects.filter(report_type='URL').count(),
             'call': ScamReport.objects.filter(report_type='CALL').count(),
+            'telegram': ScamReport.objects.filter(report_type='TELEGRAM').count(),
         }
         
         # ============ AVERAGE SCORE ============
@@ -1526,6 +1555,7 @@ def get_stats(request):
                 'screenshot_count': type_counts['screenshot'],
                 'url_count': type_counts['url'],
                 'call_count': type_counts['call'],
+                'telegram_count': type_counts['telegram'],
                 
                 # Averages
                 'average_risk_score': average_risk_score,
@@ -1568,6 +1598,7 @@ def get_stats(request):
                 'screenshot_count': 0,
                 'url_count': 0,
                 'call_count': 0,
+                'telegram_count': 0,
                 'average_risk_score': 0,
                 'risk_distribution': {'high': 0, 'medium': 0, 'low': 0},
                 'weekly_trend': [0, 0, 0, 0, 0, 0, 0],
@@ -1902,3 +1933,463 @@ def get_scam_alerts(request):
         {'type': 'WhatsApp Job Scam', 'description': '"Work from home" scams on WhatsApp', 'date': '2026-04-21', 'severity': 'MEDIUM'},
     ]
     return JsonResponse({'alerts': alerts, 'count': len(alerts)})
+# Add this import at the top of views.py
+from .ml.inference.predict import predict_scam, get_model_info
+
+# Add this endpoint to views.py
+@csrf_exempt
+@require_http_methods(["POST", "GET"])
+def predict_ml(request):
+    """ML-based scam prediction endpoint (works without ML if unavailable)"""
+    
+    if request.method == "GET":
+        try:
+            from .ml.inference.predict import get_model_info
+            info = get_model_info()
+        except:
+            info = {"is_loaded": False, "error": "ML not available"}
+        return JsonResponse({'success': True, 'model_info': info})
+    
+    # POST - Predict
+    try:
+        if request.content_type == 'application/json':
+            data = json.loads(request.body)
+            text = data.get('text', '')
+        else:
+            text = request.POST.get('text', '')
+        
+        if not text or not text.strip():
+            return JsonResponse({'error': 'No text provided'}, status=400)
+        
+        # Try ML prediction
+        ml_result = None
+        try:
+            from .ml.inference.predict import predict_scam
+            ml_result = predict_scam(text)
+        except Exception as e:
+            print(f"ML unavailable: {e}")
+        
+        # Always get keyword-based detection
+        keyword_result = detect_sms_scam(text)
+        keyword_score = keyword_result.get('score', 0)
+        
+        # Hybrid or keyword-only score
+        if ml_result:
+            ml_score = ml_result.get('ml_score', 0)
+            hybrid_score = round((keyword_score + ml_score) / 2, 1)
+            uses_ml = True
+        else:
+            ml_score = 0
+            hybrid_score = keyword_score
+            uses_ml = False
+        
+        # Final risk level
+        if hybrid_score >= 70:
+            final_risk = "HIGH RISK"
+        elif hybrid_score >= 40:
+            final_risk = "MEDIUM RISK"
+        elif hybrid_score >= 20:
+            final_risk = "LOW RISK"
+        else:
+            final_risk = "SAFE"
+        
+        return JsonResponse({
+            'success': True,
+            'text': text[:200],
+            'hybrid_score': hybrid_score,
+            'hybrid_risk_level': final_risk,
+            'hybrid_is_scam': hybrid_score >= 50,
+            'uses_ml': uses_ml,
+            'ml_prediction': {
+                'score': ml_score,
+                'risk_level': ml_result.get('ml_risk_level') if ml_result else 'N/A',
+                'is_scam': ml_result.get('ml_is_scam') if ml_result else False,
+                'confidence': ml_result.get('ml_confidence') if ml_result else 0,
+                'model': ml_result.get('model_name') if ml_result else 'N/A',
+            } if uses_ml else None,
+            'keyword_prediction': {
+                'score': keyword_score,
+                'risk_level': keyword_result.get('risk_level'),
+                'warnings': keyword_result.get('warnings', [])[:5],
+            },
+            'analysis_time': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        })
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+    
+@csrf_exempt
+@require_http_methods(["POST"])
+def report_number(request):
+    """Report a scam phone number"""
+    try:
+        if request.content_type == 'application/json':
+            data = json.loads(request.body)
+            phone_number = data.get('phone_number', '')
+            category = data.get('category', '')
+            description = data.get('description', '')
+        else:
+            phone_number = request.POST.get('phone_number', '')
+            category = request.POST.get('category', '')
+            description = request.POST.get('description', '')
+        
+        if not phone_number:
+            return JsonResponse({'error': 'Phone number required'}, status=400)
+        
+        cleaned = phone_number.strip().replace('-', '').replace(' ', '').replace('+', '')
+        if cleaned.startswith('0'):
+            cleaned = '254' + cleaned[1:]
+        elif not cleaned.startswith('254'):
+            cleaned = '254' + cleaned[-9:]
+        
+        if MODELS_AVAILABLE:
+            from .models import BlockedNumber
+            
+            number, created = BlockedNumber.objects.get_or_create(
+                phone_number=cleaned,
+                defaults={
+                    'report_count': 1,
+                    'scam_category': category or '',
+                    'description': description or '',
+                    'reported_by': request.META.get('REMOTE_ADDR', 'anonymous')
+                }
+            )
+            
+            if not created:
+                number.report_count += 1
+                number.last_reported = timezone.now()
+                if category:
+                    number.scam_category = category
+                if description:
+                    number.description = description
+                number.calculate_confidence()
+                number.save(update_fields=['report_count', 'last_reported', 'scam_category', 'description', 'confidence_score', 'status'])
+            
+            return JsonResponse({
+                'success': True,
+                'created': created,
+                'phone_number': cleaned,
+                'report_count': number.report_count,
+                'confidence': round(number.confidence_score, 1),
+                'status': number.status
+            })
+        
+        return JsonResponse({'success': True, 'message': 'Report received'})
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+    
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def vote_number(request):
+    """Upvote or downvote a reported number"""
+    try:
+        data = json.loads(request.body)
+        phone_number = data.get('phone_number', '')
+        vote_type = data.get('vote', 'up')
+        
+        if not phone_number:
+            return JsonResponse({'error': 'Phone number required'}, status=400)
+        
+        cleaned = phone_number.strip().replace('-', '').replace(' ', '').replace('+', '')
+        if cleaned.startswith('0'):
+            cleaned = '254' + cleaned[1:]
+        
+        if MODELS_AVAILABLE:
+            from .models import BlockedNumber
+            
+            try:
+                number = BlockedNumber.objects.get(phone_number=cleaned)
+                if vote_type == 'up':
+                    number.upvotes += 1
+                else:
+                    number.downvotes += 1
+                number.calculate_confidence()
+                number.save()
+                
+                return JsonResponse({
+                    'success': True,
+                    'phone_number': cleaned,
+                    'upvotes': number.upvotes,
+                    'downvotes': number.downvotes,
+                    'confidence': number.confidence_score,
+                    'status': number.status
+                })
+            except BlockedNumber.DoesNotExist:
+                return JsonResponse({'error': 'Number not found in blocklist'}, status=404)
+        
+        return JsonResponse({'error': 'Database not available'}, status=503)
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@csrf_exempt
+@require_http_methods(["GET"])
+def check_blocklist(request, phone_number=None):
+    """Check if a number is in the blocklist"""
+    if not phone_number:
+        phone_number = request.GET.get('phone', '')
+    
+    if not phone_number:
+        return JsonResponse({'error': 'Phone number required'}, status=400)
+    
+    cleaned = phone_number.strip().replace('-', '').replace(' ', '').replace('+', '')
+    if cleaned.startswith('0'):
+        cleaned = '254' + cleaned[1:]
+    
+    if MODELS_AVAILABLE:
+        from .models import BlockedNumber
+        try:
+            number = BlockedNumber.objects.get(phone_number=cleaned)
+            return JsonResponse({
+                'found': True,
+                'phone_number': cleaned,
+                'is_blocked': number.status in ['CONFIRMED', 'BLOCKED'],
+                'report_count': number.report_count,
+                'confidence': number.confidence_score,
+                'status': number.status,
+                'category': number.scam_category
+            })
+        except BlockedNumber.DoesNotExist:
+            return JsonResponse({
+                'found': False,
+                'phone_number': cleaned,
+                'is_blocked': False
+            })
+    
+    return JsonResponse({'error': 'Database not available'}, status=503)
+
+
+@csrf_exempt
+@require_http_methods(["GET"])
+def top_scam_numbers(request):
+    """Get top reported scam numbers"""
+    limit = int(request.GET.get('limit', 20))
+    
+    if MODELS_AVAILABLE:
+        from .models import BlockedNumber
+        numbers = BlockedNumber.objects.filter(
+            status__in=['CONFIRMED', 'BLOCKED']
+        ).order_by('-confidence_score')[:limit]
+        
+        return JsonResponse({
+            'count': numbers.count(),
+            'numbers': [
+                {
+                    'phone': n.phone_number,
+                    'reports': n.report_count,
+                    'confidence': n.confidence_score,
+                    'category': n.scam_category
+                }
+                for n in numbers
+            ]
+        })
+    
+    return JsonResponse({'error': 'Database not available'}, status=503)
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def analyze_forwarded_email(request):
+    """Webhook to analyze forwarded emails"""
+    try:
+        # Get raw email from request
+        raw_email = request.body
+        
+        if not raw_email:
+            return JsonResponse({'error': 'No email content provided'}, status=400)
+        
+        from detector.email_forward.parser import EmailParser
+        from detector.email_forward.analyzer import EmailAnalyzer
+        
+        # Parse email
+        parsed = EmailParser.parse_email(raw_email)
+        
+        if parsed.get('error'):
+            return JsonResponse({'error': parsed['error']}, status=400)
+        
+        # Analyze
+        analysis = EmailAnalyzer.analyze(parsed)
+        
+        # Save to database
+        if MODELS_AVAILABLE and ScamReport.objects:
+            ScamReport.objects.create(
+                report_type='EMAIL',
+                content=parsed.get('body_text', '')[:500],
+                risk_score=analysis['score'],
+                risk_level=analysis['risk_level'],
+                reported_by=request.META.get('REMOTE_ADDR', 'anonymous')
+            )
+        
+        # Build response for auto-reply
+        response = build_email_response(parsed, analysis)
+        
+        return JsonResponse({
+            'success': True,
+            'analysis': analysis,
+            'parsed': {
+                'subject': parsed.get('subject'),
+                'from': parsed.get('from'),
+                'urls_found': len(parsed.get('urls', []))
+            },
+            'auto_reply': response
+        })
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+def build_email_response(parsed, analysis):
+    """Build auto-reply email content"""
+    score = analysis['score']
+    
+    if score >= 70:
+        emoji = "🚨🔴"
+        verdict = "SCAM / PHISHING CONFIRMED"
+    elif score >= 40:
+        emoji = "⚠️🟡"
+        verdict = "SUSPICIOUS - Exercise Caution"
+    else:
+        emoji = "✅🟢"
+        verdict = "Appears Safe"
+    
+    response = """Subject: {emoji} Email Analysis: {verdict}
+
+Thank you for forwarding this email to AI Fraud Shield.
+
+====================================
+ANALYSIS RESULTS
+====================================
+Risk Score: {score}/100
+Risk Level: {analysis['risk_level']}
+Verdict: {verdict}
+
+Body Analysis Score: {analysis['body_score']}/100
+Subject Analysis: {analysis['subject_score']}/100
+URL Risk Score: {analysis['url_score']}/100
+
+URLs Found: {analysis['urls_found']}
+Suspicious URLs: {len(analysis['suspicious_urls'])}
+"""
+    
+    if analysis['suspicious_urls']:
+        response += "\n⚠️ Suspicious URLs Detected:\n"
+        for u in analysis['suspicious_urls'][:3]:
+            response += f"  • {u['url'][:80]}\n"
+    
+    if analysis['warnings']:
+        response += "\n🔍 Warning Indicators:\n"
+        for w in analysis['warnings'][:3]:
+            response += f"  • {w}\n"
+    
+    response += "\n💡 Recommendations:\n"
+    for r in analysis['recommendations']:
+        response += f"  • {r}\n"
+    
+    response += """
+====================================
+📞 Report: SMS 333 (Safaricom)
+📧 Forward phishing: report@kenyacic.go.ke
+🛡️ Powered by AI Fraud Shield - fraudshield.ke
+"""
+    
+    return response
+@csrf_exempt
+@require_http_methods(["GET"])
+def recent_activity(request):
+    try:
+        if not MODELS_AVAILABLE or not ScamReport.objects:
+            return JsonResponse({'activities': []})
+        
+        from django.utils import timezone
+        recent = ScamReport.objects.order_by('-date_reported')[:15]
+        
+        activities = []
+        for r in recent:
+            config = {
+                'SMS': {'icon': '📱', 'color': '#17a2b8'},
+                'EMAIL': {'icon': '📧', 'color': '#fd7e14'},
+                'WHATSAPP': {'icon': '💬', 'color': '#20c997'},
+                'TELEGRAM': {'icon': '🤖', 'color': '#0088cc'},
+                'CALL': {'icon': '📞', 'color': '#dc3545'},
+                'URL': {'icon': '🔗', 'color': '#6610f2'},
+            }.get(r.report_type, {'icon': '📋', 'color': '#6c757d'})
+            
+            now = timezone.now()
+            diff = now - r.date_reported
+            if diff.days > 7: time_str = r.date_reported.strftime('%b %d')
+            elif diff.days > 0: time_str = f"{diff.days}d ago"
+            elif diff.seconds > 3600: time_str = f"{diff.seconds // 3600}h ago"
+            elif diff.seconds > 60: time_str = f"{diff.seconds // 60}m ago"
+            else: time_str = "Just now"
+            
+            activities.append({
+                'type': r.report_type,
+                'icon': config['icon'],
+                'color': config['color'],
+                'preview': (r.content or '')[:80],
+                'score': r.risk_score,
+                'time': time_str
+            })
+        
+        return JsonResponse({'activities': activities})
+    except Exception as e:
+        return JsonResponse({'activities': []})
+    
+# TELEGRAM DETECTION ENDPOINT
+@csrf_exempt
+@require_http_methods(["POST"])
+def detect_telegram(request):
+    """Dedicated Telegram message detection - saves as TELEGRAM type"""
+    try:
+        if request.content_type == 'application/json':
+            data = json.loads(request.body)
+            text = data.get('telegram_text', data.get('text', ''))
+        else:
+            text = request.POST.get('telegram_text', request.POST.get('text', ''))
+        
+        if not text or not text.strip():
+            return JsonResponse({'error': 'Please enter text to analyze'}, status=400)
+        
+        result = detect_sms_scam(text)
+        
+        # Normalize risk_level
+        if 'risk_level' in result:
+            if 'CRITICAL' in result['risk_level']:
+                result['risk_level_display'] = 'CRITICAL'
+                result['risk_level'] = 'CRITICAL'
+            elif 'HIGH' in result['risk_level']:
+                result['risk_level_display'] = 'HIGH'
+                result['risk_level'] = 'HIGH'
+            elif 'MEDIUM' in result['risk_level']:
+                result['risk_level_display'] = 'MEDIUM'
+                result['risk_level'] = 'MEDIUM'
+            elif 'LOW' in result['risk_level']:
+                result['risk_level_display'] = 'LOW'
+                result['risk_level'] = 'LOW'
+        
+        # Save as TELEGRAM type
+        if MODELS_AVAILABLE and ScamReport.objects:
+            ScamReport.objects.create(
+                report_type='TELEGRAM',  # This is the key - saves as TELEGRAM
+                content=text[:500],
+                risk_score=result['score'],
+                risk_level=result.get('risk_level_display', result.get('risk_level', 'Unknown')),
+                reported_by=request.META.get('REMOTE_ADDR', 'anonymous')
+            )
+        
+        # Add color mapping
+        if result['score'] >= 70:
+            result['color'] = 'danger'
+            result['badge_class'] = 'bg-danger'
+        elif result['score'] >= 40:
+            result['color'] = 'warning'
+            result['badge_class'] = 'bg-warning'
+        else:
+            result['color'] = 'success'
+            result['badge_class'] = 'bg-success'
+        
+        return JsonResponse(result)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)

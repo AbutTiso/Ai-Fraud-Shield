@@ -10,49 +10,311 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     {% block extra_css %}{% endblock %}
     <style>
+        /* ============================================
+           USIU BRAND VARIABLES
+           ============================================ */
+        :root {
+            --usiu-navy: #002855;
+            --usiu-navy-light: #1a3f6e;
+            --usiu-navy-dark: #001a3a;
+            --usiu-gold: #F5A623;
+            --usiu-gold-light: #f7b94e;
+            --usiu-gold-dark: #e6951a;
+            --bg-body-start: #fefce8;
+            --bg-body-mid: #fef9c3;
+            --bg-body-end: #f7b94e;
+        }
+        
+        /* ============================================
+           BASE STYLES
+           ============================================ */
         body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, var(--bg-body-start) 0%, var(--bg-body-mid) 30%, var(--bg-body-end) 100%);
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             min-height: 100vh;
             padding: 20px;
+            color: #1f2937;
         }
+        
         .container {
             max-width: 1400px;
             margin: 0 auto;
         }
+        
+        /* ============================================
+           MAIN CARD
+           ============================================ */
         .main-card {
             background: white;
             border-radius: 24px;
-            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+            box-shadow: 0 25px 50px -12px rgba(0, 40, 85, 0.2);
             overflow: hidden;
+            border: 1px solid #e5e7eb;
         }
+        
+        /* ============================================
+           HEADER - USIU Navy with Gold Accent
+           ============================================ */
         .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, var(--usiu-navy) 0%, var(--usiu-navy-dark) 100%);
             color: white;
             padding: 40px 30px;
             text-align: center;
             position: relative;
             cursor: pointer;
             transition: all 0.3s ease;
+            border-bottom: 4px solid var(--usiu-gold);
+            overflow: hidden;
         }
+        
+        /* Subtle pattern overlay */
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.05) 1%, transparent 1%);
+            background-size: 50px 50px;
+            animation: shimmer 20s linear infinite;
+            pointer-events: none;
+        }
+        
+        @keyframes shimmer {
+            from { transform: translate(0, 0); }
+            to { transform: translate(50px, 50px); }
+        }
+        
         .header:hover {
             opacity: 0.95;
+            transform: scale(1.005);
         }
+        
         .header h1 { 
             font-size: 2rem; 
             margin-bottom: 10px;
+            position: relative;
+            z-index: 1;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
         }
+        
+        .header h1 i {
+            color: var(--usiu-gold);
+        }
+        
+        .header p {
+            position: relative;
+            z-index: 1;
+            opacity: 0.9;
+        }
+        
         .header a {
             color: white;
             text-decoration: none;
         }
+        
+        /* Badge in header */
+        .badge-custom {
+            display: inline-block;
+            background: var(--usiu-gold);
+            padding: 6px 18px;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            position: relative;
+            z-index: 1;
+            color: var(--usiu-navy);
+            letter-spacing: 0.5px;
+        }
+        
+        /* ============================================
+           FOOTER
+           ============================================ */
         .footer {
             text-align: center;
             padding: 25px;
-            background: #f8f9fa;
-            color: #6c757d;
+            background: linear-gradient(135deg, #fefce8 0%, #fef9c3 100%);
+            color: var(--usiu-navy);
             font-size: 0.85rem;
-            border-top: 1px solid #e9ecef;
+            border-top: 2px solid var(--usiu-gold);
+            border-radius: 0 0 24px 24px;
+        }
+        
+        .footer strong {
+            color: var(--usiu-navy-dark);
+        }
+        
+        .footer i.fa-shield-alt {
+            color: var(--usiu-gold);
+        }
+        
+        .footer i.fa-phone {
+            color: var(--usiu-navy);
+        }
+        
+        /* ============================================
+           NAVBAR (for includes/navbar.html)
+           ============================================ */
+        .navbar-custom {
+            background: white;
+            padding: 12px 24px;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 40, 85, 0.1);
+            margin-bottom: 20px;
+            border: 1px solid #e5e7eb;
+        }
+        
+        .navbar-custom .navbar-brand {
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: var(--usiu-navy);
+            text-decoration: none;
+        }
+        
+        .navbar-custom .navbar-brand i {
+            color: var(--usiu-gold);
+        }
+        
+        .navbar-custom .nav-link {
+            color: #4a5568;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border-radius: 8px;
+            padding: 8px 16px;
+        }
+        
+        .navbar-custom .nav-link:hover {
+            color: var(--usiu-navy);
+            background: rgba(0, 40, 85, 0.05);
+        }
+        
+        .navbar-custom .nav-link.active {
+            color: var(--usiu-navy);
+            background: rgba(245, 166, 35, 0.15);
+            font-weight: 600;
+        }
+        
+        /* Emergency button in navbar */
+        .btn-emergency-nav {
+            background: linear-gradient(135deg, #dc3545, #a71d2a);
+            color: white;
+            border-radius: 50px;
+            padding: 8px 18px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-emergency-nav:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(220, 53, 69, 0.3);
+            color: white;
+        }
+        
+        /* ============================================
+           SCROLLBAR
+           ============================================ */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #fefce8;
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: var(--usiu-gold);
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--usiu-gold-dark);
+        }
+        
+        /* ============================================
+           SELECTION
+           ============================================ */
+        ::selection {
+            background: var(--usiu-navy);
+            color: white;
+        }
+        
+        /* ============================================
+           RESPONSIVE
+           ============================================ */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
+            .header {
+                padding: 25px 20px;
+            }
+            
+            .header h1 {
+                font-size: 1.5rem;
+            }
+            
+            .header p {
+                font-size: 0.9rem;
+            }
+            
+            .footer {
+                padding: 20px 15px;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .header h1 {
+                font-size: 1.3rem;
+            }
+        }
+        
+        /* ============================================
+           ACCESSIBILITY
+           ============================================ */
+        :focus-visible {
+            outline: 3px solid var(--usiu-gold);
+            outline-offset: 3px;
+        }
+        
+        /* Reduced motion */
+        @media (prefers-reduced-motion: reduce) {
+            .header::before {
+                animation: none;
+            }
+            
+            * {
+                animation-duration: 0.01ms !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+        
+        /* High contrast mode */
+        @media (prefers-contrast: high) {
+            body {
+                background: white;
+            }
+            
+            .header {
+                background: #000 !important;
+                border-bottom-color: #000;
+            }
+        }
+        
+        /* Print styles */
+        @media print {
+            body {
+                background: white;
+            }
+            
+            .header::before {
+                display: none;
+            }
         }
     </style>
 </head>
@@ -62,11 +324,11 @@
         
         <div class="main-card mt-3">
             <!-- Clickable Header that goes to Home -->
-            <a href="/" style="text-decoration: none;">
+            <a href="/" style="text-decoration: none; display: block;">
                 <div class="header">
                     <h1><i class="fas fa-shield-alt"></i> AI Fraud Shield</h1>
                     <p>Kenya's Most Advanced Scam Detection Platform</p>
-                    <div class="badge-custom" style="display: inline-block; background: rgba(255,255,255,0.2); padding: 5px 15px; border-radius: 50px; font-size: 0.8rem;">
+                    <div class="badge-custom">
                         <i class="fas fa-lock"></i> 100% Safe Analysis
                     </div>
                 </div>

@@ -53,4 +53,15 @@ urlpatterns = [
     path('api/check-phone/', views.check_phone, name='check_phone'),
     path('api/report-scam-call/', views.report_scam_call, name='report_scam_call'),
     path('api/detect-web/', views.detect_web, name='detect_web'),
+    path('api/detect-telegram/', views.detect_telegram, name='detect_telegram'),
+    path('api/predict-ml/', views.predict_ml, name='predict_ml'),
+    
+    # Blocklist
+    path('api/report-number/', views.report_number, name='report_number'),
+    path('api/vote-number/', views.vote_number, name='vote_number'),
+    path('api/check-blocklist/', views.check_blocklist, name='check_blocklist'),
+    path('api/check-blocklist/<str:phone_number>/', views.check_blocklist, name='check_blocklist_number'),
+    path('api/top-scam-numbers/', views.top_scam_numbers, name='top_scam_numbers'),
+    path('api/analyze-email/', views.analyze_forwarded_email, name='analyze_forwarded_email'),
+    path('api/recent-activity/', views.recent_activity, name='recent_activity'),
 ]

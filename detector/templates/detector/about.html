@@ -14,8 +14,18 @@
             box-sizing: border-box;
         }
         
+        /* USIU Theme Colors */
+        :root {
+            --usiu-navy: #002855;
+            --usiu-navy-light: #1a3f6e;
+            --usiu-navy-dark: #001a3a;
+            --usiu-gold: #F5A623;
+            --usiu-gold-light: #f7b94e;
+            --usiu-gold-dark: #e6951a;
+        }
+        
         body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #fefce8 0%, #fef9c3 30%, var(--usiu-gold-light) 100%);
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             min-height: 100vh;
             padding: 20px;
@@ -29,7 +39,7 @@
         .main-card {
             background: white;
             border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
             overflow: hidden;
             animation: fadeInUp 0.6s ease-out;
         }
@@ -45,11 +55,11 @@
             }
         }
         
-        /* Navbar Styles */
+        /* Navbar - USIU Navy */
         .navbar-custom {
             background: white;
             padding: 12px 30px;
-            border-bottom: 1px solid #e9ecef;
+            border-bottom: 3px solid var(--usiu-gold);
             position: sticky;
             top: 0;
             z-index: 1000;
@@ -64,21 +74,25 @@
         }
         
         .navbar-custom .nav-link:hover {
-            color: #667eea;
-            background: rgba(102,126,234,0.1);
+            color: var(--usiu-navy);
+            background: rgba(0, 40, 85, 0.08);
         }
         
         .navbar-custom .nav-link.active {
-            color: #667eea;
-            background: linear-gradient(135deg, rgba(102,126,234,0.1), rgba(118,75,162,0.1));
+            color: var(--usiu-gold-dark);
+            background: rgba(0, 40, 85, 0.05);
+            font-weight: 600;
         }
         
         .navbar-brand {
             font-weight: 700;
             font-size: 1.3rem;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            color: var(--usiu-navy);
+            text-decoration: none;
+        }
+        
+        .navbar-brand i {
+            color: var(--usiu-gold);
         }
         
         .btn-emergency {
@@ -88,21 +102,24 @@
             padding: 6px 16px;
             font-size: 0.85rem;
             transition: all 0.3s ease;
+            text-decoration: none;
         }
         
         .btn-emergency:hover {
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(220,53,69,0.3);
+            box-shadow: 0 5px 15px rgba(220, 53, 69, 0.3);
             color: white;
         }
         
+        /* Header - USIU Navy Gradient */
         .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, var(--usiu-navy) 0%, var(--usiu-navy-dark) 100%);
             color: white;
             padding: 50px 30px;
             text-align: center;
             position: relative;
             overflow: hidden;
+            border-bottom: 4px solid var(--usiu-gold);
         }
         
         .header::before {
@@ -112,7 +129,7 @@
             right: -50%;
             width: 200%;
             height: 200%;
-            background: radial-gradient(circle, rgba(255,255,255,0.1) 1%, transparent 1%);
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.05) 1%, transparent 1%);
             background-size: 50px 50px;
             animation: shimmer 20s linear infinite;
         }
@@ -127,6 +144,11 @@
             margin-bottom: 15px;
             position: relative;
             z-index: 1;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .header h1 i {
+            color: var(--usiu-gold);
         }
         
         .header p {
@@ -143,29 +165,36 @@
         }
         
         .header .badge {
-            background: rgba(255,255,255,0.2);
+            background: var(--usiu-gold);
             padding: 8px 20px;
             border-radius: 50px;
             font-size: 0.9rem;
-            backdrop-filter: blur(10px);
+            color: var(--usiu-navy);
+            font-weight: 700;
         }
         
         .content {
             padding: 40px;
         }
         
+        /* Mission Section */
         .mission-section {
             text-align: center;
             margin-bottom: 40px;
             padding: 30px;
-            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            background: linear-gradient(135deg, #fefce8 0%, #fef9c3 100%);
             border-radius: 15px;
+            border-left: 4px solid var(--usiu-gold);
         }
         
         .mission-section h2 {
-            color: #667eea;
+            color: var(--usiu-navy);
             margin-bottom: 20px;
             font-size: 1.8rem;
+        }
+        
+        .mission-section h2 i {
+            color: var(--usiu-gold);
         }
         
         .mission-section p {
@@ -176,6 +205,7 @@
             margin: 0 auto;
         }
         
+        /* Features Grid */
         .features-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -189,14 +219,14 @@
             padding: 25px;
             text-align: center;
             transition: all 0.3s ease;
-            border: 1px solid #e0e0e0;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            border: 2px solid #e0e0e0;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
         }
         
         .feature-card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 15px 35px rgba(102,126,234,0.2);
-            border-color: #667eea;
+            box-shadow: 0 15px 35px rgba(0, 40, 85, 0.15);
+            border-color: var(--usiu-gold);
         }
         
         .feature-icon {
@@ -205,7 +235,7 @@
         }
         
         .feature-card h4 {
-            color: #333;
+            color: var(--usiu-navy);
             margin-bottom: 12px;
             font-weight: 600;
             font-size: 1.1rem;
@@ -217,18 +247,24 @@
             line-height: 1.5;
         }
         
+        /* Stats Section - USIU Navy */
         .stats-section {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, var(--usiu-navy) 0%, var(--usiu-navy-dark) 100%);
             color: white;
             padding: 40px;
             border-radius: 15px;
             margin: 40px 0;
             text-align: center;
+            border: 2px solid var(--usiu-gold);
         }
         
         .stats-section h3 {
             font-size: 1.5rem;
             margin-bottom: 10px;
+        }
+        
+        .stats-section h3 i {
+            color: var(--usiu-gold);
         }
         
         .stats-grid {
@@ -240,12 +276,21 @@
         
         .stat-item {
             text-align: center;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            transition: transform 0.3s;
+        }
+        
+        .stat-item:hover {
+            transform: translateY(-3px);
         }
         
         .stat-number {
             font-size: 2rem;
             font-weight: bold;
             display: block;
+            color: var(--usiu-gold);
         }
         
         .stat-label {
@@ -254,18 +299,24 @@
             margin-top: 5px;
         }
         
+        /* Why Choose Us */
         .why-choose-us {
-            background: #f8f9fa;
+            background: #fefce8;
             border-radius: 15px;
             padding: 30px;
             margin: 40px 0;
+            border-left: 4px solid var(--usiu-navy);
         }
         
         .why-choose-us h3 {
-            color: #333;
+            color: var(--usiu-navy);
             margin-bottom: 25px;
             text-align: center;
             font-size: 1.5rem;
+        }
+        
+        .why-choose-us h3 i {
+            color: var(--usiu-gold);
         }
         
         .benefits-list {
@@ -282,11 +333,13 @@
             background: white;
             border-radius: 10px;
             transition: all 0.3s ease;
+            border: 1px solid #fef08a;
         }
         
         .benefit-item:hover {
             transform: translateX(5px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            border-color: var(--usiu-gold);
         }
         
         .benefit-icon {
@@ -298,6 +351,7 @@
             color: #333;
         }
         
+        /* Alert */
         .alert-custom {
             background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
             border-left: 4px solid #ff9800;
@@ -310,6 +364,7 @@
             color: #e65100;
         }
         
+        /* Footer Buttons */
         .footer-buttons {
             display: flex;
             justify-content: center;
@@ -331,36 +386,50 @@
         }
         
         .btn-primary-custom {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, var(--usiu-navy) 0%, var(--usiu-navy-dark) 100%);
             color: white;
             border: none;
+            box-shadow: 0 4px 15px rgba(0, 40, 85, 0.3);
         }
         
         .btn-primary-custom:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(102,126,234,0.3);
+            box-shadow: 0 8px 25px rgba(0, 40, 85, 0.4);
             color: white;
+            background: linear-gradient(135deg, var(--usiu-navy-light) 0%, var(--usiu-navy) 100%);
         }
         
         .btn-outline-custom {
-            border: 2px solid #667eea;
-            color: #667eea;
+            border: 2px solid var(--usiu-navy);
+            color: var(--usiu-navy);
             background: transparent;
         }
         
         .btn-outline-custom:hover {
-            background: #667eea;
-            color: white;
+            background: var(--usiu-gold);
+            color: var(--usiu-navy);
             transform: translateY(-2px);
+            border-color: var(--usiu-gold);
         }
         
+        /* Footer */
         .footer {
             text-align: center;
             padding: 25px;
-            background: #f8f9fa;
-            color: #666;
+            background: linear-gradient(135deg, #fefce8 0%, #fef9c3 100%);
+            color: var(--usiu-navy);
             font-size: 0.8rem;
-            border-top: 1px solid #e0e0e0;
+            border-top: 2px solid var(--usiu-gold);
+        }
+        
+        .footer strong {
+            color: var(--usiu-navy-dark);
+        }
+        
+        /* Modal */
+        .modal-header {
+            background: linear-gradient(135deg, #dc3545, #c82333);
+            color: white;
         }
         
         @media (max-width: 768px) {
@@ -376,7 +445,7 @@
 <body>
     <div class="container">
         <div class="main-card">
-            <!-- Navbar at the top -->
+            <!-- Navbar -->
             <nav class="navbar-custom">
                 <div class="d-flex flex-wrap align-items-center justify-content-between">
                     <a class="navbar-brand" href="/">
@@ -396,7 +465,7 @@
                 </div>
             </nav>
             
-            <!-- Header Section -->
+            <!-- Header -->
             <div class="header">
                 <h1>
                     <i class="fas fa-shield-alt"></i> 
@@ -410,9 +479,9 @@
                 </div>
             </div>
             
-            <!-- Content Section -->
+            <!-- Content -->
             <div class="content">
-                <!-- Mission Section -->
+                <!-- Mission -->
                 <div class="mission-section">
                     <h2>
                         <i class="fas fa-bullseye"></i> Our Mission
@@ -425,8 +494,8 @@
                     </p>
                 </div>
                 
-                <!-- Features Grid -->
-                <h3 style="text-align: center; margin-bottom: 30px; color: #333;">
+                <!-- Features -->
+                <h3 style="text-align: center; margin-bottom: 30px; color: var(--usiu-navy);">
                     <i class="fas fa-cogs"></i> How It Works
                 </h3>
                 <div class="features-grid">
@@ -462,7 +531,7 @@
                     </div>
                 </div>
                 
-                <!-- Statistics Section with REAL API Data -->
+                <!-- Statistics -->
                 <div class="stats-section">
                     <h3>
                         <i class="fas fa-chart-line"></i> Our Impact
@@ -548,7 +617,7 @@
                     official channels or contact your service provider directly.
                 </div>
                 
-                <!-- Call to Action Buttons -->
+                <!-- CTA Buttons -->
                 <div class="footer-buttons">
                     <a href="/" class="btn-custom btn-primary-custom">
                         <i class="fas fa-arrow-left"></i> Back to Dashboard
@@ -589,7 +658,7 @@
     <div class="modal fade" id="emergencyModal" tabindex="-1" aria-labelledby="emergencyModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
-                <div class="modal-header" style="background: linear-gradient(135deg, #dc3545, #c82333); color: white;">
+                <div class="modal-header">
                     <h5 class="modal-title" id="emergencyModalLabel">
                         <i class="fas fa-phone-alt"></i> Emergency Contacts
                     </h5>
@@ -638,7 +707,6 @@
                 const data = await response.json();
                 
                 if (data.status === 'success') {
-                    // Update stats with real data
                     if (data.total_reports) {
                         document.getElementById('scamsDetected').innerHTML = data.total_reports.toLocaleString();
                     }
@@ -658,7 +726,6 @@
                         document.getElementById('avgRiskScore').innerHTML = data.average_risk_score.toLocaleString() + '%';
                     }
                 } else {
-                    // Fallback to demo data if API fails
                     useFallbackData();
                 }
             } catch (error) {
@@ -676,40 +743,6 @@
             document.getElementById('avgRiskScore').innerHTML = '42%';
         }
         
-        // Animate counter when page loads
-        function animateCounter(elementId, targetValue, suffix = '') {
-            const element = document.getElementById(elementId);
-            if (!element) return;
-            
-            const currentValue = parseInt(element.innerText) || 0;
-            const duration = 1000;
-            const stepTime = 20;
-            const steps = duration / stepTime;
-            const increment = (targetValue - currentValue) / steps;
-            let current = currentValue;
-            
-            // If target is a string with '+' or '%', extract number
-            if (typeof targetValue === 'string') {
-                const match = targetValue.match(/(\d+)/);
-                if (match) {
-                    const numTarget = parseInt(match[1]);
-                    const interval = setInterval(() => {
-                        current += increment;
-                        if (current >= numTarget) {
-                            element.innerText = targetValue;
-                            clearInterval(interval);
-                        } else {
-                            element.innerText = Math.floor(current) + (suffix || '');
-                        }
-                    }, stepTime);
-                    return;
-                }
-            }
-            
-            element.innerText = targetValue + (suffix || '');
-        }
-        
-        // Load stats on page load
         document.addEventListener('DOMContentLoaded', function() {
             loadRealStats();
         });

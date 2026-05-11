@@ -118,3 +118,52 @@ class WhatsAppRisk(models.Model):
     
     def __str__(self):
         return f"WhatsApp: {self.phone_number} - Risk: {self.risk_score}% - Reports: {self.reports_count}"
+    
+    
+class BlockedNumber(models.Model):
+    """Crowdsourced scam number blocklist"""
+    
+    STATUS_CHOICES = [
+        ('PENDING', 'Pending Review'),
+        ('CONFIRMED', 'Confirmed Scam'),
+        ('REJECTED', 'Not a Scam'),
+        ('BLOCKED', 'Auto-Blocked'),
+    ]
+    
+    id = models.AutoField(primary_key=True)
+    phone_number = models.CharField(max_length=15, unique=True, db_index=True)
+    report_count = models.IntegerField(default=1)
+    upvotes = models.IntegerField(default=0)
+    downvotes = models.IntegerField(default=0)
+    confidence_score = models.FloatField(default=0.0)
+    first_reported = models.DateTimeField(auto_now_add=True)
+    last_reported = models.DateTimeField(auto_now=True)
+    reported_by = models.CharField(max_length=500, blank=True, help_text="IPs or user IDs")
+    scam_category = models.CharField(max_length=50, blank=True, help_text="e.g., M-Pesa, Bank, Insurance")
+    description = models.TextField(blank=True)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='PENDING')
+    auto_blocked = models.BooleanField(default=False)
+    
+    class Meta:
+        ordering = ['-report_count', '-confidence_score']
+    
+    def __str__(self):
+        return f"{self.phone_number} - {self.status} ({self.report_count} reports)"
+    
+    def calculate_confidence(self):
+        """Calculate confidence score based on reports and votes"""
+        base_score = min(100, self.report_count * 15)
+        vote_score = (self.upvotes - self.downvotes) * 5
+        self.confidence_score = max(0, min(100, base_score + vote_score))
+        
+        # Auto-block if confidence is high
+        if self.confidence_score >= 70 and self.report_count >= 5:
+            self.status = 'BLOCKED'
+            self.auto_blocked = True
+        
+        self.save()
+    
+    def save(self, *args, **kwargs):
+        if not self.confidence_score:
+            self.calculate_confidence()
+        super().save(*args, **kwargs)
