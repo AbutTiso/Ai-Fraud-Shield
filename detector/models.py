@@ -3,6 +3,33 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
 
+
+class Company(models.Model):
+    """Organization or Firm using the platform"""
+    name = models.CharField(max_length=200)
+    slug = models.SlugField(unique=True)
+    email = models.EmailField()
+    phone = models.CharField(max_length=15, blank=True)
+    address = models.TextField(blank=True)
+    logo = models.CharField(max_length=500, blank=True, help_text="URL to company logo")
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='created_companies')
+    
+    class Meta:
+        verbose_name_plural = 'Companies'
+        ordering = ['name']
+    
+    def __str__(self):
+        return self.name
+    
+    def total_scans(self):
+        return ScamReport.objects.filter(user__userprofile__company=self).count()
+    
+    def total_staff(self):
+        return self.userprofile_set.count()
+    
+    
 class ScamReport(models.Model):
     """Store all scam reports from users"""
     REPORT_TYPES = [
@@ -15,12 +42,18 @@ class ScamReport(models.Model):
         ('CALL', 'Phone Call'),
     ]
     
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name='scam_reports')
+    company = models.ForeignKey(Company, on_delete=models.SET_NULL, null=True, blank=True, related_name='company_reports')
     report_type = models.CharField(max_length=20, choices=REPORT_TYPES)
     content = models.TextField()
     risk_score = models.IntegerField()
     risk_level = models.CharField(max_length=20)
     reported_by = models.CharField(max_length=100, blank=True, null=True)
     date_reported = models.DateTimeField(auto_now_add=True)
+    county = models.CharField(max_length=100, blank=True, null=True)
+    latitude = models.FloatField(blank=True, null=True)
+    longitude = models.FloatField(blank=True, null=True)
+    ip_address = models.CharField(max_length=50, blank=True, null=True)
     
     class Meta:
         ordering = ['-date_reported']
@@ -167,3 +200,88 @@ class BlockedNumber(models.Model):
         if not self.confidence_score:
             self.calculate_confidence()
         super().save(*args, **kwargs)
+        
+
+
+
+class UserProfile(models.Model):
+    """Extends Django User with role and company"""
+    ROLE_CHOICES = [
+        ('SUPER_ADMIN', 'Super Admin'),
+        ('COMPANY_ADMIN', 'Company Admin'),
+        ('STAFF', 'Staff'),
+        ('INDIVIDUAL', 'Individual User'),
+    ]
+    
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    company = models.ForeignKey(Company, on_delete=models.SET_NULL, null=True, blank=True, related_name='userprofile_set')
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='INDIVIDUAL')
+    phone = models.CharField(max_length=15, blank=True)
+    department = models.CharField(max_length=100, blank=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.company.name if self.company else 'Individual'} ({self.role})"
+    
+    def is_company_admin(self):
+        return self.role in ['SUPER_ADMIN', 'COMPANY_ADMIN']
+    
+    def can_view_all_company(self):
+        return self.role in ['SUPER_ADMIN', 'COMPANY_ADMIN']
+    
+class UserPoints(models.Model):
+    """Track user points and achievements"""
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='points')
+    total_points = models.IntegerField(default=0)
+    reports_submitted = models.IntegerField(default=0)
+    scams_verified = models.IntegerField(default=0)
+    numbers_blocked = models.IntegerField(default=0)
+    current_streak = models.IntegerField(default=0)
+    longest_streak = models.IntegerField(default=0)
+    last_activity = models.DateTimeField(auto_now=True)
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.total_points} pts"
+    
+    def add_points(self, points, action_type):
+        """Add points for an action"""
+        self.total_points += points
+        if action_type == 'report':
+            self.reports_submitted += 1
+        elif action_type == 'verify':
+            self.scams_verified += 1
+        elif action_type == 'block':
+            self.numbers_blocked += 1
+        self.save()
+    
+    def get_level(self):
+        """Get user level based on points"""
+        if self.total_points >= 5000: return "🛡️ Grandmaster"
+        if self.total_points >= 2000: return "🔰 Expert"
+        if self.total_points >= 1000: return "⭐ Advanced"
+        if self.total_points >= 500: return "🔍 Scout"
+        if self.total_points >= 200: return "👶 Beginner"
+        return "🌱 Newcomer"
+
+
+class Badge(models.Model):
+    """Achievement badges"""
+    name = models.CharField(max_length=100)
+    description = models.TextField()
+    icon = models.CharField(max_length=10)
+    points_required = models.IntegerField(default=0)
+    badge_type = models.CharField(max_length=50)
+    
+    def __str__(self):
+        return f"{self.icon} {self.name}"
+
+
+class UserBadge(models.Model):
+    """Badges earned by users"""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='badges')
+    badge = models.ForeignKey(Badge, on_delete=models.CASCADE)
+    earned_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        unique_together = ['user', 'badge']

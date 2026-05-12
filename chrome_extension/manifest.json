@@ -2,13 +2,15 @@
   "manifest_version": 3,
   "name": "AI Fraud Shield - Scam Detector",
   "version": "1.0.0",
-  "description": "Protect yourself from web scams with real-time detection and high-contrast themes for ChatGPT & DeepSeek",
+  "description": "Protect yourself from web scams with real-time detection, password protection, and download scanning",
   "permissions": [
     "activeTab",
     "storage",
     "notifications",
     "webNavigation",
-    "scripting"
+    "scripting",
+    "downloads",
+    "webRequest"
   ],
   "host_permissions": [
     "http://localhost:8000/*",

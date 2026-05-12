@@ -1,0 +1,214 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Sign Up - AI Fraud Shield{% endblock %}
+
+{% block extra_css %}
+<style>
+  body {
+    background: linear-gradient(135deg, #002855, #001a3f);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Segoe UI', sans-serif;
+  }
+  
+  .register-card {
+    background: white;
+    border-radius: 20px;
+    padding: 40px;
+    max-width: 500px;
+    width: 100%;
+    box-shadow: 0 25px 60px rgba(0,0,0,0.3);
+    border-top: 5px solid #f5a623;
+  }
+  
+  .register-card h2 {
+    color: #002855;
+    text-align: center;
+    margin-bottom: 10px;
+  }
+  .register-card h2 i { color: #f5a623; }
+  
+  .register-card p { text-align: center; color: #6b7280; margin-bottom: 25px; }
+  
+  .form-group { margin-bottom: 18px; }
+  .form-group label { display: block; font-weight: 600; color: #002855; margin-bottom: 6px; font-size: 0.9rem; }
+  .form-group input, .form-group select {
+    width: 100%; padding: 12px 15px;
+    border: 2px solid #e5e7eb; border-radius: 10px;
+    font-size: 1rem; transition: all 0.3s;
+  }
+  .form-group input:focus, .form-group select:focus {
+    border-color: #002855; outline: none;
+    box-shadow: 0 0 0 3px rgba(0,40,85,0.1);
+  }
+  
+  .btn-register {
+    width: 100%; padding: 14px;
+    background: linear-gradient(135deg, #002855, #001a3f);
+    color: white; border: none; border-radius: 50px;
+    font-weight: 700; font-size: 1rem; cursor: pointer;
+    transition: all 0.3s; margin-top: 10px;
+  }
+  .btn-register:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,40,85,0.3);
+  }
+  
+  .login-link { text-align: center; margin-top: 20px; color: #6b7280; }
+  .login-link a { color: #002855; font-weight: 600; text-decoration: none; }
+  .login-link a:hover { color: #f5a623; }
+  
+  .role-selector {
+    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;
+    margin-bottom: 15px;
+  }
+  .role-option {
+    padding: 12px; border: 2px solid #e5e7eb; border-radius: 10px;
+    text-align: center; cursor: pointer; transition: all 0.2s;
+  }
+  .role-option:hover { border-color: #002855; }
+  .role-option.selected { border-color: #f5a623; background: #fefce8; }
+  .role-option .icon { font-size: 1.5rem; }
+  .role-option .label { font-size: 0.75rem; font-weight: 600; color: #002855; margin-top: 4px; }
+  
+  #companyFields { display: none; }
+  #companyFields.show { display: block; }
+  
+  .message { 
+    padding: 12px; border-radius: 8px; margin-bottom: 15px; display: none;
+    text-align: center; font-weight: 500;
+  }
+  .message.success { background: #d1fae5; color: #065f46; display: block; }
+  .message.error { background: #fee2e2; color: #991b1b; display: block; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="register-card">
+  <h2><i class="fas fa-shield-alt"></i> AI Fraud Shield</h2>
+  <p>Create your account to start detecting scams</p>
+  
+  <div class="message" id="message"></div>
+  
+  <form id="registerForm">
+    <div class="form-group">
+      <label>Username</label>
+      <input type="text" id="username" placeholder="Choose a username" required>
+    </div>
+    
+    <div class="form-group">
+      <label>Email</label>
+      <input type="email" id="email" placeholder="your@email.com" required>
+    </div>
+    
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" id="password" placeholder="Min 6 characters" required minlength="6">
+    </div>
+    
+    <label style="font-weight:600;color:#002855;margin-bottom:8px;display:block;">I am a...</label>
+    <div class="role-selector">
+      <div class="role-option selected" data-role="INDIVIDUAL" onclick="selectRole(this)">
+        <div class="icon">👤</div>
+        <div class="label">Individual</div>
+      </div>
+      <div class="role-option" data-role="COMPANY_ADMIN" onclick="selectRole(this)">
+        <div class="icon">🏢</div>
+        <div class="label">Company Admin</div>
+      </div>
+      <div class="role-option" data-role="STAFF" onclick="selectRole(this)">
+        <div class="icon">👥</div>
+        <div class="label">Staff</div>
+      </div>
+    </div>
+    <input type="hidden" id="role" value="INDIVIDUAL">
+    
+    <!-- Company Fields -->
+    <div id="companyFields">
+      <div class="form-group" id="companyNameGroup">
+        <label>Company Name</label>
+        <input type="text" id="companyName" placeholder="Your company name">
+      </div>
+      <div class="form-group" id="companyCodeGroup">
+        <label>Company Code</label>
+        <input type="text" id="companyCode" placeholder="Enter company code to join">
+        <small style="color:#6b7280;">Ask your admin for the company code</small>
+      </div>
+    </div>
+    
+    <button type="submit" class="btn-register">
+      <i class="fas fa-user-plus"></i> Create Account
+    </button>
+  </form>
+  
+  <div class="login-link">
+    Already have an account? <a href="/admin/login/">Sign in</a>
+  </div>
+</div>
+
+<script>
+let selectedRole = 'INDIVIDUAL';
+
+function selectRole(el) {
+  document.querySelectorAll('.role-option').forEach(r => r.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedRole = el.dataset.role;
+  document.getElementById('role').value = selectedRole;
+  
+  const companyFields = document.getElementById('companyFields');
+  const companyNameGroup = document.getElementById('companyNameGroup');
+  const companyCodeGroup = document.getElementById('companyCodeGroup');
+  
+  if (selectedRole === 'COMPANY_ADMIN') {
+    companyFields.classList.add('show');
+    companyNameGroup.style.display = 'block';
+    companyCodeGroup.style.display = 'none';
+  } else if (selectedRole === 'STAFF') {
+    companyFields.classList.add('show');
+    companyNameGroup.style.display = 'none';
+    companyCodeGroup.style.display = 'block';
+  } else {
+    companyFields.classList.remove('show');
+  }
+}
+
+document.getElementById('registerForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  
+  const data = {
+    username: document.getElementById('username').value,
+    email: document.getElementById('email').value,
+    password: document.getElementById('password').value,
+    role: selectedRole,
+    company_name: document.getElementById('companyName').value,
+    company_code: document.getElementById('companyCode').value,
+  };
+  
+  try {
+    const res = await fetch('/api/register/', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(data)
+    });
+    
+    const result = await res.json();
+    const msg = document.getElementById('message');
+    
+    if (result.success) {
+      msg.className = 'message success';
+      msg.textContent = '✅ ' + result.message;
+      setTimeout(() => { window.location.href = '/'; }, 1500);
+    } else {
+      msg.className = 'message error';
+      msg.textContent = '❌ ' + (result.error || 'Registration failed');
+    }
+  } catch(err) {
+    document.getElementById('message').className = 'message error';
+    document.getElementById('message').textContent = '❌ Network error. Please try again.';
+  }
+});
+</script>
+{% endblock %}

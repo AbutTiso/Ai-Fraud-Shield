@@ -1,0 +1,32 @@
+{% extends "admin/base.html" %}
+{% load static %}
+
+{% block extrastyle %}
+<style>
+  body { background: linear-gradient(135deg, #002855, #001a3f); }
+  .logout-card {
+    max-width: 400px; margin: 100px auto;
+    background: white; border-radius: 16px;
+    padding: 40px; text-align: center;
+    border-top: 5px solid #f5a623;
+    box-shadow: 0 25px 50px rgba(0,0,0,0.3);
+  }
+  .logout-card h2 { color: #002855; }
+  .logout-card a {
+    display: inline-block; margin-top: 20px;
+    padding: 12px 30px; border-radius: 50px;
+    font-weight: 700; text-decoration: none;
+  }
+  .btn-login { background: #002855; color: white; }
+  .btn-home { background: #f5a623; color: #002855; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="logout-card">
+  <h2><i class="fas fa-check-circle" style="color:#10b981;"></i> Logged Out</h2>
+  <p>You have been successfully logged out.</p>
+  <a href="/admin/login/" class="btn-login">Login Again</a>
+  <a href="/" class="btn-home">Go to Homepage</a>
+</div>
+{% endblock %}

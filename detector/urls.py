@@ -1,6 +1,8 @@
 # detector/urls.py
 from django.urls import path
-from . import views
+from . import views, sms_gateway
+from .api import views as api_views
+
 
 urlpatterns = [
     # =========================
@@ -64,4 +66,37 @@ urlpatterns = [
     path('api/top-scam-numbers/', views.top_scam_numbers, name='top_scam_numbers'),
     path('api/analyze-email/', views.analyze_forwarded_email, name='analyze_forwarded_email'),
     path('api/recent-activity/', views.recent_activity, name='recent_activity'),
+    
+    # SMS Gateway
+    path('webhook/sms/', sms_gateway.sms_webhook, name='sms_webhook'),
+    path('api/send-sms/', sms_gateway.send_sms_alert, name='send_sms_alert'),
+    
+    #==========================
+    # Api urls
+    #==========================
+    path('api/v1/', api_views.api_docs, name='api_docs'),
+    path('api/v1/check/sms', api_views.check_sms, name='api_check_sms'),
+    path('api/v1/check/phone', api_views.check_phone, name='api_check_phone'),
+    path('api/v1/check/url', api_views.check_url, name='api_check_url'),
+    path('api/v1/stats', api_views.api_stats, name='api_stats'),
+    path('api/v1/report', api_views.api_report, name='api_report'),
+    path('api/v1/blocklist', api_views.api_blocklist, name='api_blocklist'),
+    
+   # Multi-Tenant Company Management
+    path('api/user-stats/', views.get_user_stats, name='user_stats'),
+    path('api/create-company/', views.create_company, name='create_company'),
+    path('api/add-staff/', views.add_staff_to_company, name='add_staff'),
+    path('api/my-company/', views.my_company, name='my_company'),
+    
+    # Registration
+    path('register/', views.register_user, name='register'),
+    path('api/register/', views.register_user, name='api_register'),
+    path('api/company/<slug:slug>/', views.get_company_info, name='company_info'),
+    
+    #Heatmap
+    path('heatmap/', views.scam_heatmap, name='scam_heatmap'),
+    # Rewards & Leaderboard
+    path('api/my-points/', views.my_points, name='my_points'),
+    path('api/leaderboard/', views.leaderboard, name='api_leaderboard'),
+    path('leaderboard/', views.leaderboard_page, name='leaderboard_page'),
 ]

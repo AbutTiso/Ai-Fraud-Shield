@@ -11,6 +11,10 @@ import json
 import csv
 import hashlib
 from collections import Counter
+from django.db.models import Avg
+from django.contrib.auth.models import User
+from django.shortcuts import render
+from .models import Company, UserProfile, UserPoints, ScamReport, PhoneRisk, EmailRisk, UrlRisk, ScreenshotReport, WhatsAppRisk, BlockedNumber, Badge, UserBadge
 
 # Email imports
 import smtplib
@@ -30,7 +34,54 @@ except ImportError:
 
     class ScamReport:
         objects = None
+        
+def get_user_company(request):
+    """Get user and company from request"""
+    user = request.user if request.user.is_authenticated else None
+    company = None
+    if user and hasattr(user, 'userprofile'):
+        company = user.userprofile.company
+    return user, company
 
+
+# ADD THESE TWO FUNCTIONS HERE (if they're missing):
+def get_location_from_ip(ip_address):
+    """Get approximate location from IP address"""
+    if not ip_address or ip_address in ['127.0.0.1', 'localhost', 'anonymous']:
+        return {
+            'county': 'Nairobi',
+            'latitude': -1.2921,
+            'longitude': 36.8219,
+        }
+    try:
+        import requests
+        response = requests.get(f'http://ip-api.com/json/{ip_address}', timeout=5)
+        data = response.json()
+        if data.get('status') == 'success':
+            return {
+                'county': data.get('regionName', 'Unknown'),
+                'latitude': data.get('lat'),
+                'longitude': data.get('lon'),
+            }
+    except:
+        pass
+    return {'county': 'Unknown', 'latitude': -1.2921, 'longitude': 36.8219}
+
+
+def map_to_kenyan_county(region_name):
+    """Map IP region to Kenyan county"""
+    county_map = {
+        'Nairobi': 'Nairobi', 'Nairobi Area': 'Nairobi',
+        'Mombasa': 'Mombasa', 'Coast': 'Mombasa',
+        'Kisumu': 'Kisumu', 'Nyanza': 'Kisumu',
+        'Nakuru': 'Nakuru', 'Rift Valley': 'Nakuru',
+        'Uasin Gishu': 'Eldoret', 'Kiambu': 'Thika',
+        'Machakos': 'Machakos', 'Kakamega': 'Kakamega',
+        'Meru': 'Meru', 'Nyeri': 'Nyeri',
+        'Garissa': 'Garissa', 'Laikipia': 'Nanyuki',
+        'Embu': 'Embu',
+    }
+    return county_map.get(region_name, 'Nairobi')
 
 def send_alert(email, risk_level, content):
     """Send email alert for high-risk detections"""
@@ -724,6 +775,39 @@ def check_url(request):
             message = "✅ This link appears safe based on available data."
             recommendation = "✓ Always verify before clicking, even on safe links."
         
+        # ============================================================
+        # SAVE URL CHECK TO DATABASE WITH USER/COMPANY TRACKING
+        # ============================================================
+        
+        if MODELS_AVAILABLE and ScamReport.objects:
+            try:
+                # Only try to get user if request has user attribute (public API won't)
+                if hasattr(request, 'user'):
+                    user, company = get_user_company(request)
+                else:
+                    user, company = None, None
+                
+                # Get location from IP
+                ip = request.META.get('REMOTE_ADDR', 'anonymous')
+                location = get_location_from_ip(ip)
+                county = map_to_kenyan_county(location['county'])
+                
+                ScamReport.objects.create(
+                    report_type='URL',
+                    content=url[:500],
+                    risk_score=score,
+                    risk_level=risk_level,
+                    reported_by=ip,
+                    user=user,
+                    company=company,
+                    county=county,
+                    latitude=location['latitude'],
+                    longitude=location['longitude'],
+                    ip_address=ip,
+                )
+            except Exception as e:
+                print(f"URL save error: {e}")
+        
         return JsonResponse({
             'url': url[:150],
             'domain': domain,
@@ -741,7 +825,6 @@ def check_url(request):
         
     except Exception as e:
         return JsonResponse({'error': str(e), 'url': url if 'url' in locals() else 'unknown'}, status=500)
-
 
 # ============ ENHANCED SCREENSHOT TEXT DETECTION ============
 @csrf_exempt
@@ -916,6 +999,34 @@ def detect_screenshot_text(request):
                 "📱 Still verify in your M-Pesa app for safety"
             ]
         
+        # ============================================================
+        # SAVE SCREENSHOT CHECK TO DATABASE WITH USER/COMPANY TRACKING
+        # ============================================================
+        if MODELS_AVAILABLE and ScamReport.objects:
+            try:
+                user, company = get_user_company(request)
+                
+                # Get location from IP
+                ip = request.META.get('REMOTE_ADDR', 'anonymous')
+                location = get_location_from_ip(ip)
+                county = map_to_kenyan_county(location['county'])
+                
+                ScamReport.objects.create(
+                    report_type='SCREENSHOT',
+                    content=extracted_text[:500],
+                    risk_score=score,
+                    risk_level=risk_level,
+                    reported_by=ip,
+                    user=user,
+                    company=company,
+                    county=county,
+                    latitude=location['latitude'],
+                    longitude=location['longitude'],
+                    ip_address=ip,
+                )
+            except Exception as e:
+                print(f"Screenshot save error: {e}")
+        
         return JsonResponse({
             'score': score,
             'risk_level': risk_level,
@@ -943,7 +1054,6 @@ def detect_screenshot_text(request):
             'reasons': ['Could not fully analyze the image text'],
             'type': 'SCREENSHOT'
         }, status=200)
-
 
 # ============ ADDITONAL ENHANCED ENDPOINT ============
 @csrf_exempt
@@ -1080,9 +1190,7 @@ def detect_sms(request):
         # Get keyword-based detection
         result = detect_sms_scam(sms_text)
         
-        # ============================================================
         # ADD ML HYBRID SCORING
-        # ============================================================
         try:
             from .ml.inference.predict import predict_scam
             ml_result = predict_scam(sms_text)
@@ -1097,16 +1205,12 @@ def detect_sms(request):
                 result['ml_confidence'] = ml_result.get('ml_confidence')
                 result['model_name'] = ml_result.get('model_name')
                 result['uses_ml'] = True
-                
-                # Use hybrid score for final risk level
                 result['score'] = hybrid_score
         except Exception as e:
             result['uses_ml'] = False
-            print(f"⚠️ ML prediction unavailable: {e}")
         
         # Normalize risk_level for frontend
         if 'risk_level' in result:
-            # Extract just the risk level without extra text
             if 'CRITICAL' in result['risk_level']:
                 result['risk_level_display'] = 'CRITICAL'
                 result['risk_level'] = 'CRITICAL'
@@ -1122,7 +1226,7 @@ def detect_sms(request):
             else:
                 result['risk_level'] = result['risk_level'].split(' - ')[0].strip()
         
-        # Add color mapping based on hybrid score
+        # Add color mapping
         if result['score'] >= 70:
             result['color'] = 'danger'
             result['badge_class'] = 'bg-danger'
@@ -1133,24 +1237,42 @@ def detect_sms(request):
             result['color'] = 'success'
             result['badge_class'] = 'bg-success'
         
-        # Save to database if models available
+        # ============================================================
+        # SAVE WITH USER, COMPANY & LOCATION TRACKING
+        # ============================================================
         if MODELS_AVAILABLE and ScamReport.objects:
             try:
+                user, company = get_user_company(request)
+                
+                # Get location from IP
+                ip = request.META.get('REMOTE_ADDR', 'anonymous')
+                location = get_location_from_ip(ip)
+                county = map_to_kenyan_county(location['county'])
+                
                 ScamReport.objects.create(
                     report_type='SMS',
                     content=sms_text[:500],
                     risk_score=result['score'],
                     risk_level=result.get('risk_level_display', result['risk_level']),
-                    reported_by=request.META.get('REMOTE_ADDR', 'anonymous')
+                    reported_by=request.META.get('REMOTE_ADDR', 'anonymous'),
+                    user=user,
+                    company=company,
+                    county=county,
+                    latitude=location['latitude'],
+                    longitude=location['longitude'],
+                    ip_address=ip,
                 )
+                
+                # Award points for scam detection
+                if result['score'] >= 40 and user:
+                    award_points(user, 'detect_scam', 5)
+                    
             except Exception as e:
                 print(f"Database save error: {e}")
         
         return JsonResponse(result)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
-    
-    
 # EMAIL DETECTION ENDPOINT
 @csrf_exempt
 @require_http_methods(["POST"])
@@ -1167,6 +1289,14 @@ def detect_email(request):
         
         result = detect_email_scam(email_text)
         
+        # Get user and company for tracking
+        user, company = get_user_company(request)
+        
+        # Get location from IP
+        ip = request.META.get('REMOTE_ADDR', 'anonymous')
+        location = get_location_from_ip(ip)
+        county = map_to_kenyan_county(location['county'])
+        
         if MODELS_AVAILABLE and ScamReport.objects:
             try:
                 ScamReport.objects.create(
@@ -1174,16 +1304,24 @@ def detect_email(request):
                     content=email_text[:500],
                     risk_score=result['score'],
                     risk_level=result['risk_level'].split(' - ')[0] if ' - ' in result['risk_level'] else result['risk_level'],
-                    reported_by=request.META.get('REMOTE_ADDR', 'anonymous')
+                    reported_by=ip,
+                    user=user,
+                    company=company,
+                    county=county,
+                    latitude=location['latitude'],
+                    longitude=location['longitude'],
+                    ip_address=ip,
                 )
+                # Award points
+                if result['score'] >= 40 and user:
+                    award_points(user, 'detect_scam', 5)
             except Exception as e:
                 print(f"Database save error: {e}")
         
         return JsonResponse(result)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
-
-
+    
 # WHATSAPP DETECTION ENDPOINT
 @csrf_exempt
 @require_http_methods(["POST"])
@@ -1197,6 +1335,14 @@ def detect_whatsapp(request):
         result = detect_whatsapp_builtin(chat_text)
         result['chat_text_preview'] = chat_text[:500]
         
+        # Get user and company for tracking
+        user, company = get_user_company(request)
+        
+        # Get location from IP
+        ip = request.META.get('REMOTE_ADDR', 'anonymous')
+        location = get_location_from_ip(ip)
+        county = map_to_kenyan_county(location['county'])
+        
         if MODELS_AVAILABLE and ScamReport.objects:
             try:
                 ScamReport.objects.create(
@@ -1204,8 +1350,16 @@ def detect_whatsapp(request):
                     content=chat_text[:1000],
                     risk_score=result['score'],
                     risk_level=result['risk_level'].replace(' - SCAM DETECTED', ''),
-                    reported_by=request.META.get('REMOTE_ADDR', 'anonymous')
+                    reported_by=ip,
+                    user=user,
+                    company=company,
+                    county=county,
+                    latitude=location['latitude'],
+                    longitude=location['longitude'],
+                    ip_address=ip,
                 )
+                if result['score'] >= 40 and user:
+                    award_points(user, 'detect_scam', 5)
             except Exception as e:
                 print(f"Database save error: {e}")
         
@@ -1226,8 +1380,9 @@ def detect_whatsapp(request):
             'type': 'WHATSAPP',
             'grammar_issues': 0
         }, status=200)
+        
 
-
+# DETECT CALL ENDPOINT
 @csrf_exempt
 @require_http_methods(["POST"])
 def detect_call(request):
@@ -1247,7 +1402,7 @@ def detect_call(request):
         result['analysis_time'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         result['type'] = 'CALL'
         
-        # FIX: Normalize risk_level for frontend
+        # Normalize risk_level for frontend
         if 'risk_level' in result:
             if 'CRITICAL' in result['risk_level']:
                 result['risk_level'] = 'CRITICAL'
@@ -1274,15 +1429,10 @@ def detect_call(request):
                 result['badge_class'] = 'bg-success'
                 result['emoji'] = '🟢'
         
-        # Ensure score is present
         if 'score' not in result:
             result['score'] = result.get('combined_score', 0)
-        
-        # Add warnings if missing
         if 'warnings' not in result:
             result['warnings'] = result.get('reasons', [])
-        
-        # Add message if missing
         if 'message' not in result:
             if result['score'] >= 70:
                 result['message'] = "🔴 CRITICAL: This call shows overwhelming scam indicators! HANG UP NOW!"
@@ -1293,23 +1443,38 @@ def detect_call(request):
             else:
                 result['message'] = "✓ No scam patterns detected, but always exercise caution."
         
-        # In detect_call() view, ensure it saves like this:
+        # Get user and company for tracking
+        user, company = get_user_company(request)
+        
+        # Get location from IP
+        ip = request.META.get('REMOTE_ADDR', 'anonymous')
+        location = get_location_from_ip(ip)
+        county = map_to_kenyan_county(location['county'])
+        
         if MODELS_AVAILABLE and ScamReport.objects:
             try:
                 ScamReport.objects.create(
-                    report_type='CALL',  # Make sure this is 'CALL'
+                    report_type='CALL',
                     content=transcript[:500],
                     risk_score=result.get('score', 0),
                     risk_level=result.get('risk_level_display', result.get('risk_level', 'LOW')),
-                    reported_by=request.META.get('REMOTE_ADDR', 'anonymous')
+                    reported_by=ip,
+                    user=user,
+                    company=company,
+                    county=county,
+                    latitude=location['latitude'],
+                    longitude=location['longitude'],
+                    ip_address=ip,
                 )
-                print(f"✅ Call detection saved to database with score: {result.get('score', 0)}")
+                if result.get('score', 0) >= 40 and user:
+                    award_points(user, 'detect_scam', 5)
             except Exception as e:
                 print(f"Database save error (non-critical): {e}")
+        
         return JsonResponse(result)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
-
+    
 # PHONE NUMBER CHECK ENDPOINT
 @csrf_exempt
 @require_http_methods(["POST"])
@@ -1330,6 +1495,79 @@ def check_phone(request):
         return JsonResponse({'error': str(e)}, status=500)
 
 
+#DETECT TELEGRAM ENDPOINT
+@csrf_exempt
+@require_http_methods(["POST"])
+def detect_telegram(request):
+    """Dedicated Telegram message detection - saves as TELEGRAM type"""
+    try:
+        if request.content_type == 'application/json':
+            data = json.loads(request.body)
+            text = data.get('telegram_text', data.get('text', ''))
+        else:
+            text = request.POST.get('telegram_text', request.POST.get('text', ''))
+        
+        if not text or not text.strip():
+            return JsonResponse({'error': 'Please enter text to analyze'}, status=400)
+        
+        result = detect_sms_scam(text)
+        
+        # Normalize risk_level
+        if 'risk_level' in result:
+            if 'CRITICAL' in result['risk_level']:
+                result['risk_level_display'] = 'CRITICAL'
+                result['risk_level'] = 'CRITICAL'
+            elif 'HIGH' in result['risk_level']:
+                result['risk_level_display'] = 'HIGH'
+                result['risk_level'] = 'HIGH'
+            elif 'MEDIUM' in result['risk_level']:
+                result['risk_level_display'] = 'MEDIUM'
+                result['risk_level'] = 'MEDIUM'
+            elif 'LOW' in result['risk_level']:
+                result['risk_level_display'] = 'LOW'
+                result['risk_level'] = 'LOW'
+        
+        # Get user and company for tracking
+        user, company = get_user_company(request)
+        
+        # Get location from IP
+        ip = request.META.get('REMOTE_ADDR', 'anonymous')
+        location = get_location_from_ip(ip)
+        county = map_to_kenyan_county(location['county'])
+        
+        # Save as TELEGRAM type
+        if MODELS_AVAILABLE and ScamReport.objects:
+            ScamReport.objects.create(
+                report_type='TELEGRAM',
+                content=text[:500],
+                risk_score=result['score'],
+                risk_level=result.get('risk_level_display', result.get('risk_level', 'Unknown')),
+                reported_by=ip,
+                user=user,
+                company=company,
+                county=county,
+                latitude=location['latitude'],
+                longitude=location['longitude'],
+                ip_address=ip,
+            )
+            if result['score'] >= 40 and user:
+                award_points(user, 'detect_scam', 5)
+        
+        # Add color mapping
+        if result['score'] >= 70:
+            result['color'] = 'danger'
+            result['badge_class'] = 'bg-danger'
+        elif result['score'] >= 40:
+            result['color'] = 'warning'
+            result['badge_class'] = 'bg-warning'
+        else:
+            result['color'] = 'success'
+            result['badge_class'] = 'bg-success'
+        
+        return JsonResponse(result)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
 # REPORT SCAM CALL ENDPOINT
 @csrf_exempt
 @require_http_methods(["POST"])
@@ -1348,6 +1586,14 @@ def report_scam_call(request):
         
         result = report_scam_call_number(phone_number, description)
         
+        # Get user and company for tracking
+        user, company = get_user_company(request)
+        
+        # Get location from IP
+        ip = request.META.get('REMOTE_ADDR', 'anonymous')
+        location = get_location_from_ip(ip)
+        county = map_to_kenyan_county(location['county'])
+        
         if MODELS_AVAILABLE and ScamReport.objects:
             try:
                 ScamReport.objects.create(
@@ -1355,7 +1601,13 @@ def report_scam_call(request):
                     content=f"Reported scam number: {phone_number}\nDescription: {description}"[:500],
                     risk_score=85,
                     risk_level='HIGH',
-                    reported_by=request.META.get('REMOTE_ADDR', 'anonymous')
+                    reported_by=ip,
+                    user=user,
+                    company=company,
+                    county=county,
+                    latitude=location['latitude'],
+                    longitude=location['longitude'],
+                    ip_address=ip,
                 )
             except Exception as e:
                 print(f"Database save error: {e}")
@@ -1363,8 +1615,7 @@ def report_scam_call(request):
         return JsonResponse(result)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
-
-
+    
 # STATISTICS ENDPOINT
 # detector/views.py - Add/Replace this get_stats function
 
@@ -1380,79 +1631,60 @@ import json
 #@cache_page(60)  # Cache for 60 seconds to improve performance
 def get_stats(request):
     """
-    Get enhanced dashboard statistics with caching
-    Returns: Comprehensive stats for dashboard charts
+    Get enhanced dashboard statistics filtered by user role
+    - Anonymous: Empty stats
+    - Individual User: Only their own reports
+    - Company Admin: All reports for their company
+    - Super Admin: All reports
     """
     try:
-        # Check if models are available
         if not MODELS_AVAILABLE or not ScamReport.objects:
-            # Return empty stats structure
-            return JsonResponse({
-                'success': True,
-                'stats': {
-                    'total_reports': 0,
-                    'high_risk_count': 0,
-                    'medium_risk_count': 0,
-                    'low_risk_count': 0,
-                    'sms_count': 0,
-                    'email_count': 0,
-                    'whatsapp_count': 0,
-                    'screenshot_count': 0,
-                    'url_count': 0,
-                    'call_count': 0,
-                    'telegram_count': 0,
-                    'average_risk_score': 0,
-                    'risk_distribution': {'high': 0, 'medium': 0, 'low': 0},
-                    'weekly_trend': [0, 0, 0, 0, 0, 0, 0],
-                    'monthly_trend': [],
-                    'recent_scams': [],
-                    'top_scam_types': [],
-                    'today_count': 0,
-                    'this_week_count': 0,
-                    'this_month_count': 0
-                },
-                'status': 'success'
-            })
+            return JsonResponse({'success': True, 'stats': {}})
+        
+        user = request.user
+        
+        # ============ USER-BASED FILTERING ============
+        if user.is_authenticated and user.is_superuser:
+            reports = ScamReport.objects.all()
+        elif user.is_authenticated:
+            try:
+                profile = user.userprofile
+                if profile.can_view_all_company() and profile.company:
+                    reports = ScamReport.objects.filter(company=profile.company)
+                else:
+                    reports = ScamReport.objects.filter(user=user)
+            except:
+                reports = ScamReport.objects.filter(user=user)
+        else:
+            # Anonymous - show empty
+            reports = ScamReport.objects.none()
         
         # ============ BASIC COUNTS ============
-        total_reports = ScamReport.objects.count()
+        total_reports = reports.count()
         today = timezone.now().date()
         week_ago = today - timedelta(days=7)
         month_ago = today - timedelta(days=30)
         
-        # Today's reports
-        today_count = ScamReport.objects.filter(
-            date_reported__date=today
-        ).count()
-        
-        # This week's reports
-        this_week_count = ScamReport.objects.filter(
-            date_reported__date__gte=week_ago
-        ).count()
-        
-        # This month's reports
-        this_month_count = ScamReport.objects.filter(
-            date_reported__date__gte=month_ago
-        ).count()
+        today_count = reports.filter(date_reported__date=today).count()
+        this_week_count = reports.filter(date_reported__date__gte=week_ago).count()
+        this_month_count = reports.filter(date_reported__date__gte=month_ago).count()
         
         # ============ RISK LEVEL COUNTS ============
-        high_risk_count = ScamReport.objects.filter(risk_score__gte=70).count()
-        medium_risk_count = ScamReport.objects.filter(risk_score__gte=40, risk_score__lt=70).count()
-        low_risk_count = ScamReport.objects.filter(risk_score__lt=40).count()
+        high_risk_count = reports.filter(risk_score__gte=70).count()
+        medium_risk_count = reports.filter(risk_score__gte=40, risk_score__lt=70).count()
+        low_risk_count = reports.filter(risk_score__lt=40).count()
         
         # ============ TYPE BREAKDOWN ============
-        type_counts = {
-            'sms': ScamReport.objects.filter(report_type='SMS').count(),
-            'email': ScamReport.objects.filter(report_type='EMAIL').count(),
-            'whatsapp': ScamReport.objects.filter(report_type='WHATSAPP').count(),
-            'screenshot': ScamReport.objects.filter(report_type='SCREENSHOT').count(),
-            'url': ScamReport.objects.filter(report_type='URL').count(),
-            'call': ScamReport.objects.filter(report_type='CALL').count(),
-            'telegram': ScamReport.objects.filter(report_type='TELEGRAM').count(),
-        }
+        sms_count = reports.filter(report_type='SMS').count()
+        email_count = reports.filter(report_type='EMAIL').count()
+        whatsapp_count = reports.filter(report_type='WHATSAPP').count()
+        screenshot_count = reports.filter(report_type='SCREENSHOT').count()
+        url_count = reports.filter(report_type='URL').count()
+        call_count = reports.filter(report_type='CALL').count()
+        telegram_count = reports.filter(report_type='TELEGRAM').count()
         
         # ============ AVERAGE SCORE ============
-        avg_result = ScamReport.objects.aggregate(avg_score=Avg('risk_score'))
+        avg_result = reports.aggregate(avg_score=Avg('risk_score'))
         average_risk_score = round(avg_result.get('avg_score', 0) or 0, 1)
         
         # ============ RISK DISTRIBUTION ============
@@ -1462,55 +1694,29 @@ def get_stats(request):
             'low': low_risk_count
         }
         
-        # ============ WEEKLY TREND (Last 7 days) ============
+        # ============ WEEKLY TREND ============
         weekly_trend = []
         weekly_labels = []
         for i in range(6, -1, -1):
             date = today - timedelta(days=i)
-            count = ScamReport.objects.filter(date_reported__date=date).count()
+            count = reports.filter(date_reported__date=date).count()
             weekly_trend.append(count)
-            weekly_labels.append(date.strftime('%a'))  # Mon, Tue, Wed, etc.
+            weekly_labels.append(date.strftime('%a'))
         
-        # ============ MONTHLY TREND (Last 30 days by week) ============
-        monthly_trend = []
-        monthly_labels = []
-        for i in range(3, -1, -1):
-            week_start = today - timedelta(days=(i * 7 + 7))
-            week_end = today - timedelta(days=(i * 7))
-            count = ScamReport.objects.filter(
-                date_reported__date__gte=week_start,
-                date_reported__date__lt=week_end
-            ).count()
-            monthly_trend.append(count)
-            monthly_labels.append(f'Week {4-i}')
-        
-        # ============ TOP SCAM TYPES (Most frequent keywords) ============
-        # Analyze recent scam reports for common keywords
-        recent_for_keywords = ScamReport.objects.filter(
-            risk_score__gte=50
-        ).order_by('-date_reported')[:50]
-        
-        keyword_counts = {}
-        scam_keywords = [
-            'mpesa', 'safaricom', 'urgent', 'suspended', 'bank', 'kcb', 
-            'equity', 'winner', 'prize', 'loan', 'fuliza', 'm-shwari'
-        ]
-        
-        for report in recent_for_keywords:
-            if report.content:
-                content_lower = report.content.lower()
-                for keyword in scam_keywords:
-                    if keyword in content_lower:
-                        keyword_counts[keyword] = keyword_counts.get(keyword, 0) + 1
-        
-        top_scam_types = sorted(
-            [{'type': k, 'count': v} for k, v in keyword_counts.items()],
-            key=lambda x: x['count'],
-            reverse=True
-        )[:5]
+        # ============ COUNTY BREAKDOWN ============
+        county_data = []
+        if user.is_authenticated:
+            county_qs = reports.values('county').annotate(
+                count=models.Count('id')
+            ).order_by('-count')[:10]
+            for c in county_qs:
+                county_data.append({
+                    'county': c['county'] or 'Unknown',
+                    'count': c['count']
+                })
         
         # ============ RECENT SCAMS ============
-        recent_scams = ScamReport.objects.order_by('-date_reported')[:20]
+        recent_scams = reports.order_by('-date_reported')[:20]
         recent_data = []
         for r in recent_scams:
             recent_data.append({
@@ -1519,62 +1725,55 @@ def get_stats(request):
                 'score': r.risk_score,
                 'level': 'HIGH' if r.risk_score >= 70 else 'MEDIUM' if r.risk_score >= 40 else 'LOW',
                 'date': r.date_reported.strftime('%Y-%m-%d %H:%M'),
-                'date_relative': get_relative_time(r.date_reported),
                 'content': r.content[:150] + '...' if r.content and len(r.content) > 150 else r.content or 'No content',
-                'preview': (r.content[:80] + '...') if r.content and len(r.content) > 80 else r.content
+                'preview': (r.content[:80] + '...') if r.content and len(r.content) > 80 else r.content,
+                'county': r.county or 'Unknown',  # Added county to recent scams
             })
         
-        # ============ HOURLY DISTRIBUTION (When scams are reported) ============
-        hourly_distribution = [0] * 24
-        last_day_reports = ScamReport.objects.filter(
-            date_reported__date__gte=today - timedelta(days=30)
-        )
-        for report in last_day_reports:
-            hour = report.date_reported.hour
-            hourly_distribution[hour] += 1
+        # ============ STAFF SCANS (for company admin) ============
+        staff_scans = []
+        if user.is_authenticated:
+            try:
+                profile = user.userprofile
+                if profile.can_view_all_company() and profile.company:
+                    for staff_profile in profile.company.userprofile_set.filter(role='STAFF').select_related('user'):
+                        staff_scans.append({
+                            'name': staff_profile.user.username,
+                            'scans': ScamReport.objects.filter(user=staff_profile.user).count(),
+                            'high_risk': ScamReport.objects.filter(user=staff_profile.user, risk_score__gte=70).count(),
+                            'today': ScamReport.objects.filter(user=staff_profile.user, date_reported__date=today).count(),
+                        })
+            except:
+                pass
         
         # ============ RESPONSE ============
         return JsonResponse({
             'success': True,
+            'is_authenticated': user.is_authenticated,
+            'is_company_admin': user.is_authenticated and hasattr(user, 'userprofile') and user.userprofile.can_view_all_company(),
+            'company_name': user.userprofile.company.name if user.is_authenticated and hasattr(user, 'userprofile') and user.userprofile.company else None,
+            'staff_scans': staff_scans,
             'stats': {
-                # Basic counts
                 'total_reports': total_reports,
                 'today_count': today_count,
                 'this_week_count': this_week_count,
                 'this_month_count': this_month_count,
-                
-                # Risk counts
                 'high_risk_count': high_risk_count,
                 'medium_risk_count': medium_risk_count,
                 'low_risk_count': low_risk_count,
-                
-                # Type breakdown
-                'sms_count': type_counts['sms'],
-                'email_count': type_counts['email'],
-                'whatsapp_count': type_counts['whatsapp'],
-                'screenshot_count': type_counts['screenshot'],
-                'url_count': type_counts['url'],
-                'call_count': type_counts['call'],
-                'telegram_count': type_counts['telegram'],
-                
-                # Averages
+                'sms_count': sms_count,
+                'email_count': email_count,
+                'whatsapp_count': whatsapp_count,
+                'screenshot_count': screenshot_count,
+                'url_count': url_count,
+                'call_count': call_count,
+                'telegram_count': telegram_count,
                 'average_risk_score': average_risk_score,
-                
-                # Distributions
                 'risk_distribution': risk_distribution,
-                
-                # Trends
                 'weekly_trend': weekly_trend,
                 'weekly_labels': weekly_labels,
-                'monthly_trend': monthly_trend,
-                'monthly_labels': monthly_labels,
-                'hourly_distribution': hourly_distribution,
-                
-                # Top scams
-                'top_scam_types': top_scam_types,
-                
-                # Recent scams
                 'recent_scams': recent_data,
+                'county_data': county_data,  # Added county breakdown
             },
             'timestamp': datetime.now().isoformat(),
             'status': 'success'
@@ -1583,35 +1782,9 @@ def get_stats(request):
     except Exception as e:
         import traceback
         traceback.print_exc()
-        
-        # Return safe fallback
         return JsonResponse({
             'success': False,
-            'stats': {
-                'total_reports': 0,
-                'high_risk_count': 0,
-                'medium_risk_count': 0,
-                'low_risk_count': 0,
-                'sms_count': 0,
-                'email_count': 0,
-                'whatsapp_count': 0,
-                'screenshot_count': 0,
-                'url_count': 0,
-                'call_count': 0,
-                'telegram_count': 0,
-                'average_risk_score': 0,
-                'risk_distribution': {'high': 0, 'medium': 0, 'low': 0},
-                'weekly_trend': [0, 0, 0, 0, 0, 0, 0],
-                'weekly_labels': ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-                'monthly_trend': [0, 0, 0, 0],
-                'monthly_labels': ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
-                'hourly_distribution': [0] * 24,
-                'top_scam_types': [],
-                'recent_scams': [],
-                'today_count': 0,
-                'this_week_count': 0,
-                'this_month_count': 0
-            },
+            'stats': {},
             'error': str(e),
             'status': 'error'
         })
@@ -2065,6 +2238,10 @@ def report_number(request):
                 number.calculate_confidence()
                 number.save(update_fields=['report_count', 'last_reported', 'scam_category', 'description', 'confidence_score', 'status'])
             
+            # Award points for reporting
+            if request.user.is_authenticated:
+                award_points(request.user, 'report_number', 50)
+            
             return JsonResponse({
                 'success': True,
                 'created': created,
@@ -2078,7 +2255,6 @@ def report_number(request):
         
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
-    
 
 @csrf_exempt
 @require_http_methods(["POST"])
@@ -2212,14 +2388,38 @@ def analyze_forwarded_email(request):
         # Analyze
         analysis = EmailAnalyzer.analyze(parsed)
         
-        # Save to database
+        # ============================================================
+        # SAVE WITH USER MATCHING
+        # ============================================================
         if MODELS_AVAILABLE and ScamReport.objects:
+            import re
+            
+            # Try to match sender to a registered user
+            from_addr = parsed.get('from', '')
+            user = None
+            company = None
+            
+            # Extract email from "Name <email>" format
+            email_match = re.search(r'<(.+?)>', from_addr)
+            sender_email = email_match.group(1) if email_match else from_addr
+            
+            # Try to find user by email
+            if sender_email:
+                try:
+                    user = User.objects.filter(email__iexact=sender_email).first()
+                    if user and hasattr(user, 'userprofile') and user.userprofile.company:
+                        company = user.userprofile.company
+                except:
+                    pass
+            
             ScamReport.objects.create(
                 report_type='EMAIL',
                 content=parsed.get('body_text', '')[:500],
                 risk_score=analysis['score'],
                 risk_level=analysis['risk_level'],
-                reported_by=request.META.get('REMOTE_ADDR', 'anonymous')
+                reported_by=request.META.get('REMOTE_ADDR', 'anonymous'),
+                user=user,
+                company=company,
             )
         
         # Build response for auto-reply
@@ -2238,7 +2438,7 @@ def analyze_forwarded_email(request):
         
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
-
+    
 
 def build_email_response(parsed, analysis):
     """Build auto-reply email content"""
@@ -2337,59 +2537,598 @@ def recent_activity(request):
     except Exception as e:
         return JsonResponse({'activities': []})
     
-# TELEGRAM DETECTION ENDPOINT
+
+# ============================================================
+# MULTI-TENANT COMPANY MANAGEMENT
+# ============================================================
+
+@csrf_exempt
+@require_http_methods(["GET"])
+def get_user_stats(request):
+    """Get stats filtered by user's role and company"""
+    user = request.user
+    
+    if not user.is_authenticated:
+        return JsonResponse({
+            'success': True,
+            'label': 'Public',
+            'is_company_admin': False,
+            'stats': {
+                'total_reports': 0,
+                'today_count': 0,
+                'high_risk_count': 0,
+                'sms_count': 0,
+                'email_count': 0,
+                'call_count': 0,
+            }
+        })
+    
+    try:
+        profile = user.userprofile
+        is_admin = profile.can_view_all_company()
+        company = profile.company
+    except:
+        profile = None
+        is_admin = False
+        company = None
+    
+    # Determine which reports to show
+    if is_admin and company:
+        reports = ScamReport.objects.filter(company=company)
+        label = f"{company.name} - All Staff"
+        total_staff = company.userprofile_set.count()
+        
+        # Get per-staff stats
+        staff_scans = []
+        for staff_profile in company.userprofile_set.filter(role='STAFF').select_related('user'):
+            staff_scans.append({
+                'name': staff_profile.user.username,
+                'scans': ScamReport.objects.filter(user=staff_profile.user).count(),
+                'high_risk': ScamReport.objects.filter(user=staff_profile.user, risk_score__gte=70).count(),
+                'today': ScamReport.objects.filter(user=staff_profile.user, date_reported__date=timezone.now().date()).count(),
+            })
+    else:
+        reports = ScamReport.objects.filter(user=user) if user.is_authenticated else ScamReport.objects.none()
+        label = user.username if user.is_authenticated else 'Public'
+        total_staff = 0
+        staff_scans = []
+    
+    today = timezone.now().date()
+    
+    return JsonResponse({
+        'success': True,
+        'label': label,
+        'is_company_admin': is_admin,
+        'company_name': company.name if company else None,
+        'total_staff': total_staff,
+        'staff_scans': sorted(staff_scans, key=lambda x: x['scans'], reverse=True)[:10],
+        'stats': {
+            'total_reports': reports.count(),
+            'today_count': reports.filter(date_reported__date=today).count(),
+            'high_risk_count': reports.filter(risk_score__gte=70).count(),
+            'sms_count': reports.filter(report_type='SMS').count(),
+            'email_count': reports.filter(report_type='EMAIL').count(),
+            'call_count': reports.filter(report_type='CALL').count(),
+        }
+    })
+
+
 @csrf_exempt
 @require_http_methods(["POST"])
-def detect_telegram(request):
-    """Dedicated Telegram message detection - saves as TELEGRAM type"""
+def create_company(request):
+    """Create a new company (super admin only)"""
+    if not request.user.is_superuser:
+        return JsonResponse({'error': 'Only super admins can create companies'}, status=403)
+    
     try:
-        if request.content_type == 'application/json':
-            data = json.loads(request.body)
-            text = data.get('telegram_text', data.get('text', ''))
-        else:
-            text = request.POST.get('telegram_text', request.POST.get('text', ''))
+        data = json.loads(request.body) if request.content_type == 'application/json' else request.POST
+        name = data.get('name', '')
+        email = data.get('email', '')
+        phone = data.get('phone', '')
         
-        if not text or not text.strip():
-            return JsonResponse({'error': 'Please enter text to analyze'}, status=400)
+        if not name:
+            return JsonResponse({'error': 'Company name required'}, status=400)
         
-        result = detect_sms_scam(text)
+        slug = name.lower().replace(' ', '-')
         
-        # Normalize risk_level
-        if 'risk_level' in result:
-            if 'CRITICAL' in result['risk_level']:
-                result['risk_level_display'] = 'CRITICAL'
-                result['risk_level'] = 'CRITICAL'
-            elif 'HIGH' in result['risk_level']:
-                result['risk_level_display'] = 'HIGH'
-                result['risk_level'] = 'HIGH'
-            elif 'MEDIUM' in result['risk_level']:
-                result['risk_level_display'] = 'MEDIUM'
-                result['risk_level'] = 'MEDIUM'
-            elif 'LOW' in result['risk_level']:
-                result['risk_level_display'] = 'LOW'
-                result['risk_level'] = 'LOW'
+        company = Company.objects.create(
+            name=name,
+            slug=slug,
+            email=email,
+            phone=phone,
+            created_by=request.user
+        )
         
-        # Save as TELEGRAM type
-        if MODELS_AVAILABLE and ScamReport.objects:
-            ScamReport.objects.create(
-                report_type='TELEGRAM',  # This is the key - saves as TELEGRAM
-                content=text[:500],
-                risk_score=result['score'],
-                risk_level=result.get('risk_level_display', result.get('risk_level', 'Unknown')),
-                reported_by=request.META.get('REMOTE_ADDR', 'anonymous')
-            )
+        # Make the creator the company admin
+        UserProfile.objects.create(
+            user=request.user,
+            company=company,
+            role='COMPANY_ADMIN'
+        )
         
-        # Add color mapping
-        if result['score'] >= 70:
-            result['color'] = 'danger'
-            result['badge_class'] = 'bg-danger'
-        elif result['score'] >= 40:
-            result['color'] = 'warning'
-            result['badge_class'] = 'bg-warning'
-        else:
-            result['color'] = 'success'
-            result['badge_class'] = 'bg-success'
+        return JsonResponse({
+            'success': True,
+            'company_id': company.id,
+            'company_name': company.name,
+            'slug': company.slug
+        })
         
-        return JsonResponse(result)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def add_staff_to_company(request):
+    """Add a staff member to a company (company admin only)"""
+    try:
+        profile = request.user.userprofile
+        if not profile.can_view_all_company():
+            return JsonResponse({'error': 'Only company admins can add staff'}, status=403)
+        
+        data = json.loads(request.body) if request.content_type == 'application/json' else request.POST
+        username = data.get('username', '')
+        email = data.get('email', '')
+        
+        # Find or create user
+        from django.contrib.auth.models import User
+        user = User.objects.filter(username=username).first()
+        if not user:
+            # Create new user
+            user = User.objects.create_user(
+                username=username,
+                email=email,
+                password=data.get('password', 'staff123')
+            )
+        
+        # Create profile linked to company
+        staff_profile, created = UserProfile.objects.get_or_create(
+            user=user,
+            defaults={
+                'company': profile.company,
+                'role': 'STAFF',
+                'department': data.get('department', '')
+            }
+        )
+        
+        if not created and staff_profile.company != profile.company:
+            staff_profile.company = profile.company
+            staff_profile.role = 'STAFF'
+            staff_profile.save()
+        
+        return JsonResponse({
+            'success': True,
+            'created': created,
+            'username': user.username,
+            'staff_id': user.id
+        })
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@csrf_exempt
+@require_http_methods(["GET"])
+def my_company(request):
+    """Get current user's company info"""
+    if not request.user.is_authenticated:
+        return JsonResponse({'error': 'Login required'}, status=401)
+    
+    try:
+        profile = request.user.userprofile
+        company = profile.company
+        
+        if not company:
+            return JsonResponse({
+                'has_company': False,
+                'role': profile.role,
+                'message': 'You are an individual user. Create or join a company for team features.'
+            })
+        
+        staff = UserProfile.objects.filter(company=company).select_related('user')
+        
+        return JsonResponse({
+            'has_company': True,
+            'company': {
+                'name': company.name,
+                'email': company.email,
+                'phone': company.phone,
+                'created_at': company.created_at.strftime('%Y-%m-%d'),
+            },
+            'my_role': profile.role,
+            'is_admin': profile.can_view_all_company(),
+            'total_staff': staff.count(),
+            'staff': [
+                {
+                    'username': s.user.username,
+                    'role': s.role,
+                    'department': s.department,
+                    'scans': ScamReport.objects.filter(user=s.user).count(),
+                }
+                for s in staff
+            ]
+        })
+        
+    except UserProfile.DoesNotExist:
+        return JsonResponse({
+            'has_company': False,
+            'message': 'Profile not found. Contact admin.'
+        }, status=404)
+        
+@csrf_exempt
+@require_http_methods(["POST", "GET"])
+def register_user(request):
+    """Register a new user with role selection"""
+    
+    if request.method == "GET":
+        return render(request, 'detector/register.html')
+    
+    try:
+        data = json.loads(request.body) if request.content_type == 'application/json' else request.POST
+        
+        username = data.get('username', '')
+        email = data.get('email', '')
+        password = data.get('password', '')
+        role = data.get('role', 'INDIVIDUAL')
+        company_code = data.get('company_code', '')  # For joining existing company
+        
+        if not username or not password:
+            return JsonResponse({'error': 'Username and password required'}, status=400)
+        
+        if User.objects.filter(username=username).exists():
+            return JsonResponse({'error': 'Username already taken'}, status=400)
+        
+        # Create user
+        user = User.objects.create_user(username=username, email=email, password=password)
+        
+        # Handle role and company
+        company = None
+        
+        if role == 'COMPANY_ADMIN':
+            # Create new company
+            company_name = data.get('company_name', f"{username}'s Company")
+            company = Company.objects.create(
+                name=company_name,
+                slug=username.lower(),
+                email=email,
+                created_by=user
+            )
+        
+        elif role == 'STAFF' and company_code:
+            # Join existing company
+            try:
+                company = Company.objects.get(slug=company_code)
+            except Company.DoesNotExist:
+                return JsonResponse({'error': 'Invalid company code'}, status=400)
+        
+        # Create profile
+        UserProfile.objects.create(
+            user=user,
+            company=company,
+            role=role,
+        )
+        
+        # Auto-login
+        from django.contrib.auth import login
+        login(request, user)
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Registration successful!',
+            'username': username,
+            'role': role,
+            'company': company.name if company else None,
+            'redirect': '/'
+        })
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+def get_company_info(request, slug):
+    """Get public info about a company (for staff joining)"""
+    try:
+        company = Company.objects.get(slug=slug)
+        return JsonResponse({
+            'name': company.name,
+            'slug': company.slug,
+            'staff_count': company.userprofile_set.count(),
+        })
+    except Company.DoesNotExist:
+        return JsonResponse({'error': 'Company not found'}, status=404)
+    
+#############################
+#HEAT MAP DATA ENDPOINT
+#############################
+
+
+
+def scam_heatmap(request):
+    """Display scam activity heatmap for Kenya"""
+    try:
+        import folium
+        from folium.plugins import HeatMap
+        
+        # Get filter parameters
+        scam_type = request.GET.get('type', 'all')
+        time_range = request.GET.get('time', 'all')
+        
+        # Kenya center coordinates
+        kenya_center = [-0.0236, 37.9062]
+        
+        # Create map
+        m = folium.Map(
+            location=kenya_center,
+            zoom_start=7,
+            tiles='CartoDB dark_matter',
+            attr='AI Fraud Shield'
+        )
+        
+        # County coordinates
+        county_coords = {
+            'Nairobi': [-1.2921, 36.8219],
+            'Mombasa': [-4.0435, 39.6682],
+            'Kisumu': [-0.0917, 34.7680],
+            'Nakuru': [-0.3031, 36.0800],
+            'Eldoret': [0.5143, 35.2698],
+            'Thika': [-1.0396, 37.0695],
+            'Malindi': [-3.2175, 40.1167],
+            'Kitale': [1.0187, 35.0062],
+            'Garissa': [-0.4532, 39.6460],
+            'Nyeri': [-0.4201, 36.9516],
+            'Meru': [0.0500, 37.6500],
+            'Machakos': [-1.5177, 37.2634],
+            'Kakamega': [0.2833, 34.7500],
+            'Embu': [-0.5311, 37.4500],
+            'Nanyuki': [0.0167, 37.0667],
+            'Kisii': [-0.6816, 34.7775],
+            'Lamu': [-2.2696, 40.9006],
+            'Narok': [-1.0717, 35.8647],
+            'Voi': [-3.3967, 38.5559],
+            'Mandera': [3.9417, 41.8667],
+        }
+        
+        county_counts = {c: 0 for c in county_coords}
+        county_counts['Other'] = 0
+        total_scams = 0
+        high_risk = 0
+        heat_data = []
+        
+        if MODELS_AVAILABLE and ScamReport.objects:
+            reports = ScamReport.objects.filter(risk_score__gte=40)
+            
+            # Apply type filter
+            if scam_type != 'all':
+                reports = reports.filter(report_type=scam_type)
+            
+            # Apply time filter
+            today = timezone.now().date()
+            if time_range == 'today':
+                reports = reports.filter(date_reported__date=today)
+            elif time_range == 'week':
+                reports = reports.filter(date_reported__date__gte=today - timedelta(days=7))
+            elif time_range == 'month':
+                reports = reports.filter(date_reported__date__gte=today - timedelta(days=30))
+            
+            # ============================================================
+            # FIXED: Get counts BEFORE slicing
+            # ============================================================
+            total_scams = reports.count()
+            high_risk = reports.filter(risk_score__gte=70).count()
+            
+            # NOW slice for display (limit to 200 markers)
+            reports = reports[:200]
+            
+            for report in reports:
+                # Use REAL county/location data
+                if report.latitude and report.longitude:
+                    coords = [report.latitude, report.longitude]
+                    county = report.county if report.county else 'Unknown'
+                elif report.county and report.county in county_coords:
+                    coords = county_coords[report.county]
+                    county = report.county
+                else:
+                    county = 'Nairobi'
+                    coords = county_coords['Nairobi']
+                
+                if county in county_counts:
+                    county_counts[county] += 1
+                else:
+                    county_counts['Other'] += 1
+                
+                if report.risk_score >= 70:
+                    color = 'red'
+                elif report.risk_score >= 50:
+                    color = 'orange'
+                else:
+                    color = 'yellow'
+                
+                folium.CircleMarker(
+                    location=coords,
+                    radius=5 + (report.risk_score / 10),
+                    popup=f"<b>{report.report_type}</b><br>Score: {report.risk_score}/100<br>County: {county}",
+                    color=color,
+                    fill=True,
+                    fillOpacity=0.6
+                ).add_to(m)
+                
+                heat_data.append([coords[0], coords[1], report.risk_score / 100])
+            
+            if heat_data:
+                HeatMap(heat_data, radius=25, blur=15, max_zoom=10).add_to(m)
+        
+        # Add county markers
+        for county, coords in county_coords.items():
+            count = county_counts.get(county, 0)
+            if count > 0:
+                folium.Marker(
+                    coords,
+                    popup=f"<b>{county}</b><br>Scam Reports: {count}",
+                    icon=folium.Icon(color='blue', icon='info-sign')
+                ).add_to(m)
+        
+        # Add legend
+        legend_html = '''
+        <div style="position:fixed;bottom:50px;left:50px;z-index:9999;background:white;padding:10px;border-radius:8px;box-shadow:0 2px 10px rgba(0,0,0,0.3);font-family:sans-serif;font-size:12px;">
+            <strong>🗺️ Scam Risk Levels</strong><br>
+            <span style="color:red;">●</span> High Risk (70+)<br>
+            <span style="color:orange;">●</span> Medium Risk (50-69)<br>
+            <span style="color:yellow;">●</span> Low Risk (40-49)<br>
+            <span style="color:blue;">▼</span> County Center
+        </div>
+        '''
+        m.get_root().html.add_child(folium.Element(legend_html))
+        
+        # Build county stats
+        county_stats = []
+        for county, count in sorted(county_counts.items(), key=lambda x: x[1], reverse=True):
+            if count > 0 and county != 'Other':
+                pct = min(100, (count / max(1, total_scams)) * 100)
+                county_stats.append({
+                    'name': county,
+                    'count': count,
+                    'percentage': round(pct, 1)
+                })
+        
+        blocked = 0
+        if MODELS_AVAILABLE:
+            try:
+                from .models import BlockedNumber
+                blocked = BlockedNumber.objects.filter(status__in=['CONFIRMED', 'BLOCKED']).count()
+            except:
+                pass
+        
+        map_html = m._repr_html_()
+        
+        return render(request, 'detector/heatmap.html', {
+            'map_html': map_html,
+            'total_scams': total_scams,
+            'high_risk': high_risk,
+            'active_counties': len([c for c in county_stats if c['count'] > 0]),
+            'blocked_numbers': blocked,
+            'county_stats': county_stats[:15],
+            'current_filter': scam_type,
+            'current_time': time_range,
+        })
+        
+    except ImportError:
+        return render(request, 'detector/heatmap.html', {
+            'error': 'Map library not installed. Run: pip install folium',
+            'total_scams': 0, 'high_risk': 0, 'active_counties': 0,
+            'blocked_numbers': 0, 'county_stats': [],
+        })
+    except Exception as e:
+        return render(request, 'detector/heatmap.html', {
+            'error': str(e),
+            'total_scams': 0, 'high_risk': 0, 'active_counties': 0,
+            'blocked_numbers': 0, 'county_stats': [],
+        })
+        
+# ============================================================
+# Rewards and Gamification Endpoints
+# ============================================================
+POINTS_MAP = {
+    'detect_scam': 5,      # Detecting a scam
+    'report_number': 50,   # Reporting a scam number
+    'verify_scam': 20,     # Verification confirmed
+    'block_number': 30,    # Number gets blocked
+    'daily_login': 10,     # Daily activity
+    'share_report': 15,    # Sharing results
+}
+
+def award_points(user, action_type, points=None):
+    """Award points to user for actions"""
+    if not user or not user.is_authenticated:
+        return None
+    
+    if points is None:
+        points = POINTS_MAP.get(action_type, 5)
+    
+    try:
+        user_points, created = UserPoints.objects.get_or_create(user=user)
+        user_points.add_points(points, action_type)
+        
+        # Check for badges
+        check_and_award_badges(user, user_points)
+        
+        return user_points
+    except Exception as e:
+        print(f"Points error: {e}")
+        return None
+
+
+def check_and_award_badges(user, user_points):
+    """Check and award badges based on achievements"""
+    badges_to_check = [
+        {'cond': user_points.total_points >= 100, 'name': 'First 100'},
+        {'cond': user_points.total_points >= 500, 'name': 'Rising Star'},
+        {'cond': user_points.total_points >= 1000, 'name': 'Scam Hunter'},
+        {'cond': user_points.reports_submitted >= 10, 'name': 'Reporter'},
+        {'cond': user_points.reports_submitted >= 50, 'name': 'Watchdog'},
+        {'cond': user_points.scams_verified >= 20, 'name': 'Verifier'},
+        {'cond': user_points.numbers_blocked >= 5, 'name': 'Blocker'},
+        {'cond': user_points.current_streak >= 7, 'name': 'Dedicated'},
+    ]
+    
+    for check in badges_to_check:
+        if check['cond']:
+            badge, created = Badge.objects.get_or_create(
+                name=check['name'],
+                defaults={'description': f'Earned the {check["name"]} badge', 'icon': '🏅'}
+            )
+            UserBadge.objects.get_or_create(user=user, badge=badge)
+
+
+@csrf_exempt
+@require_http_methods(["GET"])
+def leaderboard(request):
+    """Get top users by points"""
+    limit = int(request.GET.get('limit', 20))
+    
+    top_users = UserPoints.objects.select_related('user').order_by('-total_points')[:limit]
+    
+    leaderboard_data = []
+    for rank, up in enumerate(top_users, 1):
+        leaderboard_data.append({
+            'rank': rank,
+            'username': up.user.username,
+            'points': up.total_points,
+            'level': up.get_level(),
+            'reports': up.reports_submitted,
+            'badges': UserBadge.objects.filter(user=up.user).count(),
+        })
+    
+    return JsonResponse({
+        'leaderboard': leaderboard_data,
+        'total_users': UserPoints.objects.count(),
+    })
+
+
+@csrf_exempt
+@require_http_methods(["GET"])
+def my_points(request):
+    """Get current user's points"""
+    if not request.user.is_authenticated:
+        return JsonResponse({'error': 'Login required'}, status=401)
+    
+    try:
+        up = UserPoints.objects.get(user=request.user)
+        badges = UserBadge.objects.filter(user=request.user).select_related('badge')
+        
+        return JsonResponse({
+            'points': up.total_points,
+            'level': up.get_level(),
+            'reports': up.reports_submitted,
+            'verified': up.scams_verified,
+            'blocked': up.numbers_blocked,
+            'streak': up.current_streak,
+            'badges': [{'name': b.badge.name, 'icon': b.badge.icon} for b in badges],
+        })
+    except UserPoints.DoesNotExist:
+        return JsonResponse({
+            'points': 0, 'level': '🌱 Newcomer',
+            'reports': 0, 'verified': 0, 'blocked': 0, 'streak': 0, 'badges': []
+        })
+def leaderboard_page(request):
+    """Display leaderboard page"""
+    return render(request, 'detector/leaderboard.html')

@@ -456,3 +456,323 @@ new MutationObserver(() => {
 }).observe(document, { subtree: true, childList: true });
 
 console.log('🛡️ AI Fraud Shield: Content script loaded');
+
+
+// ============================================================
+// ENHANCEMENT: PASSWORD FIELD PROTECTION
+// ============================================================
+function protectPasswordFields() {
+  const passwordFields = document.querySelectorAll('input[type="password"]');
+  
+  passwordFields.forEach(field => {
+    // Skip if already protected
+    if (field.dataset.fraudshieldProtected) return;
+    field.dataset.fraudshieldProtected = 'true';
+    
+    // Check if page is suspicious
+    const pageScore = checkPageSafety();
+    
+    if (pageScore > 40) {
+      // Add warning near password field
+      const warning = document.createElement('div');
+      warning.style.cssText = `
+        background: #dc3545;
+        color: white;
+        padding: 8px 12px;
+        border-radius: 6px;
+        font-size: 12px;
+        margin: 5px 0;
+        animation: slideDown 0.3s ease;
+        font-family: -apple-system, sans-serif;
+      `;
+      warning.innerHTML = `
+        <strong>⚠️ AI Fraud Shield Warning!</strong><br>
+        This site shows scam indicators (Score: ${pageScore}/100).<br>
+        <strong>DO NOT enter your password here!</strong>
+      `;
+      field.parentNode.insertBefore(warning, field);
+      
+      // Add red border to password field
+      field.style.border = '2px solid #dc3545';
+      field.style.boxShadow = '0 0 10px rgba(220,53,69,0.3)';
+      
+      // Warn on focus
+      field.addEventListener('focus', () => {
+        showToast('⚠️ Warning: This site is suspicious. Do not enter your password!', 'danger');
+      });
+    }
+  });
+}
+
+// ============================================================
+// ENHANCEMENT: FORM SUBMISSION WARNING
+// ============================================================
+function protectFormSubmissions() {
+  const forms = document.querySelectorAll('form');
+  
+  forms.forEach(form => {
+    if (form.dataset.fraudshieldProtected) return;
+    form.dataset.fraudshieldProtected = 'true';
+    
+    form.addEventListener('submit', async (e) => {
+      // Check if form has password/sensitive fields
+      const hasPassword = form.querySelector('input[type="password"]');
+      const hasCard = form.querySelector('input[name*="card"], input[name*="credit"], input[name*="cvv"]');
+      const hasPin = form.querySelector('input[name*="pin"], input[name*="mpin"], input[name*="otp"]');
+      
+      if (hasPassword || hasCard || hasPin) {
+        const pageScore = checkPageSafety();
+        
+        if (pageScore > 50) {
+          e.preventDefault();
+          
+          const confirmed = confirm(
+            `🚨 AI FRAUD SHIELD WARNING!\n\n` +
+            `This page has a scam risk score of ${pageScore}/100.\n\n` +
+            `⚠️ Submitting your information here could be dangerous!\n\n` +
+            `Are you ABSOLUTELY sure you want to continue?\n\n` +
+            `Click Cancel to stay safe.`
+          );
+          
+          if (!confirmed) {
+            showToast('✅ Good decision! Your information is safe.', 'success');
+          } else {
+            form.submit();
+          }
+        }
+      }
+    });
+  });
+}
+
+// ============================================================
+// ENHANCEMENT: CHECK PAGE SAFETY (Local + API)
+// ============================================================
+function checkPageSafety() {
+  let score = 0;
+  const pageText = document.body.innerText.toLowerCase();
+  
+  // Check for scam keywords
+  const scamKeywords = [
+    'verify your account', 'suspended', 'blocked', 'urgent',
+    'send money', 'mpesa', 'pin', 'password', 'otp',
+    'click here', 'limited time', 'act now'
+  ];
+  
+  scamKeywords.forEach(keyword => {
+    if (pageText.includes(keyword)) score += 8;
+  });
+  
+  // Check for suspicious patterns
+  const hasPasswordForm = document.querySelector('input[type="password"]') !== null;
+  const hasSuspiciousDomain = checkSuspiciousDomain();
+  const hasHiddenFields = document.querySelectorAll('input[type="hidden"]').length > 3;
+  
+  if (hasPasswordForm) score += 10;
+  if (hasSuspiciousDomain) score += 25;
+  if (hasHiddenFields) score += 5;
+  
+  return Math.min(100, score);
+}
+
+function checkSuspiciousDomain() {
+  const domain = window.location.hostname.toLowerCase();
+  const suspiciousPatterns = [
+    'secure-', 'verify-', 'login-', 'update-', 'confirm-',
+    'account-', 'security-', 'banking-', 'mpesa-', 'safaricom-'
+  ];
+  
+  return suspiciousPatterns.some(pattern => domain.includes(pattern));
+}
+
+// ============================================================
+// ENHANCEMENT: DOWNLOAD SCANNING
+// ============================================================
+function scanDownloads() {
+  // Intercept download links
+  document.addEventListener('click', (e) => {
+    const link = e.target.closest('a');
+    if (!link) return;
+    
+    const href = link.href;
+    if (!href) return;
+    
+    // Check if it's a download link
+    const downloadExtensions = ['.exe', '.zip', '.rar', '.msi', '.dmg', '.apk', '.scr', '.bat', '.cmd', '.ps1'];
+    const isDownload = downloadExtensions.some(ext => href.toLowerCase().includes(ext));
+    
+    if (isDownload) {
+      const suspicious = checkSuspiciousDomain();
+      if (suspicious) {
+        e.preventDefault();
+        
+        const warning = confirm(
+          `⚠️ AI FRAUD SHIELD WARNING!\n\n` +
+          `This download is from a suspicious domain!\n\n` +
+          `File: ${href.substring(href.lastIndexOf('/') + 1)}\n` +
+          `Domain: ${window.location.hostname}\n\n` +
+          `Downloading from suspicious sites can install malware.\n\n` +
+          `Cancel to stay safe.`
+        );
+        
+        if (warning) {
+          window.location.href = href;
+        }
+      }
+    }
+  });
+}
+
+// ============================================================
+// ENHANCEMENT: REAL-TIME URL SAFETY CHECK
+// ============================================================
+async function checkCurrentUrl() {
+  const url = window.location.href;
+  
+  // Skip known safe domains
+  const safeDomains = ['google.com', 'facebook.com', 'twitter.com', 'youtube.com', 'wikipedia.org'];
+  const domain = window.location.hostname.replace('www.', '');
+  if (safeDomains.some(safe => domain.includes(safe))) return;
+  
+  try {
+    const response = await fetch('http://127.0.0.1:8000/api/v1/check/url', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-API-Key': 'test_key_123'
+      },
+      body: JSON.stringify({ url: url })
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      if (data.is_safe === false && data.score > 40) {
+        showUrlWarning(data.score, data.warnings);
+      }
+    }
+  } catch (e) {
+    // API not available - skip
+  }
+}
+
+function showUrlWarning(score, warnings) {
+  const existingWarning = document.getElementById('fraudshield-url-warning');
+  if (existingWarning) return;
+  
+  const banner = document.createElement('div');
+  banner.id = 'fraudshield-url-warning';
+  banner.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: #dc3545;
+    color: white;
+    padding: 12px 20px;
+    text-align: center;
+    z-index: 999999;
+    font-family: -apple-system, sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    animation: slideDown 0.4s ease;
+  `;
+  
+  banner.innerHTML = `
+    <div style="display:flex;justify-content:center;align-items:center;gap:15px;flex-wrap:wrap;">
+      <span>🚨 <strong>WARNING:</strong> This URL is suspicious (Score: ${score}/100)</span>
+      <button onclick="this.parentElement.parentElement.remove()" style="background:white;color:#dc3545;border:none;padding:5px 15px;border-radius:20px;cursor:pointer;font-weight:700;">✕ Dismiss</button>
+    </div>
+  `;
+  
+  document.body.insertBefore(banner, document.body.firstChild);
+  
+  // Auto-dismiss after 8 seconds
+  setTimeout(() => {
+    if (banner.parentNode) {
+      banner.style.opacity = '0';
+      banner.style.transition = 'opacity 0.5s';
+      setTimeout(() => banner.remove(), 500);
+    }
+  }, 8000);
+}
+
+// ============================================================
+// ENHANCEMENT: TOAST NOTIFICATIONS
+// ============================================================
+function showToast(message, type = 'info') {
+  const toast = document.createElement('div');
+  const bgColor = type === 'danger' ? '#dc3545' : type === 'success' ? '#10b981' : '#002855';
+  
+  toast.style.cssText = `
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: ${bgColor};
+    color: white;
+    padding: 12px 20px;
+    border-radius: 10px;
+    z-index: 999999;
+    font-family: -apple-system, sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+    animation: slideUp 0.3s ease;
+    max-width: 350px;
+  `;
+  toast.textContent = message;
+  document.body.appendChild(toast);
+  
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transition = 'opacity 0.3s';
+    setTimeout(() => toast.remove(), 300);
+  }, 4000);
+}
+
+// ============================================================
+// INITIALIZE ALL PROTECTIONS
+// ============================================================
+function initEnhancedProtection() {
+  console.log('🛡️ AI Fraud Shield - Enhanced Protection Active');
+  
+  // Run on page load
+  protectPasswordFields();
+  protectFormSubmissions();
+  scanDownloads();
+  checkCurrentUrl();
+  
+  // Re-run on DOM changes (for SPAs)
+  const observer = new MutationObserver(() => {
+    protectPasswordFields();
+    protectFormSubmissions();
+  });
+  
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true
+  });
+}
+
+// Add CSS animations
+const protectionStyles = document.createElement('style');
+protectionStyles.textContent = `
+  @keyframes slideDown {
+    from { opacity: 0; transform: translateY(-30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+`;
+document.head.appendChild(protectionStyles);
+
+// Start protection
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initEnhancedProtection);
+} else {
+  initEnhancedProtection();
+}
+
+console.log('🛡️ AI Fraud Shield: Enhanced Extension Loaded');

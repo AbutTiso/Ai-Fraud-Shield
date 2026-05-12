@@ -647,7 +647,6 @@ function updateCharts(data) {
 // ============================================================
 // STATS UPDATE FUNCTIONS
 // ============================================================
-
 async function loadEnhancedStats() {
   console.log("Loading enhanced stats...");
   try {
@@ -686,18 +685,36 @@ async function loadEnhancedStats() {
       // Update charts
       updateChartsInstant(s);
 
-      // Trigger enhanced dashboard charts (in dashboard.js)
+      // Trigger enhanced dashboard charts
       if (typeof updateEnhancedStats === 'function') {
           updateEnhancedStats(s);
       }
 
       // Update table
       updateRecentScamsTable(s.recent_scams || []);
+
+      // ============================================================
+      // UPDATE STAFF ACTIVITY TABLE (Company Admin)
+      // ============================================================
+      if (data.staff_scans && data.staff_scans.length > 0) {
+        const staffBody = document.getElementById('staffActivityBody');
+        if (staffBody) {
+          staffBody.innerHTML = data.staff_scans.map(staff => `
+            <tr>
+              <td><i class="fas fa-user"></i> ${staff.name || 'Unknown'}</td>
+              <td><span class="badge bg-info">${staff.scans || 0}</span></td>
+              <td><span class="badge bg-danger">${staff.high_risk || 0}</span></td>
+              <td><span class="badge bg-success">${staff.today || 0}</span></td>
+            </tr>
+          `).join('');
+        }
+      }
     }
   } catch (error) {
     console.error("Error loading stats:", error);
   }
 }
+
 
 // Instant stats update (for real-time call monitoring)
 async function updateStatsInstant() {

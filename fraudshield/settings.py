@@ -24,7 +24,13 @@ SECRET_KEY = 'django-insecure-i4p%l%*yiwqo^psrvm0@%$*yzw^u1*26*m8f84+!j06tppc05p
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    
+    'localhost',
+    '127.0.0.1',
+    'fog-compound-brilliant.ngrok-free.dev',
+    '.ngrok-free.dev',  
+]
 
 
 # Application definition
@@ -55,7 +61,7 @@ ROOT_URLCONF = 'fraudshield.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -105,7 +111,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Africa/Nairobi'
 
 USE_I18N = True
 
@@ -174,3 +180,9 @@ LOGGING = {
 }
 
 TELEGRAM_BOT_TOKEN = '8447775514:AAGlB5_Hq1zNTVsJYXax0gghmM9esdicGow'
+
+# Africa's Talking SMS Gateway
+AT_USERNAME = 'sandbox'
+AT_API_KEY = 'atsk_e34f17d2baa7f92e9a4e5e6da2a6153d3b003da44b9155d6aa68b2a3b9dc2656c8aeefed'
+AT_SHORTCODE = '4350'
+LOGOUT_REDIRECT_URL = '/'
