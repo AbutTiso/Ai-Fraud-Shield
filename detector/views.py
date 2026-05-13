@@ -2841,14 +2841,13 @@ def get_company_info(request, slug):
 #HEAT MAP DATA ENDPOINT
 #############################
 
-
-
 def scam_heatmap(request):
     """Display scam activity heatmap for Kenya"""
+    import folium
+    from folium.plugins import HeatMap
+    
+    print(f"🔥 Heatmap called - Total reports: {ScamReport.objects.count()}")
     try:
-        import folium
-        from folium.plugins import HeatMap
-        
         # Get filter parameters
         scam_type = request.GET.get('type', 'all')
         time_range = request.GET.get('time', 'all')
@@ -2894,7 +2893,8 @@ def scam_heatmap(request):
         high_risk = 0
         heat_data = []
         
-        if MODELS_AVAILABLE and ScamReport.objects:
+        # FIXED: Check directly without MODELS_AVAILABLE
+        if ScamReport.objects.count() > 0:
             reports = ScamReport.objects.filter(risk_score__gte=40)
             
             # Apply type filter
@@ -2910,11 +2910,10 @@ def scam_heatmap(request):
             elif time_range == 'month':
                 reports = reports.filter(date_reported__date__gte=today - timedelta(days=30))
             
-            # ============================================================
-            # FIXED: Get counts BEFORE slicing
-            # ============================================================
+            # Get counts BEFORE slicing
             total_scams = reports.count()
             high_risk = reports.filter(risk_score__gte=70).count()
+            print(f"🔥 Heatmap data: {total_scams} total, {high_risk} high risk")
             
             # NOW slice for display (limit to 200 markers)
             reports = reports[:200]
@@ -2990,13 +2989,13 @@ def scam_heatmap(request):
                     'percentage': round(pct, 1)
                 })
         
+        # Get blocked numbers
         blocked = 0
-        if MODELS_AVAILABLE:
-            try:
-                from .models import BlockedNumber
-                blocked = BlockedNumber.objects.filter(status__in=['CONFIRMED', 'BLOCKED']).count()
-            except:
-                pass
+        try:
+            from .models import BlockedNumber
+            blocked = BlockedNumber.objects.filter(status__in=['CONFIRMED', 'BLOCKED']).count()
+        except:
+            pass
         
         map_html = m._repr_html_()
         
@@ -3011,18 +3010,22 @@ def scam_heatmap(request):
             'current_time': time_range,
         })
         
-    except ImportError:
+    except ImportError as e:
+        print(f"🔥 Heatmap ImportError: {e}")
         return render(request, 'detector/heatmap.html', {
             'error': 'Map library not installed. Run: pip install folium',
             'total_scams': 0, 'high_risk': 0, 'active_counties': 0,
             'blocked_numbers': 0, 'county_stats': [],
         })
     except Exception as e:
+        print(f"🔥 Heatmap Exception: {e}")
         return render(request, 'detector/heatmap.html', {
             'error': str(e),
             'total_scams': 0, 'high_risk': 0, 'active_counties': 0,
             'blocked_numbers': 0, 'county_stats': [],
         })
+
+
         
 # ============================================================
 # Rewards and Gamification Endpoints
