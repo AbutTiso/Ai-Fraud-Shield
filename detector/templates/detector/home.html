@@ -1,344 +1,437 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}
-  AI Fraud Shield - Complete Scam Detection Suite | Kenya
-{% endblock %}
+{% block title %}AI Fraud Shield - Scam Detection | Kenya{% endblock %}
+
+{# ========== OVERRIDE BASE HEADER TO PREVENT DUPLICATE ========== #}
+{% block header %}{% endblock %}
 
 {% block extra_css %}
   <link rel="stylesheet" href="{% static 'detector/css/style.css' %}" />
   <link rel="stylesheet" href="{% static 'detector/css/home.css' %}" />
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    /* Landing Hero */
+    .landing-hero {
+      background: linear-gradient(135deg, #002855 0%, #001a3f 100%);
+      color: white;
+      padding: 32px 28px;
+      text-align: center;
+      border-bottom: 4px solid #f5a623;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .landing-hero::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(255,255,255,0.05) 1%, transparent 1%);
+      background-size: 50px 50px;
+      animation: shimmer 20s linear infinite;
+      pointer-events: none;
+    }
+
+    @keyframes shimmer {
+      from { transform: translate(0, 0); }
+      to { transform: translate(50px, 50px); }
+    }
+
+    .landing-hero-content {
+      position: relative;
+      z-index: 1;
+    }
+
+    .landing-hero-icon {
+      width: 70px;
+      height: 70px;
+      background: rgba(245,166,35,0.15);
+      border: 2px solid #f5a623;
+      border-radius: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      color: #f5a623;
+      margin: 0 auto 16px;
+    }
+
+    .landing-hero h1 {
+      font-size: 1.8rem;
+      font-weight: 700;
+      margin: 0 0 8px;
+    }
+
+    .landing-hero h1 i {
+      color: #f5a623;
+    }
+
+    .landing-hero .welcome-msg {
+      font-size: 1rem;
+      opacity: 0.9;
+      margin-bottom: 6px;
+    }
+
+    .landing-hero .welcome-sub {
+      font-size: 0.85rem;
+      opacity: 0.7;
+      margin-bottom: 16px;
+    }
+
+    .landing-hero-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+      position: relative;
+      z-index: 1;
+    }
+
+    .btn-landing {
+      padding: 10px 22px;
+      border-radius: 50px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.3s;
+    }
+
+    .btn-landing:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+    }
+
+    .btn-landing-gold {
+      background: #f5a623;
+      color: #002855;
+    }
+
+    .btn-landing-outline {
+      border: 2px solid rgba(255,255,255,0.4);
+      color: white;
+    }
+
+    .btn-landing-outline:hover {
+      background: rgba(255,255,255,0.1);
+      color: white;
+    }
+
+    .btn-landing-danger {
+      background: #dc3545;
+      color: white;
+    }
+
+    /* Quick Stats - inside main content */
+    .quick-stats-strip {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    
+    .quick-stat-item {
+      background: white;
+      border-radius: 10px;
+      padding: 10px 8px;
+      text-align: center;
+      border: 1px solid #e5e7eb;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-decoration: none;
+      color: inherit;
+      display: block;
+    }
+    
+    .quick-stat-item:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      border-color: #f5a623;
+    }
+    
+    .quick-stat-item .qs-icon {
+      font-size: 1.1rem;
+      margin-bottom: 2px;
+    }
+    
+    .quick-stat-item .qs-value {
+      font-size: 1.2rem;
+      font-weight: 800;
+      color: #002855;
+      line-height: 1;
+    }
+    
+    .quick-stat-item .qs-label {
+      font-size: 0.6rem;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      font-weight: 600;
+      margin-top: 3px;
+    }
+
+    @media (max-width: 768px) {
+      .landing-hero { padding: 24px 16px; }
+      .landing-hero h1 { font-size: 1.4rem; }
+      .quick-stats-strip { grid-template-columns: repeat(3, 1fr); }
+    }
+    
+    @media (max-width: 480px) {
+      .quick-stats-strip { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
 {% endblock %}
 
 {% block content %}
-  <div class="container">
-    <div class="main-card">
-      <!-- HEADER -->
-      <!-- SIDEBAR LAYOUT -->
-      <div class="sidebar-layout">
-        <!-- SIDEBAR -->
-        <div class="sidebar">
-          <div class="sidebar-brand">
-            <div class="sidebar-brand-icon">
-              <i class="fas fa-shield-alt"></i>
-            </div>
-            <div class="sidebar-brand-text">AI Fraud Shield</div>
-          </div>
-          <div class="sidebar-nav-wrapper">
-            <div class="sidebar-section-title">Detection Tools</div>
-            <ul class="sidebar-nav">
-              <li>
-                <a href="#" class="side-link active" data-tab="sms"><span class="nav-icon"><i class="fas fa-sms"></i></span><span class="nav-label">SMS Detection</span></a>
-              </li>
-              <li>
-                <a href="#" class="side-link" data-tab="email"><span class="nav-icon"><i class="fas fa-envelope"></i></span><span class="nav-label">Email Analysis</span></a>
-              </li>
-              <li>
-                <a href="#" class="side-link" data-tab="whatsapp"><span class="nav-icon"><i class="fab fa-whatsapp"></i></span><span class="nav-label">WhatsApp</span></a>
-              </li>
-              <li>
-                <a href="#" class="side-link" data-tab="screenshot"><span class="nav-icon"><i class="fas fa-camera"></i></span><span class="nav-label">Screenshot</span></a>
-              </li>
-              <li>
-                <a href="#" class="side-link" data-tab="url"><span class="nav-icon"><i class="fas fa-link"></i></span><span class="nav-label">URL Checker</span></a>
-              </li>
-            </ul>
-            <div class="sidebar-section-title">Advanced Tools</div>
-            <ul class="sidebar-nav">
-              <li>
-                <a href="#" class="side-link" data-tab="call"><span class="nav-icon"><i class="fas fa-phone-alt"></i></span><span class="nav-label">Call Monitor</span></a>
-              </li>
-              <li>
-                <a href="#" class="side-link" data-tab="telegram"><span class="nav-icon"><i class="fab fa-telegram-plane"></i></span><span class="nav-label">Telegram</span></a>
-              </li>
-              <li><a href="/heatmap/"><span class="nav-icon"><i class="fas fa-map-marked-alt"></i></span><span class="nav-label">Scam Heatmap</span></a></li>
-            </ul>
-            {% if user.is_authenticated %}
-              <div class="sidebar-section-title">My Dashboard</div>
-              <ul class="sidebar-nav">
-                <li>
-                  <a href="#" class="side-link" data-tab="stats">
-                    <span class="nav-icon"><i class="fas fa-chart-bar"></i></span><span class="nav-label">
-                      {% if user.userprofile.company and user.userprofile.role == 'COMPANY_ADMIN' %}
-                        {{ user.userprofile.company.name }} Stats
-                      {% else %}
-                        My Statistics
-                      {% endif %}
-                    </span>
-                  </a>
-                </li>
-              </ul>
+<div class="container">
+  <div class="main-card">
+    
+    <!-- ========== LANDING HERO HEADER ========== -->
+    <div class="landing-hero">
+      <div class="landing-hero-content">
+        <div class="landing-hero-icon">
+          <i class="fas fa-shield-haltered"></i>
+        </div>
+        <h1><i class="fas fa-shield-alt"></i> AI Fraud Shield</h1>
+        
+        {% if user.is_authenticated %}
+          <p class="welcome-msg">
+            Welcome back, <strong>{{ user.username }}</strong>! 
+            {% if user.userprofile.company %}
+              <br><small style="opacity:0.8;">{{ user.userprofile.company.name }} · {{ user.userprofile.get_role_display }}</small>
+            {% endif %}
+          </p>
+          <p class="welcome-sub">Your personal scam detection dashboard</p>
+          <div class="landing-hero-actions">
+            <a href="/report-scam/" class="btn-landing btn-landing-danger">
+              <i class="fas fa-flag"></i> Report Scam
+            </a>
+            {% if user.userprofile.company and user.userprofile.role != 'INDIVIDUAL' %}
+            <a href="/corporate/" class="btn-landing btn-landing-gold">
+              <i class="fas fa-building-shield"></i> Corporate Shield
+            </a>
             {% endif %}
           </div>
-          <div class="sidebar-footer">
-            <a href="/scam-alerts/"><i class="fas fa-bell"></i> <span>Scam Alerts</span></a>
-            <a href="/safety-tips/"><i class="fas fa-lightbulb"></i> <span>Safety Tips</span></a>
+        {% else %}
+          <p class="welcome-msg">
+            Kenya's Most Advanced <strong>AI-Powered Scam Detection</strong> Platform
+          </p>
+          <p class="welcome-sub">
+            <i class="fas fa-check-circle" style="color:#10b981;"></i> 100% Free · 
+            <i class="fas fa-check-circle" style="color:#10b981;"></i> 200+ Scam Patterns · 
+            <i class="fas fa-check-circle" style="color:#10b981;"></i> English & Swahili
+          </p>
+          <div class="landing-hero-actions">
+            <a href="/register/" class="btn-landing btn-landing-gold">
+              <i class="fas fa-user-plus"></i> Sign Up Free
+            </a>
+            <a href="/login/" class="btn-landing btn-landing-outline">
+              <i class="fas fa-sign-in-alt"></i> Login
+            </a>
+            <a href="/report-scam/" class="btn-landing btn-landing-danger">
+              <i class="fas fa-flag"></i> Report Scam
+            </a>
           </div>
-        </div>
-        <!-- /sidebar -->
-
-        <!-- MAIN CONTENT -->
-        <div class="main-content">
-          <!-- SMS Tab -->
-          <div id="smsTab" class="tab-content active">
-            <div class="tab-header">
-              <h5><i class="fas fa-sms"></i> SMS Scam Detector</h5><p class="text-muted mb-0 mt-1">Paste any suspicious SMS. Works with English and Swahili.</p>
-            </div>
-            <div class="mb-3">
-              <small><i class="fas fa-flask"></i> Test:</small>
-              <button type="button" class="example-btn" data-type="sms" data-example="scam">Account Scam</button>
-              <button type="button" class="example-btn" data-type="sms" data-example="prize">Prize Scam</button>
-              <button type="button" class="example-btn" data-type="sms" data-example="safe">Safe SMS</button>
-            </div>
-            <form id="smsForm">
-              <div class="mb-3">
-                <textarea class="form-control" id="smsText" rows="6" placeholder="Paste SMS here..."></textarea>
-              </div><button type="submit" class="btn-analyze"><i class="fas fa-search"></i> Analyze SMS</button>
-            </form>
-            <div class="spinner" id="smsSpinner">
-              <div class="spinner-border"></div>
-              <p class="mt-2">Analyzing...</p>
-            </div>
-            <div id="smsResult" class="result-card"></div>
-          </div>
-
-          <!-- Email Tab -->
-          <div id="emailTab" class="tab-content">
-            <div class="tab-header">
-              <h5><i class="fas fa-envelope"></i> Safe Email Phishing Detector</h5>
-            </div>
-            <div class="safe-analysis-badge">
-              <div class="d-flex align-items-center">
-                <div style="font-size:2rem;margin-right:15px;">
-                  <i class="fas fa-shield-alt"></i>
-                </div>
-                <div>
-                  <strong><i class="fas fa-check-circle"></i> 100% SAFE - NO CLICKS!</strong><br /><small>We NEVER click links. Paste email as TEXT only.</small>
-                </div>
-              </div>
-            </div>
-            <form id="emailForm">
-              <div class="mb-3">
-                <label class="form-label fw-bold">Paste Email Content:</label><textarea class="form-control" id="emailText" rows="12" placeholder="Paste email content..."></textarea>
-              </div><button type="submit" class="btn-analyze"><i class="fas fa-shield-alt"></i> Analyze Email</button>
-            </form>
-            <div class="spinner" id="emailSpinner">
-              <div class="spinner-border"></div>
-              <p class="mt-2">Analyzing...</p>
-            </div>
-            <div id="emailResult" class="result-card"></div>
-          </div>
-
-          <!-- WhatsApp Tab -->
-          <div id="whatsappTab" class="tab-content">
-            <div class="tab-header">
-              <h5><i class="fab fa-whatsapp"></i> WhatsApp Scam Detector</h5><p class="text-muted">Export chat → Menu → More → Export chat → Without media</p>
-            </div>
-            <form id="whatsappForm">
-              <div class="mb-3">
-                <textarea class="form-control" id="whatsappText" rows="10" placeholder="Paste WhatsApp export..." style="font-family:monospace;"></textarea>
-              </div><button type="submit" class="btn-analyze"><i class="fab fa-whatsapp"></i> Analyze</button>
-            </form>
-            <div class="spinner" id="whatsappSpinner">
-              <div class="spinner-border"></div>
-              <p class="mt-2">Analyzing...</p>
-            </div>
-            <div id="whatsappResult" class="result-card"></div>
-          </div>
-
-          <!-- Call Tab -->
-          <div id="callTab" class="tab-content">
-            <div class="tab-header">
-              <h5><i class="fas fa-phone-alt"></i> Call Monitor</h5>
-            </div>
-            <div class="row">
-              <div class="col-md-6">
-                <div class="card">
-                  <div class="card-body">
-                    <h6>Manual Analysis</h6><textarea id="callTranscript" class="form-control" rows="8" placeholder="Paste transcript..."></textarea><button class="btn-analyze mt-3" id="analyzeCallBtn">Analyze</button><div id="callResult" class="result-card mt-3"></div>
-                  </div>
-                </div>
-              </div>
-              <div class="col-md-6">
-                <div class="card">
-                  <div class="card-body">
-                    <h6>Check Number</h6><input type="tel" id="callerNumber" class="form-control" placeholder="0712345678" /><button class="btn-analyze mt-2" id="checkNumberBtn">Check</button><div id="numberCheckResult" class="mt-3"></div>
-                  </div>
-                </div>
-                <div class="card quick-ref-card mt-3">
-                  <div class="card-body">
-                    <h6>⚠️ Quick Reference</h6><ul class="small">
-                      <li>❌ NEVER share PIN</li>
-                      <li>❌ NEVER share OTP</li>
-                      <li>✅ Hang up & call back</li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="card call-monitor-card mt-3">
-              <div class="card-body text-center">
-                <h6><i class="fas fa-microphone-alt live-badge"></i> LIVE MONITOR</h6><button class="btn btn-light" id="startCallMonitorBtn">Start</button> <button class="btn btn-outline-light" id="stopCallMonitorBtn" disabled>Stop</button><div id="monitorStatus" class="mt-2">⚪ Not monitoring</div>
-                <div id="liveTranscriptContainer" class="mt-3" style="max-height:200px;overflow-y:auto;text-align:left;"></div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Screenshot Tab -->
-          <div id="screenshotTab" class="tab-content">
-            <div class="tab-header">
-              <h5><i class="fas fa-camera"></i> Fake M-Pesa Receipt Detector</h5>
-            </div>
-            <div class="drop-zone" id="dropZone">
-              <div class="text-center">
-                <div style="font-size:3rem;">📸</div>
-                <div>Drag & drop or click</div><small>JPG, PNG (Max 5MB)</small>
-              </div>
-            </div>
-            <input type="file" id="screenshotInput" accept="image/*" style="display:none;" />
-            <div id="screenshotPreview" style="display:none;text-align:center;margin-top:20px;">
-              <img id="previewImage" style="max-width:100%;max-height:300px;border-radius:10px;" /><button class="btn-analyze" id="analyzeScreenshotBtn">Analyze</button>
-            </div>
-            <div class="spinner" id="screenshotSpinner">
-              <div class="spinner-border"></div>
-              <p class="mt-2">Extracting text...</p>
-            </div>
-            <div id="screenshotResult" class="result-card"></div>
-          </div>
-
-          <!-- Telegram Tab -->
-          <div id="telegramTab" class="tab-content">
-            <div class="tab-header">
-              <h5><i class="fab fa-telegram-plane"></i> Telegram Bot</h5>
-            </div>
-            <div class="row">
-              <div class="col-md-7">
-                <div class="card">
-                  <div class="card-body">
-                    <h6>Check Message</h6><form id="telegramForm">
-                      <textarea class="form-control" id="telegramText" rows="8" placeholder="Paste Telegram message..."></textarea><button type="submit" class="btn-analyze mt-2">Analyze</button>
-                    </form>
-                    <div id="telegramResult" class="result-card"></div>
-                  </div>
-                </div>
-              </div>
-              <div class="col-md-5">
-                <div class="card telegram-gradient">
-                  <div class="card-body text-center">
-                    <div style="font-size:3rem;">🤖</div><h6>@AIFraudShield_Bot</h6><p class="small">Our bot is LIVE!</p><a href="https://t.me/AIFraudShield_Bot" target="_blank" class="btn btn-light btn-sm">Open Bot</a>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- URL Tab -->
-          <div id="urlTab" class="tab-content">
-            <div class="tab-header">
-              <h5><i class="fas fa-link"></i> URL Checker</h5>
-            </div>
-            <form id="urlForm">
-              <div class="mb-3">
-                <input type="url" class="form-control" id="urlInput" placeholder="https://example.com" required />
-              </div><button type="submit" class="btn-analyze">Check URL</button>
-            </form>
-            <div class="spinner" id="urlSpinner">
-              <div class="spinner-border"></div>
-            </div>
-            <div id="urlResult" class="result-card"></div>
-          </div>
-
-          <!-- Stats Tab -->
-<div id="statsTab" class="tab-content">
-  <div class="tab-header">
-    <h5><i class="fas fa-chart-bar"></i> 
-      {% if user.is_superuser %}
-        System Overview - All Companies
-      {% elif user.is_authenticated and user.userprofile.company and user.userprofile.role == 'COMPANY_ADMIN' %}
-        {{ user.userprofile.company.name }} - Security Dashboard
-      {% elif user.is_authenticated %}
-        Your Security Dashboard
-      {% else %}
-        Public Statistics - <a href="/register/" style="color:#f5a623;">Sign Up</a> to track your activity
-      {% endif %}
-    </h5>
-  </div>
-
-  <!-- SUPER ADMIN: System-wide stats -->
-  {% if user.is_superuser %}
-  <div class="row g-3 mb-4">
-    <div class="col-md-3 col-6"><div class="stats-card navy"><div class="stats-number" id="statTotalReports">0</div><div class="stats-label">All Detections</div></div></div>
-    <div class="col-md-3 col-6"><div class="stats-card danger"><div class="stats-number" id="statHighRisk">0</div><div class="stats-label">High Risk</div></div></div>
-    <div class="col-md-3 col-6"><div class="stats-card gold"><div class="stats-number" id="statCompanies">0</div><div class="stats-label">Companies</div></div></div>
-    <div class="col-md-3 col-6"><div class="stats-card success"><div class="stats-number" id="statBlocked">0</div><div class="stats-label">Blocked Numbers</div></div></div>
-  </div>
-  {% endif %}
-
-  <!-- COMPANY ADMIN: Company stats + Staff table -->
-  {% if user.is_authenticated and user.userprofile.company and user.userprofile.role == 'COMPANY_ADMIN' and not user.is_superuser %}
-  <div class="row g-3 mb-4">
-    <div class="col-md-3 col-6"><div class="stats-card navy"><div class="stats-number" id="statTotalReports">0</div><div class="stats-label">Company Scans</div></div></div>
-    <div class="col-md-3 col-6"><div class="stats-card danger"><div class="stats-number" id="statHighRisk">0</div><div class="stats-label">High Risk Threats</div></div></div>
-    <div class="col-md-3 col-6"><div class="stats-card gold"><div class="stats-number" id="statStaff">0</div><div class="stats-label">Staff Members</div></div></div>
-    <div class="col-md-3 col-6"><div class="stats-card success"><div class="stats-number" id="statBlocked">0</div><div class="stats-label">Blocked Numbers</div></div></div>
-  </div>
-  <div class="card mb-4" style="border-left:4px solid #f5a623;">
-    <div class="card-body">
-      <h6><i class="fas fa-users"></i> Staff Activity Monitoring</h6>
-      <div class="table-responsive"><table class="table table-sm">
-        <thead><tr><th>Staff</th><th>Scans</th><th>High Risk</th><th>Today</th></tr></thead>
-        <tbody id="staffActivityBody"><tr><td colspan="4">Loading...</td></tr></tbody>
-      </table></div>
-    </div>
-  </div>
-  {% endif %}
-
-  <!-- INDIVIDUAL/STAFF: Personal stats -->
-  {% if user.is_authenticated and not user.is_superuser and not user.userprofile.company or user.userprofile.role == 'STAFF' %}
-  <div class="row g-3 mb-4">
-    <div class="col-md-3 col-6"><div class="stats-card navy"><div class="stats-number" id="statTotalReports">0</div><div class="stats-label">Your Scans</div></div></div>
-    <div class="col-md-3 col-6"><div class="stats-card danger"><div class="stats-number" id="statHighRisk">0</div><div class="stats-label">High Risk</div></div></div>
-    <div class="col-md-3 col-6"><div class="stats-card success"><div class="stats-number" id="statAccuracy">98%</div><div class="stats-label">Detection Rate</div></div></div>
-    <div class="col-md-3 col-6"><div class="stats-card gold"><div class="stats-number" id="statAvgScore">0</div><div class="stats-label">Avg Risk Score</div></div></div>
-  </div>
-  {% endif %}
-
-  <!-- ANONYMOUS -->
-  {% if not user.is_authenticated %}
-  <div class="alert mb-4" style="background:#fef3d5;border:1px solid #f5a623;border-radius:10px;text-align:center;">
-    <i class="fas fa-info-circle"></i> <strong>Sign up for free</strong> to track your scam detection history and access advanced features.
-    <a href="/register/" class="btn btn-sm ms-3" style="background:#f5a623;color:#002855;font-weight:700;">Sign Up Free</a>
-  </div>
-  {% endif %}
-
-  <!-- Charts (authenticated users only) -->
-  {% if user.is_authenticated %}
-  <div class="row g-4 mb-4">
-    <div class="col-md-6"><div class="chart-card"><h5>Scams by Type</h5><canvas id="scamTypeChart"></canvas></div></div>
-    <div class="col-md-6"><div class="chart-card"><h5>Risk Distribution</h5><canvas id="riskDistributionChart"></canvas></div></div>
-  </div>
-  <div class="row g-4 mb-4"><div class="col-12"><div class="chart-card"><h5>Trend (7 Days)</h5><canvas id="trendChart"></canvas></div></div></div>
-  
-  <div class="d-flex justify-content-between mb-2">
-    <h5>Recent Activity</h5>
-    {% if user.is_superuser or user.userprofile.role == 'COMPANY_ADMIN' %}<button class="btn-export" onclick="exportReports()">Export CSV</button>{% endif %}
-  </div>
-  <div class="table-responsive"><table class="table table-hover">
-    <thead><tr><th>Date</th><th>Type</th><th>Content</th><th>Score</th><th>Level</th></tr></thead>
-    <tbody id="recentScamsBody"><tr><td colspan="5">Loading...</td></tr></tbody>
-  </table></div>
-  {% endif %}
-</div>
-        </div>
-        <!-- /main-content -->
+        {% endif %}
       </div>
-      <!-- /sidebar-layout -->
+    </div>
 
-      <!-- FOOTER -->
+    <!-- SIDEBAR LAYOUT -->
+    <div class="sidebar-layout">
+      <!-- SIDEBAR -->
+      <div class="sidebar">
+        <div class="sidebar-brand">
+          <div class="sidebar-brand-icon"><i class="fas fa-shield-alt"></i></div>
+          <div class="sidebar-brand-text">Detection Tools</div>
+        </div>
+        <div class="sidebar-nav-wrapper">
+          <div class="sidebar-section-title">Main Tools</div>
+          <ul class="sidebar-nav">
+            <li><a href="#" class="side-link active" data-tab="sms"><span class="nav-icon"><i class="fas fa-sms"></i></span><span class="nav-label">SMS Detection</span></a></li>
+            <li><a href="#" class="side-link" data-tab="email"><span class="nav-icon"><i class="fas fa-envelope"></i></span><span class="nav-label">Email Analysis</span></a></li>
+            <li><a href="#" class="side-link" data-tab="whatsapp"><span class="nav-icon"><i class="fab fa-whatsapp"></i></span><span class="nav-label">WhatsApp</span></a></li>
+            <li><a href="#" class="side-link" data-tab="screenshot"><span class="nav-icon"><i class="fas fa-camera"></i></span><span class="nav-label">Screenshot</span></a></li>
+            <li><a href="#" class="side-link" data-tab="url"><span class="nav-icon"><i class="fas fa-link"></i></span><span class="nav-label">URL Checker</span></a></li>
+          </ul>
+          <div class="sidebar-section-title">More Tools</div>
+          <ul class="sidebar-nav">
+            <li><a href="#" class="side-link" data-tab="call"><span class="nav-icon"><i class="fas fa-phone-alt"></i></span><span class="nav-label">Call Monitor</span></a></li>
+            <li><a href="#" class="side-link" data-tab="telegram"><span class="nav-icon"><i class="fab fa-telegram-plane"></i></span><span class="nav-label">Telegram</span></a></li>
+            <li><a href="/heatmap/"><span class="nav-icon"><i class="fas fa-map-marked-alt"></i></span><span class="nav-label">Scam Heatmap</span></a></li>
+          </ul>
+          
+          {% if user.is_authenticated %}
+            <div class="sidebar-section-title">Dashboard</div>
+            <ul class="sidebar-nav">
+              <li><a href="#" class="side-link" data-tab="stats"><span class="nav-icon"><i class="fas fa-chart-bar"></i></span><span class="nav-label">My Statistics</span></a></li>
+              <li><a href="/reports-dashboard/"><span class="nav-icon"><i class="fas fa-flag"></i></span><span class="nav-label">View Reports</span></a></li>
+            </ul>
+          {% endif %}
+          
+          {% if user.is_superuser or user.userprofile.role == 'COMPANY_ADMIN' %}
+            <div class="sidebar-section-title" style="color:#dc3545;"><i class="fas fa-lock"></i> Admin</div>
+            <ul class="sidebar-nav">
+              <li><a href="{% url 'admin:detector_scamreport_changelist' %}"><span class="nav-icon"><i class="fas fa-flag"></i></span><span class="nav-label">Scam Reports</span></a></li>
+              <li><a href="{% url 'admin:detector_blockednumber_changelist' %}"><span class="nav-icon"><i class="fas fa-ban"></i></span><span class="nav-label">Blocked Numbers</span></a></li>
+              {% if user.is_superuser %}
+              <li><a href="{% url 'admin:detector_company_changelist' %}"><span class="nav-icon"><i class="fas fa-building"></i></span><span class="nav-label">Companies</span></a></li>
+              {% endif %}
+              <li><a href="/api/export/reports/"><span class="nav-icon"><i class="fas fa-download"></i></span><span class="nav-label">Export CSV</span></a></li>
+            </ul>
+          {% endif %}
+        </div>
+        <div class="sidebar-footer">
+          <a href="/scam-alerts/"><i class="fas fa-bell"></i> Scam Alerts</a>
+          <a href="/safety-tips/"><i class="fas fa-lightbulb"></i> Safety Tips</a>
+        </div>
+      </div>
+
+      <!-- MAIN CONTENT -->
+      <div class="main-content">
+        
+        <!-- Quick Stats -->
+        <div class="quick-stats-strip">
+          <div class="quick-stat-item">
+            <div class="qs-icon">🛡️</div>
+            <div class="qs-value" id="qsScans">--</div>
+            <div class="qs-label">Today</div>
+          </div>
+          <div class="quick-stat-item" onclick="window.location.href='{% url 'admin:detector_scamreport_changelist' %}'">
+            <div class="qs-icon">🚨</div>
+            <div class="qs-value" id="qsHighRisk">--</div>
+            <div class="qs-label">High Risk</div>
+          </div>
+          <div class="quick-stat-item">
+            <div class="qs-icon">📱</div>
+            <div class="qs-value" id="qsSMS">--</div>
+            <div class="qs-label">SMS Scans</div>
+          </div>
+          <div class="quick-stat-item" onclick="window.location.href='/heatmap/'">
+            <div class="qs-icon">🗺️</div>
+            <div class="qs-value" id="qsCounties">--</div>
+            <div class="qs-label">Counties</div>
+          </div>
+          <div class="quick-stat-item" onclick="window.location.href='{% url 'admin:detector_blockednumber_changelist' %}'">
+            <div class="qs-icon">🚫</div>
+            <div class="qs-value" id="qsBlocked">--</div>
+            <div class="qs-label">Blocked</div>
+          </div>
+        </div>
+
+        <!-- SMS Tab -->
+        <div id="smsTab" class="tab-content active">
+          <div class="tab-header"><h5><i class="fas fa-sms"></i> SMS Scam Detector</h5><p class="text-muted mb-0 mt-1">Paste any suspicious SMS. Works with English and Swahili.</p></div>
+          <div class="mb-3">
+            <small><i class="fas fa-flask"></i> Test:</small>
+            <button type="button" class="example-btn" data-type="sms" data-example="scam">Account Scam</button>
+            <button type="button" class="example-btn" data-type="sms" data-example="prize">Prize Scam</button>
+            <button type="button" class="example-btn" data-type="sms" data-example="safe">Safe SMS</button>
+          </div>
+          <form id="smsForm">
+            <div class="mb-3"><textarea class="form-control" id="smsText" rows="6" placeholder="Paste SMS here..."></textarea></div>
+            <button type="submit" class="btn-analyze"><i class="fas fa-search"></i> Analyze SMS</button>
+          </form>
+          <div class="spinner" id="smsSpinner"><div class="spinner-border"></div><p class="mt-2">Analyzing...</p></div>
+          <div id="smsResult" class="result-card"></div>
+        </div>
+
+        <!-- Email Tab -->
+        <div id="emailTab" class="tab-content">
+          <div class="tab-header"><h5><i class="fas fa-envelope"></i> Safe Email Phishing Detector</h5></div>
+          <div class="safe-analysis-badge"><div class="d-flex align-items-center"><div style="font-size:2rem;margin-right:15px;"><i class="fas fa-shield-alt"></i></div><div><strong><i class="fas fa-check-circle"></i> 100% SAFE - NO CLICKS!</strong><br /><small>We NEVER click links. Paste email as TEXT only.</small></div></div></div>
+          <form id="emailForm">
+            <div class="mb-3"><label class="form-label fw-bold">Paste Email Content:</label><textarea class="form-control" id="emailText" rows="12" placeholder="Paste email content..."></textarea></div>
+            <button type="submit" class="btn-analyze"><i class="fas fa-shield-alt"></i> Analyze Email</button>
+          </form>
+          <div class="spinner" id="emailSpinner"><div class="spinner-border"></div><p class="mt-2">Analyzing...</p></div>
+          <div id="emailResult" class="result-card"></div>
+        </div>
+
+        <!-- WhatsApp Tab -->
+        <div id="whatsappTab" class="tab-content">
+          <div class="tab-header"><h5><i class="fab fa-whatsapp"></i> WhatsApp Scam Detector</h5><p class="text-muted">Export chat → Menu → More → Export chat → Without media</p></div>
+          <form id="whatsappForm"><div class="mb-3"><textarea class="form-control" id="whatsappText" rows="10" placeholder="Paste WhatsApp export..." style="font-family:monospace;"></textarea></div><button type="submit" class="btn-analyze"><i class="fab fa-whatsapp"></i> Analyze</button></form>
+          <div class="spinner" id="whatsappSpinner"><div class="spinner-border"></div><p class="mt-2">Analyzing...</p></div>
+          <div id="whatsappResult" class="result-card"></div>
+        </div>
+
+        <!-- Call Tab -->
+        <div id="callTab" class="tab-content">
+          <div class="tab-header"><h5><i class="fas fa-phone-alt"></i> Call Monitor</h5></div>
+          <div class="row">
+            <div class="col-md-6"><div class="card"><div class="card-body"><h6>Manual Analysis</h6><textarea id="callTranscript" class="form-control" rows="8" placeholder="Paste transcript..."></textarea><button class="btn-analyze mt-3" id="analyzeCallBtn">Analyze</button><div id="callResult" class="result-card mt-3"></div></div></div></div>
+            <div class="col-md-6"><div class="card"><div class="card-body"><h6>Check Number</h6><input type="tel" id="callerNumber" class="form-control" placeholder="0712345678" /><button class="btn-analyze mt-2" id="checkNumberBtn">Check</button><div id="numberCheckResult" class="mt-3"></div></div></div></div>
+          </div>
+        </div>
+
+        <!-- Screenshot Tab -->
+        <div id="screenshotTab" class="tab-content">
+          <div class="tab-header"><h5><i class="fas fa-camera"></i> Fake M-Pesa Receipt Detector</h5></div>
+          <div class="drop-zone" id="dropZone"><div class="text-center"><div style="font-size:3rem;">📸</div><div>Drag & drop or click</div><small>JPG, PNG (Max 5MB)</small></div></div>
+          <input type="file" id="screenshotInput" accept="image/*" style="display:none;" />
+          <div id="screenshotPreview" style="display:none;"><img id="previewImage" style="max-width:100%;max-height:300px;border-radius:10px;" /><button class="btn-analyze" id="analyzeScreenshotBtn">Analyze</button></div>
+          <div class="spinner" id="screenshotSpinner"><div class="spinner-border"></div><p>Extracting text...</p></div>
+          <div id="screenshotResult" class="result-card"></div>
+        </div>
+
+        <!-- Telegram Tab -->
+        <div id="telegramTab" class="tab-content">
+          <div class="tab-header"><h5><i class="fab fa-telegram-plane"></i> Telegram Bot</h5></div>
+          <div class="row">
+            <div class="col-md-7"><div class="card"><div class="card-body"><h6>Check Message</h6><form id="telegramForm"><textarea class="form-control" id="telegramText" rows="8" placeholder="Paste Telegram message..."></textarea><button type="submit" class="btn-analyze mt-2">Analyze</button></form><div id="telegramResult" class="result-card"></div></div></div></div>
+            <div class="col-md-5"><div class="card telegram-gradient"><div class="card-body text-center"><div style="font-size:3rem;">🤖</div><h6>@AIFraudShield_Bot</h6><p class="small">Our bot is LIVE!</p><a href="https://t.me/AIFraudShield_Bot" target="_blank" class="btn btn-light btn-sm">Open Bot</a></div></div></div>
+          </div>
+        </div>
+
+        <!-- URL Tab -->
+        <div id="urlTab" class="tab-content">
+          <div class="tab-header"><h5><i class="fas fa-link"></i> URL Checker</h5></div>
+          <form id="urlForm"><div class="mb-3"><input type="url" class="form-control" id="urlInput" placeholder="https://example.com" required /></div><button type="submit" class="btn-analyze">Check URL</button></form>
+          <div class="spinner" id="urlSpinner"><div class="spinner-border"></div></div>
+          <div id="urlResult" class="result-card"></div>
+        </div>
+
+        <!-- Stats Tab -->
+        <div id="statsTab" class="tab-content">
+          <div class="tab-header"><h5><i class="fas fa-chart-bar"></i> Statistics</h5></div>
+          {% if not user.is_authenticated %}
+          <div class="alert mb-3" style="background:#fef3d5;border:1px solid #f5a623;text-align:center;">
+            <a href="/register/" style="color:#002855;font-weight:700;">Sign Up Free</a> to track your activity
+          </div>
+          {% endif %}
+          {% if user.is_authenticated %}
+          <div class="row g-3 mb-3">
+            <div class="col-md-6"><div class="chart-card"><h6>Scams by Type</h6><canvas id="scamTypeChart"></canvas></div></div>
+            <div class="col-md-6"><div class="chart-card"><h6>Risk Distribution</h6><canvas id="riskDistributionChart"></canvas></div></div>
+          </div>
+          <div class="chart-card mb-3"><h6>Trend (7 Days)</h6><canvas id="trendChart"></canvas></div>
+          <h6>Recent Activity</h6>
+          <div class="table-responsive"><table class="table table-hover table-sm"><thead><tr><th>Date</th><th>Type</th><th>Content</th><th>Score</th></tr></thead><tbody id="recentScamsBody"><tr><td colspan="4">Loading...</td></tr></tbody></table></div>
+          {% endif %}
+        </div>
+      </div>
     </div>
   </div>
+</div>
+
+<script>
+fetch('/api/stats/')
+  .then(r => r.json())
+  .then(d => {
+    if (d.stats) {
+      document.getElementById('qsScans').textContent = d.stats.today_count || 0;
+      document.getElementById('qsHighRisk').textContent = d.stats.high_risk_count || 0;
+      document.getElementById('qsSMS').textContent = d.stats.sms_count || 0;
+      document.getElementById('qsCounties').textContent = (d.stats.county_data || []).length || 0;
+      document.getElementById('qsBlocked').textContent = d.stats.takedown_total || 0;
+    }
+  });
+</script>
 {% endblock %}
 
 {% block extra_js %}

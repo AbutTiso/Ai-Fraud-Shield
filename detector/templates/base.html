@@ -10,71 +10,63 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     {% block extra_css %}{% endblock %}
     <style>
-        /* ============================================
-           USIU BRAND VARIABLES
-           ============================================ */
         :root {
-            --usiu-navy: #002855;
-            --usiu-navy-light: #1a3f6e;
-            --usiu-navy-dark: #001a3a;
-            --usiu-gold: #F5A623;
-            --usiu-gold-light: #f7b94e;
-            --usiu-gold-dark: #e6951a;
+            --navy: #002855;
+            --navy-light: #1a3f6e;
+            --navy-dark: #001a3a;
+            --gold: #F5A623;
+            --gold-light: #f7b94e;
+            --gold-dark: #e6951a;
             --bg-body-start: #fefce8;
             --bg-body-mid: #fef9c3;
             --bg-body-end: #f7b94e;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --text-muted: #94a3b8;
+            --border-color: #e2e8f0;
+            --danger: #dc3545;
+            --success: #10b981;
         }
         
-        /* ============================================
-           BASE STYLES
-           ============================================ */
+        * { box-sizing: border-box; }
+
         body {
             background: linear-gradient(135deg, var(--bg-body-start) 0%, var(--bg-body-mid) 30%, var(--bg-body-end) 100%);
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             min-height: 100vh;
             padding: 20px;
-            color: #1f2937;
+            color: var(--text-primary);
+            line-height: 1.6;
         }
         
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-        }
+        .container { max-width: 1400px; margin: 0 auto; }
         
-        /* ============================================
-           MAIN CARD
-           ============================================ */
         .main-card {
             background: white;
             border-radius: 24px;
             box-shadow: 0 25px 50px -12px rgba(0, 40, 85, 0.2);
             overflow: hidden;
-            border: 1px solid #e5e7eb;
+            border: 1px solid var(--border-color);
         }
         
-        /* ============================================
-           HEADER - USIU Navy with Gold Accent
-           ============================================ */
+        /* Header */
         .header {
-            background: linear-gradient(135deg, var(--usiu-navy) 0%, var(--usiu-navy-dark) 100%);
+            background: linear-gradient(135deg, var(--navy) 0%, var(--navy-dark) 100%);
             color: white;
             padding: 40px 30px;
             text-align: center;
             position: relative;
             cursor: pointer;
             transition: all 0.3s ease;
-            border-bottom: 4px solid var(--usiu-gold);
+            border-bottom: 4px solid var(--gold);
             overflow: hidden;
         }
         
-        /* Subtle pattern overlay */
         .header::before {
             content: '';
             position: absolute;
-            top: -50%;
-            right: -50%;
-            width: 200%;
-            height: 200%;
+            top: -50%; right: -50%;
+            width: 200%; height: 200%;
             background: radial-gradient(circle, rgba(255,255,255,0.05) 1%, transparent 1%);
             background-size: 50px 50px;
             animation: shimmer 20s linear infinite;
@@ -86,125 +78,136 @@
             to { transform: translate(50px, 50px); }
         }
         
-        .header:hover {
-            opacity: 0.95;
-            transform: scale(1.005);
-        }
+        .header:hover { opacity: 0.95; transform: scale(1.005); }
         
         .header h1 { 
-            font-size: 2rem; 
-            margin-bottom: 10px;
-            position: relative;
-            z-index: 1;
+            font-size: 2rem; margin-bottom: 10px;
+            position: relative; z-index: 1;
             text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            font-weight: 700;
         }
         
-        .header h1 i {
-            color: var(--usiu-gold);
-        }
+        .header h1 i { color: var(--gold); }
         
-        .header p {
-            position: relative;
-            z-index: 1;
-            opacity: 0.9;
-        }
+        .header p { position: relative; z-index: 1; opacity: 0.9; font-size: 1rem; margin: 0; }
         
-        .header a {
-            color: white;
-            text-decoration: none;
-        }
+        .header a { color: white; text-decoration: none; }
         
-        /* Badge in header */
         .badge-custom {
             display: inline-block;
-            background: var(--usiu-gold);
+            background: var(--gold);
             padding: 6px 18px;
             border-radius: 50px;
             font-size: 0.8rem;
             font-weight: 700;
-            position: relative;
-            z-index: 1;
-            color: var(--usiu-navy);
+            position: relative; z-index: 1;
+            color: var(--navy);
             letter-spacing: 0.5px;
+            margin-top: 12px;
         }
-        
-        /* ============================================
-           FOOTER
-           ============================================ */
-        .footer {
-            text-align: center;
-            padding: 25px;
-            background: linear-gradient(135deg, #fefce8 0%, #fef9c3 100%);
-            color: var(--usiu-navy);
+
+        /* User welcome in header */
+        .header .user-welcome {
+            position: relative; z-index: 1;
+            margin-top: 8px;
             font-size: 0.85rem;
-            border-top: 2px solid var(--usiu-gold);
+            opacity: 0.85;
+        }
+        
+        /* Footer */
+        .footer {
+            background: linear-gradient(135deg, var(--navy) 0%, var(--navy-dark) 100%);
+            color: white;
+            padding: 28px 30px;
+            text-align: center;
+            font-size: 0.9rem;
+            border-top: 4px solid var(--gold);
             border-radius: 0 0 24px 24px;
+            position: relative;
+            overflow: hidden;
         }
-        
-        .footer strong {
-            color: var(--usiu-navy-dark);
+
+        .footer::before {
+            content: '';
+            position: absolute;
+            top: -50%; left: -50%;
+            width: 200%; height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.03) 1%, transparent 1%);
+            background-size: 40px 40px;
+            animation: shimmer 25s linear infinite;
+            pointer-events: none;
         }
-        
-        .footer i.fa-shield-alt {
-            color: var(--usiu-gold);
+
+        .footer-content { position: relative; z-index: 1; }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            text-align: left;
+            margin-bottom: 20px;
         }
-        
-        .footer i.fa-phone {
-            color: var(--usiu-navy);
+
+        .footer-col h4 {
+            color: var(--gold); font-weight: 700; font-size: 0.95rem;
+            margin-bottom: 10px; display: flex; align-items: center; gap: 8px;
         }
+
+        .footer-col h4 i { color: var(--gold); }
+
+        .footer-col p, .footer-col a {
+            color: rgba(255, 255, 255, 0.8); font-size: 0.85rem;
+            margin: 4px 0; text-decoration: none; display: block;
+            transition: color 0.2s ease;
+        }
+
+        .footer-col a:hover { color: var(--gold); }
+        .footer-col strong { color: var(--gold); }
+
+        .footer-bottom {
+            border-top: 1px solid rgba(255, 255, 255, 0.15);
+            padding-top: 16px; margin-top: 16px;
+            text-align: center; position: relative; z-index: 1;
+            font-size: 0.8rem; opacity: 0.85;
+        }
+
+        .footer-bottom i { color: var(--gold); }
+        .footer-bottom strong { color: var(--gold); }
         
-        /* ============================================
-           NAVBAR (for includes/navbar.html)
-           ============================================ */
+        /* Navbar */
         .navbar-custom {
-            background: white;
-            padding: 12px 24px;
+            background: white; padding: 12px 24px;
             border-radius: 16px;
             box-shadow: 0 4px 20px rgba(0, 40, 85, 0.1);
             margin-bottom: 20px;
-            border: 1px solid #e5e7eb;
+            border: 1px solid var(--border-color);
         }
         
         .navbar-custom .navbar-brand {
-            font-weight: 700;
-            font-size: 1.2rem;
-            color: var(--usiu-navy);
-            text-decoration: none;
+            font-weight: 700; font-size: 1.2rem;
+            color: var(--navy); text-decoration: none;
         }
         
-        .navbar-custom .navbar-brand i {
-            color: var(--usiu-gold);
-        }
+        .navbar-custom .navbar-brand i { color: var(--gold); }
         
         .navbar-custom .nav-link {
-            color: #4a5568;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            border-radius: 8px;
-            padding: 8px 16px;
+            color: var(--text-secondary); font-weight: 500;
+            transition: all 0.3s ease; border-radius: 8px; padding: 8px 16px;
         }
         
         .navbar-custom .nav-link:hover {
-            color: var(--usiu-navy);
-            background: rgba(0, 40, 85, 0.05);
+            color: var(--navy); background: rgba(0, 40, 85, 0.05);
         }
         
         .navbar-custom .nav-link.active {
-            color: var(--usiu-navy);
-            background: rgba(245, 166, 35, 0.15);
-            font-weight: 600;
+            color: var(--navy); background: rgba(245, 166, 35, 0.15); font-weight: 600;
         }
         
-        /* Emergency button in navbar */
         .btn-emergency-nav {
-            background: linear-gradient(135deg, #dc3545, #a71d2a);
-            color: white;
-            border-radius: 50px;
-            padding: 8px 18px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            text-decoration: none;
-            transition: all 0.3s ease;
+            background: linear-gradient(135deg, var(--danger), #a71d2a);
+            color: white; border-radius: 50px; padding: 8px 18px;
+            font-size: 0.85rem; font-weight: 600;
+            text-decoration: none; transition: all 0.3s ease;
         }
         
         .btn-emergency-nav:hover {
@@ -213,108 +216,42 @@
             color: white;
         }
         
-        /* ============================================
-           SCROLLBAR
-           ============================================ */
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #fefce8; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--gold-dark); }
+        
+        ::selection { background: var(--navy); color: white; }
+        
+        :focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
+        
+        @media (prefers-reduced-motion: reduce) {
+            .header::before, .footer::before { animation: none; }
+            * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
         }
         
-        ::-webkit-scrollbar-track {
-            background: #fefce8;
-            border-radius: 10px;
+        @media (prefers-contrast: high) {
+            body { background: white; }
+            .header, .footer { background: #000 !important; border-color: #000; }
         }
         
-        ::-webkit-scrollbar-thumb {
-            background: var(--usiu-gold);
-            border-radius: 10px;
+        @media print {
+            body { background: white; }
+            .header::before, .footer::before { display: none; }
         }
         
-        ::-webkit-scrollbar-thumb:hover {
-            background: var(--usiu-gold-dark);
-        }
-        
-        /* ============================================
-           SELECTION
-           ============================================ */
-        ::selection {
-            background: var(--usiu-navy);
-            color: white;
-        }
-        
-        /* ============================================
-           RESPONSIVE
-           ============================================ */
         @media (max-width: 768px) {
-            body {
-                padding: 10px;
-            }
-            
-            .header {
-                padding: 25px 20px;
-            }
-            
-            .header h1 {
-                font-size: 1.5rem;
-            }
-            
-            .header p {
-                font-size: 0.9rem;
-            }
-            
-            .footer {
-                padding: 20px 15px;
-            }
+            body { padding: 10px; }
+            .header { padding: 25px 20px; }
+            .header h1 { font-size: 1.5rem; }
+            .header p { font-size: 0.9rem; }
+            .footer { padding: 20px 15px; }
+            .footer-grid { grid-template-columns: 1fr; text-align: center; }
+            .footer-col h4 { justify-content: center; }
         }
         
         @media (max-width: 576px) {
-            .header h1 {
-                font-size: 1.3rem;
-            }
-        }
-        
-        /* ============================================
-           ACCESSIBILITY
-           ============================================ */
-        :focus-visible {
-            outline: 3px solid var(--usiu-gold);
-            outline-offset: 3px;
-        }
-        
-        /* Reduced motion */
-        @media (prefers-reduced-motion: reduce) {
-            .header::before {
-                animation: none;
-            }
-            
-            * {
-                animation-duration: 0.01ms !important;
-                transition-duration: 0.01ms !important;
-            }
-        }
-        
-        /* High contrast mode */
-        @media (prefers-contrast: high) {
-            body {
-                background: white;
-            }
-            
-            .header {
-                background: #000 !important;
-                border-bottom-color: #000;
-            }
-        }
-        
-        /* Print styles */
-        @media print {
-            body {
-                background: white;
-            }
-            
-            .header::before {
-                display: none;
-            }
+            .header h1 { font-size: 1.3rem; }
         }
     </style>
 </head>
@@ -323,29 +260,147 @@
         {% include 'includes/navbar.html' %}
         
         <div class="main-card mt-3">
-            <!-- Clickable Header that goes to Home -->
+            <!-- ========== DYNAMIC HEADER - Changes based on page ========== -->
+            {% block header %}
             <a href="/" style="text-decoration: none; display: block;">
                 <div class="header">
-                    <h1><i class="fas fa-shield-alt"></i> AI Fraud Shield</h1>
-                    <p>Kenya's Most Advanced Scam Detection Platform</p>
-                    <div class="badge-custom">
-                        <i class="fas fa-lock"></i> 100% Safe Analysis
-                    </div>
+                    {% if request.path == '/' %}
+                        {# Home Page #}
+                        <h1><i class="fas fa-shield-alt"></i> AI Fraud Shield</h1>
+                        <p>Kenya's Most Advanced Scam Detection Platform</p>
+                        <div class="badge-custom">
+                            <i class="fas fa-lock"></i> 100% Safe Analysis
+                        </div>
+                        {% if user.is_authenticated %}
+                        <div class="user-welcome">
+                            Welcome, <strong>{{ user.username }}</strong>
+                            {% if user.userprofile.company %}
+                                · {{ user.userprofile.company.name }}
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                        
+                    {% elif '/about/' in request.path %}
+                        <h1><i class="fas fa-info-circle"></i> About Us</h1>
+                        <p>Learn about our mission to protect Kenyans from digital scams</p>
+                        
+                    {% elif '/how-it-works/' in request.path %}
+                        <h1><i class="fas fa-cogs"></i> How It Works</h1>
+                        <p>Understanding our advanced scam detection technology</p>
+                        <div class="badge-custom">
+                            <i class="fas fa-robot"></i> AI-Powered Protection
+                        </div>
+                        
+                    {% elif '/faq/' in request.path %}
+                        <h1><i class="fas fa-question-circle"></i> Frequently Asked Questions</h1>
+                        <p>Answers to common questions about our service</p>
+                        
+                    {% elif '/safety-tips/' in request.path %}
+                        <h1><i class="fas fa-lightbulb"></i> Safety Tips</h1>
+                        <p>How to protect yourself from digital scams</p>
+                        
+                    {% elif '/scam-alerts/' in request.path %}
+                        <h1><i class="fas fa-bell"></i> Scam Alerts</h1>
+                        <p>Latest scam threats reported in Kenya</p>
+                        
+                    {% elif '/report-scam/' in request.path %}
+                        <h1><i class="fas fa-flag"></i> Report a Scam</h1>
+                        <p>Help protect fellow Kenyans by reporting scams</p>
+                        <div class="badge-custom">
+                            <i class="fas fa-shield-alt"></i> Confidential Report
+                        </div>
+                        
+                    {% elif '/report-phishing/' in request.path %}
+                        <h1><i class="fas fa-fish"></i> Report Phishing Email</h1>
+                        <p>Help stop email scammers by reporting phishing attempts</p>
+                        
+                    {% elif '/contact/' in request.path %}
+                        <h1><i class="fas fa-envelope"></i> Contact Us</h1>
+                        <p>Get in touch with our support team</p>
+                        
+                    {% elif '/login/' in request.path %}
+                        <h1><i class="fas fa-sign-in-alt"></i> Welcome Back</h1>
+                        <p>Sign in to your AI Fraud Shield account</p>
+                        
+                    {% elif '/register/' in request.path %}
+                        <h1><i class="fas fa-user-plus"></i> Create Account</h1>
+                        <p>Join thousands of Kenyans protecting themselves from scams</p>
+                        
+                    {% elif '/profile/' in request.path %}
+                        <h1><i class="fas fa-user-circle"></i> My Profile</h1>
+                        <p>Your account details and activity</p>
+                        
+                    {% elif '/corporate/' in request.path %}
+                        <h1><i class="fas fa-building-shield"></i> Corporate Shield</h1>
+                        <p>Enterprise security dashboard for your organization</p>
+                        
+                    {% elif '/reports-dashboard/' in request.path %}
+                        <h1><i class="fas fa-flag"></i> Scam Reports Dashboard</h1>
+                        <p>Comprehensive overview of all submitted scam reports</p>
+                        
+                    {% elif '/heatmap/' in request.path %}
+                        <h1><i class="fas fa-map-marked-alt"></i> Scam Heatmap</h1>
+                        <p>Geographic distribution of scam reports across Kenya</p>
+                        
+                    {% elif '/leaderboard/' in request.path %}
+                        <h1><i class="fas fa-trophy"></i> Leaderboard</h1>
+                        <p>Top contributors protecting Kenya from scams</p>
+                        
+                    {% else %}
+                        {# Default Header #}
+                        <h1><i class="fas fa-shield-alt"></i> AI Fraud Shield</h1>
+                        <p>Kenya's Most Advanced Scam Detection Platform</p>
+                        <div class="badge-custom">
+                            <i class="fas fa-lock"></i> 100% Safe Analysis
+                        </div>
+                    {% endif %}
                 </div>
             </a>
+            {% endblock %}
             
             {% block content %}{% endblock %}
         </div>
         
+        <!-- Footer -->
         <div class="footer mt-3">
-            <p>
-                <i class="fas fa-shield-alt"></i> Never share your PIN, M-Pesa password, or send money to unknown numbers.<br>
-                <i class="fas fa-phone"></i> Report scams to <strong>333</strong> (Safaricom) or <strong>3333</strong> (Airtel)
-            </p>
+            <div class="footer-content">
+                <div class="footer-grid">
+                    <div class="footer-col">
+                        <h4><i class="fas fa-link"></i> Quick Links</h4>
+                        <a href="/"><i class="fas fa-home"></i> Home</a>
+                        <a href="/how-it-works/"><i class="fas fa-cogs"></i> How It Works</a>
+                        <a href="/safety-tips/"><i class="fas fa-lightbulb"></i> Safety Tips</a>
+                        <a href="/scam-alerts/"><i class="fas fa-bell"></i> Scam Alerts</a>
+                    </div>
+                    <div class="footer-col">
+                        <h4><i class="fas fa-flag"></i> Report Scams</h4>
+                        <a href="/report-scam/"><i class="fas fa-exclamation-circle"></i> Report a Scam</a>
+                        <a href="/report-phishing/"><i class="fas fa-fish"></i> Report Phishing</a>
+                        <p><i class="fas fa-phone"></i> Safaricom: <strong>333</strong></p>
+                        <p><i class="fas fa-phone"></i> Airtel: <strong>3333</strong></p>
+                    </div>
+                    <div class="footer-col">
+                        <h4><i class="fas fa-shield-alt"></i> Stay Safe</h4>
+                        <p><i class="fas fa-lock"></i> Never share your PIN</p>
+                        <p><i class="fas fa-key"></i> Never share M-Pesa password</p>
+                        <p><i class="fas fa-user-slash"></i> Don't send money to unknown numbers</p>
+                        <p><i class="fas fa-envelope"></i> Forward phishing to <strong>report@kenyacic.go.ke</strong></p>
+                    </div>
+                </div>
+                <div class="footer-bottom">
+                    <p>
+                        <i class="fas fa-shield-alt"></i> 
+                        &copy; 2026 <strong>AI Fraud Shield Kenya</strong> | 
+                        🛡️ Protecting Kenyans from Scams | 
+                        Report scams: SMS <strong>333</strong> (Safaricom) | 
+                        <strong>3333</strong> (Airtel)
+                    </p>
+                    <p style="margin-top: 4px; font-size: 0.75rem;">
+                        Developed with ❤️ to keep Kenya safe from digital fraud
+                    </p>
+                </div>
+            </div>
         </div>
-        <div class="footer">
-        <p>&copy; 2026 AI Fraud Shield Kenya | 🛡️ Protecting Kenyans from Scams | Report scams: SMS 333 (Safaricom)</p>
-      </div>
     </div>
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

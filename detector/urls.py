@@ -2,7 +2,7 @@
 from django.urls import path
 from . import views, sms_gateway
 from .api import views as api_views
-
+from .ussd import handler as ussd_handler
 
 urlpatterns = [
     # =========================
@@ -99,4 +99,26 @@ urlpatterns = [
     path('api/my-points/', views.my_points, name='my_points'),
     path('api/leaderboard/', views.leaderboard, name='api_leaderboard'),
     path('leaderboard/', views.leaderboard_page, name='leaderboard_page'),
+    # Takedown
+    path('api/takedown/', views.takedown_scam, name='takedown_scam'),
+    # USSD
+    path('ussd-demo/', views.ussd_demo_page, name='ussd_demo'),
+    path('ussd/callback/', ussd_handler.ussd_callback, name='ussd_callback'),
+    #corporate shield
+    path('corporate/', views.corporate_dashboard_page, name='corporate_page'),
+    path('api/corporate/', views.corporate_dashboard, name='corporate_dashboard'),
+    path('api/bulk-verify/', views.bulk_verify_numbers, name='bulk_verify'),
+    path('api/generate-api-key/', views.generate_api_key, name='generate_api_key'),
+    path('api/widget-code/', views.get_widget_code, name='widget_code'),
+    # detector/urls.py - Add this line
+    path('corporate/upgrade/', views.corporate_upgrade_page, name='corporate_upgrade'),
+    path('reports-dashboard/', views.reports_dashboard, name='reports_dashboard'),
+    
+    # Authentication
+    path('login/', views.login_page, name='login'),
+    path('api/login/', views.api_login, name='api_login'),
+    path('logout/', views.api_logout, name='logout'),
+    # Profile
+    path('profile/', views.profile_page, name='profile'),
+
 ]

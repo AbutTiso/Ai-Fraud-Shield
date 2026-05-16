@@ -1,40 +1,27 @@
 import os
 from dotenv import load_dotenv
-
-# Load environment variables
-load_dotenv()
-
-# Then change your SECRET_KEY line to:
-SECRET_KEY = os.getenv('SECRET_KEY', 'fallback-key-for-development')
-
-# Change DEBUG line to:
-DEBUG = os.getenv('DEBUG', 'True') == 'True'
 from pathlib import Path
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
-
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-i4p%l%*yiwqo^psrvm0@%$*yzw^u1*26*m8f84+!j06tppc05p'
+SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-fallback-key-for-dev')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv('DEBUG', 'True') == 'True'
 
 ALLOWED_HOSTS = [
-    
     'localhost',
     '127.0.0.1',
     'fog-compound-brilliant.ngrok-free.dev',
     '.ngrok-free.dev',  
 ]
 
-
 # Application definition
-
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -42,7 +29,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'detector',  # Our custom app for SMS scam detection
+    'detector',
 ]
 
 MIDDLEWARE = [
@@ -53,7 +40,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'detector.middleware.RateLimitMiddleware',  # Custom rate limiting middleware
+    'detector.middleware.RateLimitMiddleware',
 ]
 
 ROOT_URLCONF = 'fraudshield.urls'
@@ -75,10 +62,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'fraudshield.wsgi.application'
 
-
 # Database
-# https://docs.djangoproject.com/en/6.0/ref/settings/#databases
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -86,10 +70,7 @@ DATABASES = {
     }
 }
 
-
 # Password validation
-# https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
-
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -105,39 +86,36 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
-# https://docs.djangoproject.com/en/6.0/topics/i18n/
-
 LANGUAGE_CODE = 'en-us'
-
 TIME_ZONE = 'Africa/Nairobi'
-
 USE_I18N = True
-
 USE_TZ = True
 
+# ============ AUTHENTICATION SETTINGS ============
+LOGIN_URL = '/login/'
+LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/'
 
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/6.0/howto/static-files/
+# ============ EMAIL SETTINGS ============
+# For development (logs to console)
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+DEFAULT_FROM_EMAIL = 'noreply@aifraudshield.com'
+CONTACT_EMAIL = 'admin@aifraudshield.com'
 
+# ============ USSD SETTINGS ============
+USSD_SERVICE_CODE = os.getenv('USSD_SERVICE_CODE', '*483*72#')
+
+# ============ STATIC FILES ============
 STATIC_URL = 'static/'
-
-# Add these lines below STATIC_URL:
-# Where to collect static files for production
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-
-# Where Django looks for static files during development
 STATICFILES_DIRS = [
     BASE_DIR / 'detector' / 'static',
 ]
 
-# Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Add at the bottom of settings.py
-
-# Rate limiting for API endpoints
+# ============ RATE LIMITING ============
 REST_FRAMEWORK = {
     'DEFAULT_THROTTLE_CLASSES': [
         'rest_framework.throttling.AnonRateThrottle',
@@ -148,16 +126,17 @@ REST_FRAMEWORK = {
         'user': '1000/day',
     }
 }
-# Caching configuration
+
+# ============ CACHING ============
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
         'LOCATION': 'unique-snowflake',
-        'TIMEOUT': 300,  # 5 minutes
+        'TIMEOUT': 300,
     }
 }
 
-# Logging configuration - SIMPLE WORKING VERSION
+# ============ LOGGING ============
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -165,7 +144,7 @@ LOGGING = {
         'file': {
             'level': 'INFO',
             'class': 'logging.FileHandler',
-            'filename': 'fraudshield.log',
+            'filename': BASE_DIR / 'fraudshield.log',
         },
         'console': {
             'class': 'logging.StreamHandler',
@@ -179,10 +158,8 @@ LOGGING = {
     },
 }
 
-TELEGRAM_BOT_TOKEN = '8447775514:AAGlB5_Hq1zNTVsJYXax0gghmM9esdicGow'
-
-# Africa's Talking SMS Gateway
-AT_USERNAME = 'sandbox'
-AT_API_KEY = 'atsk_e34f17d2baa7f92e9a4e5e6da2a6153d3b003da44b9155d6aa68b2a3b9dc2656c8aeefed'
-AT_SHORTCODE = '4350'
-LOGOUT_REDIRECT_URL = '/'
+# ============ THIRD PARTY API KEYS (from .env) ============
+TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN', '')
+AT_USERNAME = os.getenv('AT_USERNAME', 'sandbox')
+AT_API_KEY = os.getenv('AT_API_KEY', '')
+AT_SHORTCODE = os.getenv('AT_SHORTCODE', '4350')

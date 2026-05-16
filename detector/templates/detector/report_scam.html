@@ -3,53 +3,777 @@
 
 {% block title %}Report a Scam - AI Fraud Shield{% endblock %}
 
+{% block header %}{% endblock %}
+
 {% block content %}
-<div class="container mt-4">
-    <div class="main-card">
-        <div class="header">
-            <h1><i class="fas fa-flag"></i> Report a Scam</h1>
-            <p>Help us protect others by reporting scams you've encountered</p>
+<div class="report-header">
+    <div class="report-header-content">
+        <div class="report-header-icon">
+            <i class="fas fa-flag"></i>
         </div>
-        <div class="content p-4">
-            <div class="alert alert-info">
-                <i class="fas fa-info-circle"></i> Your report helps us identify new scam patterns and protect other Kenyans.
-            </div>
+        <div class="report-header-text">
+            <h1>Report a Scam</h1>
+            <p>Help protect fellow Kenyans by reporting scams you've encountered</p>
+        </div>
+    </div>
+    <div class="report-header-badge">
+        <i class="fas fa-shield-alt"></i> Confidential Report
+    </div>
+</div>
+
+<div class="content-wrapper p-4">
+    <!-- Success Message (Hidden by default) -->
+    <div id="successMessage" class="success-alert" style="display: none;">
+        <div class="success-icon">
+            <i class="fas fa-check-circle"></i>
+        </div>
+        <div class="success-content">
+            <h4>Report Submitted Successfully!</h4>
+            <p>Thank you for helping protect the community. Your report has been received and will be analyzed by our team.</p>
+        </div>
+    </div>
+    
+    <!-- Error Message (Hidden by default) -->
+    <div id="errorMessage" class="error-alert" style="display: none;">
+        <div class="error-icon">
+            <i class="fas fa-exclamation-circle"></i>
+        </div>
+        <div class="error-content">
+            <h4>Submission Failed</h4>
+            <p id="errorText">Something went wrong. Please try again later.</p>
+        </div>
+    </div>
+    
+    <!-- Info Alert -->
+    <div class="alert alert-info d-flex align-items-center" role="alert">
+        <i class="fas fa-info-circle fa-lg me-3"></i>
+        <div>
+            Your report helps us identify new scam patterns and strengthen our detection system for all Kenyan users.
+        </div>
+    </div>
+    
+    <!-- Report Form -->
+    <form id="reportForm" method="post" class="report-form">
+        {% csrf_token %}
+        <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+        
+        <div class="form-section">
+            <h3 class="form-section-title">
+                <i class="fas fa-tag"></i> Scam Details
+            </h3>
             
-            <form method="post" action="/api/submit-feedback/">
-                {% csrf_token %}
-                <div class="mb-3">
-                    <label class="form-label">Type of Scam</label>
-                    <select class="form-control" required>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label" for="scamType">
+                        <i class="fas fa-exclamation-circle text-danger"></i> Type of Scam *
+                    </label>
+                    <select class="form-select custom-select" id="scamType" name="scam_type" required>
                         <option value="">Select scam type...</option>
-                        <option>SMS Scam</option>
-                        <option>Email Phishing</option>
-                        <option>WhatsApp Scam</option>
-                        <option>Fake M-Pesa Receipt</option>
-                        <option>Fake Loan Offer</option>
-                        <option>Prize/Lottery Scam</option>
-                        <option>Other</option>
+                        <option value="SMS Scam">SMS Scam</option>
+                        <option value="Email Phishing">Email Phishing</option>
+                        <option value="WhatsApp Scam">WhatsApp Scam</option>
+                        <option value="Fake M-Pesa Receipt">Fake M-Pesa Receipt</option>
+                        <option value="Fake Loan Offer">Fake Loan Offer</option>
+                        <option value="Prize/Lottery Scam">Prize/Lottery Scam</option>
+                        <option value="Fake Job Offer">Fake Job Offer</option>
+                        <option value="Social Media Scam">Social Media Scam</option>
+                        <option value="Other">Other</option>
                     </select>
                 </div>
-                <div class="mb-3">
-                    <label class="form-label">Scam Message Content</label>
-                    <textarea class="form-control" rows="6" placeholder="Paste the scam message here..."></textarea>
+                
+                <div class="col-md-6">
+                    <label class="form-label" for="dateReceived">
+                        <i class="fas fa-calendar-alt text-warning"></i> When did you receive this? *
+                    </label>
+                    <input type="datetime-local" class="form-control custom-input" id="dateReceived" name="date_received" required>
                 </div>
-                <div class="mb-3">
-                    <label class="form-label">Scammer Phone Number (if known)</label>
-                    <input type="tel" class="form-control" placeholder="e.g., 0712345678">
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">When did you receive this?</label>
-                    <input type="date" class="form-control">
-                </div>
-                <button type="submit" class="btn-analyze"><i class="fas fa-paper-plane"></i> Submit Report</button>
-            </form>
-            
-            <div class="alert alert-warning mt-4">
-                <strong><i class="fas fa-exclamation-triangle"></i> For immediate help:</strong><br>
-                If you have already lost money, please contact your bank immediately and report to DCI at <strong>0800 722 203</strong>
             </div>
+            
+            <div class="mt-3">
+                <label class="form-label" for="messageContent">
+                    <i class="fas fa-envelope text-primary"></i> Scam Message Content *
+                </label>
+                <textarea 
+                    class="form-control custom-textarea" 
+                    id="messageContent"
+                    rows="5" 
+                    name="message_content"
+                    placeholder="Paste the full scam message here to help us identify patterns..."
+                    required
+                ></textarea>
+                <div class="form-text">
+                    <i class="fas fa-lock"></i> Your information is encrypted and kept confidential
+                </div>
+                <div class="char-count">
+                    <span id="charCount">0</span> / 5000 characters
+                </div>
+            </div>
+        </div>
+        
+        <div class="form-section mt-4">
+            <h3 class="form-section-title">
+                <i class="fas fa-user-secret"></i> Scammer Information
+            </h3>
+            
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label" for="scammerPhone">
+                        <i class="fas fa-phone text-secondary"></i> Scammer Phone Number
+                    </label>
+                    <div class="input-group">
+                        <span class="input-group-text">+254</span>
+                        <input 
+                            type="tel" 
+                            class="form-control custom-input" 
+                            id="scammerPhone"
+                            name="scammer_phone"
+                            placeholder="7XXXXXXXX"
+                            pattern="[0-9]{9}"
+                            maxlength="9"
+                        >
+                    </div>
+                    <div class="form-text">Enter without the leading 0 (e.g., 712345678)</div>
+                </div>
+                
+                <div class="col-md-6">
+                    <label class="form-label" for="suspiciousUrl">
+                        <i class="fas fa-globe text-info"></i> Suspicious URL (if any)
+                    </label>
+                    <input 
+                        type="url" 
+                        class="form-control custom-input" 
+                        id="suspiciousUrl"
+                        name="suspicious_url"
+                        placeholder="https://example.com"
+                    >
+                    <div class="form-text">The website or link the scammer sent you</div>
+                </div>
+            </div>
+            
+            <div class="mt-3">
+                <label class="form-label" for="scammerName">
+                    <i class="fas fa-user text-muted"></i> Scammer's Name (if known)
+                </label>
+                <input 
+                    type="text" 
+                    class="form-control custom-input" 
+                    id="scammerName"
+                    name="scammer_name"
+                    placeholder="e.g., John Doe or Company Name"
+                >
+            </div>
+        </div>
+        
+        <div class="form-section mt-4">
+            <h3 class="form-section-title">
+                <i class="fas fa-clipboard-check"></i> Impact Assessment
+            </h3>
+            
+            <div class="mb-3">
+                <label class="form-label">
+                    <i class="fas fa-dollar-sign text-success"></i> Did you lose any money?
+                </label>
+                <div class="btn-group-custom">
+                    <input type="radio" class="btn-check" name="money_lost" id="money-yes" value="yes" autocomplete="off">
+                    <label class="btn btn-outline-danger" for="money-yes">
+                        <i class="fas fa-times-circle"></i> Yes, I lost money
+                    </label>
+                    
+                    <input type="radio" class="btn-check" name="money_lost" id="money-no" value="no" checked autocomplete="off">
+                    <label class="btn btn-outline-success" for="money-no">
+                        <i class="fas fa-check-circle"></i> No, I didn't lose money
+                    </label>
+                </div>
+            </div>
+            
+            <div id="amountLostSection" style="display: none;">
+                <div class="mb-3">
+                    <label class="form-label" for="amountLost">
+                        <i class="fas fa-money-bill text-danger"></i> Amount Lost (KES)
+                    </label>
+                    <input 
+                        type="number" 
+                        class="form-control custom-input" 
+                        id="amountLost"
+                        name="amount_lost"
+                        placeholder="0.00"
+                        min="0"
+                        step="0.01"
+                    >
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <label class="form-label" for="additionalDetails">
+                    <i class="fas fa-comment text-muted"></i> Any additional details?
+                </label>
+                <textarea 
+                    class="form-control custom-textarea" 
+                    id="additionalDetails"
+                    rows="3" 
+                    name="additional_details"
+                    placeholder="Any other information that might help us..."
+                ></textarea>
+            </div>
+        </div>
+        
+        <!-- Consent Checkbox -->
+        <div class="form-check mt-4">
+            <input class="form-check-input" type="checkbox" id="consent" name="consent" required>
+            <label class="form-check-label" for="consent">
+                I confirm that this information is accurate and I consent to it being used for scam prevention purposes. *
+            </label>
+        </div>
+        
+        <!-- Submit Button -->
+        <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+            <button type="button" class="btn btn-outline-secondary me-md-2" onclick="resetForm()">
+                <i class="fas fa-undo"></i> Clear Form
+            </button>
+            <button type="submit" class="btn-submit" id="submitBtn">
+                <i class="fas fa-paper-plane"></i> Submit Report
+            </button>
+        </div>
+    </form>
+    
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay" style="display: none;">
+        <div class="loading-spinner">
+            <i class="fas fa-spinner fa-spin"></i>
+            <p>Submitting your report...</p>
+        </div>
+    </div>
+    
+    <!-- Emergency Warning -->
+    <div class="emergency-alert mt-4">
+        <div class="emergency-icon">
+            <i class="fas fa-exclamation-triangle"></i>
+        </div>
+        <div class="emergency-content">
+            <h4>If you've lost money to this scam:</h4>
+            <ul>
+                <li><strong>Contact your bank immediately</strong> to freeze your account</li>
+                <li>Report to <strong>DCI Kenya</strong> at <a href="tel:0800722203">0800 722 203</a></li>
+                <li>Contact Safaricom at <strong>333</strong> or Airtel at <strong>3333</strong></li>
+                <li>Visit your nearest police station to file an official report</li>
+            </ul>
         </div>
     </div>
 </div>
+
+<style>
+    /* ========== Report Header ========== */
+    .report-header {
+        background: linear-gradient(135deg, var(--usiu-navy) 0%, var(--usiu-navy-dark) 100%);
+        color: white;
+        padding: 32px;
+        border-radius: 24px 24px 0 0;
+        border-bottom: 4px solid var(--usiu-gold);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 20px;
+    }
+    
+    .report-header-content {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+    
+    .report-header-icon {
+        width: 60px;
+        height: 60px;
+        background: rgba(245, 166, 35, 0.15);
+        border: 2px solid var(--usiu-gold);
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.75rem;
+        color: var(--usiu-gold);
+    }
+    
+    .report-header-text h1 {
+        font-size: 1.75rem;
+        font-weight: 700;
+        margin: 0 0 4px 0;
+        color: white;
+    }
+    
+    .report-header-text p {
+        margin: 0;
+        opacity: 0.9;
+        font-size: 0.95rem;
+    }
+    
+    .report-header-badge {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        padding: 8px 16px;
+        border-radius: 50px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .report-header-badge i {
+        color: var(--usiu-gold);
+    }
+    
+    /* ========== Content Wrapper ========== */
+    .content-wrapper {
+        background: white;
+        position: relative;
+    }
+    
+    /* ========== Success/Error Alerts ========== */
+    .success-alert, .error-alert {
+        border-radius: 16px;
+        padding: 24px;
+        display: flex;
+        gap: 20px;
+        align-items: flex-start;
+        margin-bottom: 20px;
+    }
+    
+    .success-alert {
+        background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+        border: 2px solid #10b981;
+    }
+    
+    .error-alert {
+        background: linear-gradient(135deg, #fff5f5 0%, #fed7d7 100%);
+        border: 2px solid #dc3545;
+    }
+    
+    .success-icon, .error-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        flex-shrink: 0;
+    }
+    
+    .success-icon {
+        background: #10b981;
+        color: white;
+    }
+    
+    .error-icon {
+        background: #dc3545;
+        color: white;
+    }
+    
+    .success-content h4, .error-content h4 {
+        font-weight: 700;
+        margin-bottom: 8px;
+    }
+    
+    .success-content h4 { color: #059669; }
+    .error-content h4 { color: #dc3545; }
+    
+    .success-content p, .error-content p {
+        margin: 0;
+        font-size: 0.95rem;
+    }
+    
+    /* ========== Form Sections ========== */
+    .form-section {
+        background: #fafbfc;
+        border: 1px solid #e5e7eb;
+        border-radius: 16px;
+        padding: 24px;
+    }
+    
+    .form-section-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--usiu-navy);
+        margin-bottom: 20px;
+        padding-bottom: 12px;
+        border-bottom: 2px solid var(--usiu-gold);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .form-section-title i {
+        color: var(--usiu-gold);
+        font-size: 1rem;
+    }
+    
+    /* ========== Custom Form Controls ========== */
+    .custom-select, .custom-input, .custom-textarea {
+        border: 1.5px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 10px 14px;
+        font-size: 0.95rem;
+        transition: all 0.3s ease;
+        background: white;
+    }
+    
+    .custom-select:focus, .custom-input:focus, .custom-textarea:focus {
+        border-color: var(--usiu-gold);
+        box-shadow: 0 0 0 3px rgba(245, 166, 35, 0.1);
+        outline: none;
+    }
+    
+    .custom-textarea {
+        resize: vertical;
+        min-height: 100px;
+    }
+    
+    .input-group-text {
+        background: var(--usiu-navy);
+        color: white;
+        border: 1.5px solid var(--usiu-navy);
+        border-radius: 12px 0 0 12px;
+    }
+    
+    /* ========== Form Labels ========== */
+    .form-label {
+        font-weight: 600;
+        color: #2d3748;
+        font-size: 0.9rem;
+        margin-bottom: 8px;
+    }
+    
+    .form-label i {
+        width: 20px;
+        text-align: center;
+    }
+    
+    .char-count {
+        text-align: right;
+        font-size: 0.8rem;
+        color: #94a3b8;
+        margin-top: 4px;
+    }
+    
+    /* ========== Submit Button ========== */
+    .btn-submit {
+        background: linear-gradient(135deg, var(--usiu-navy) 0%, var(--usiu-navy-dark) 100%);
+        color: white;
+        border: none;
+        padding: 12px 30px;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        border-bottom: 3px solid var(--usiu-gold);
+    }
+    
+    .btn-submit:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(0, 40, 85, 0.2);
+        color: white;
+    }
+    
+    .btn-submit:active:not(:disabled) {
+        transform: translateY(0);
+    }
+    
+    .btn-submit:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+    
+    /* ========== Loading Overlay ========== */
+    .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        backdrop-filter: blur(4px);
+    }
+    
+    .loading-spinner {
+        background: white;
+        padding: 40px;
+        border-radius: 20px;
+        text-align: center;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+    
+    .loading-spinner i {
+        font-size: 3rem;
+        color: var(--usiu-gold);
+        margin-bottom: 16px;
+    }
+    
+    .loading-spinner p {
+        color: var(--usiu-navy);
+        font-weight: 600;
+        font-size: 1.1rem;
+    }
+    
+    /* ========== Emergency Alert ========== */
+    .emergency-alert {
+        background: linear-gradient(135deg, #fff5f5 0%, #fed7d7 100%);
+        border: 2px solid #dc3545;
+        border-radius: 16px;
+        padding: 24px;
+        display: flex;
+        gap: 20px;
+        align-items: flex-start;
+    }
+    
+    .emergency-icon {
+        width: 50px;
+        height: 50px;
+        background: #dc3545;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: white;
+        flex-shrink: 0;
+    }
+    
+    .emergency-content h4 {
+        color: #dc3545;
+        font-weight: 700;
+        margin-bottom: 12px;
+        font-size: 1.1rem;
+    }
+    
+    .emergency-content ul {
+        margin: 0;
+        padding-left: 20px;
+    }
+    
+    .emergency-content li {
+        margin-bottom: 8px;
+        font-size: 0.95rem;
+    }
+    
+    .emergency-content a {
+        color: #dc3545;
+        font-weight: 700;
+        text-decoration: underline;
+    }
+    
+    /* ========== Button Group ========== */
+    .btn-group-custom {
+        display: flex;
+        gap: 12px;
+    }
+    
+    .btn-outline-danger, .btn-outline-success {
+        border: 2px solid;
+        border-radius: 12px;
+        padding: 10px 24px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-check:checked + .btn-outline-danger {
+        background: #dc3545;
+        color: white;
+    }
+    
+    .btn-check:checked + .btn-outline-success {
+        background: #10b981;
+        color: white;
+    }
+    
+    /* ========== Responsive ========== */
+    @media (max-width: 768px) {
+        .report-header {
+            padding: 20px;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        
+        .report-header-content {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        
+        .report-header-icon {
+            width: 50px;
+            height: 50px;
+            font-size: 1.5rem;
+        }
+        
+        .report-header-text h1 {
+            font-size: 1.4rem;
+        }
+        
+        .form-section {
+            padding: 16px;
+        }
+        
+        .btn-group-custom {
+            flex-direction: column;
+        }
+        
+        .emergency-alert {
+            flex-direction: column;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('reportForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    const successMessage = document.getElementById('successMessage');
+    const errorMessage = document.getElementById('errorMessage');
+    const errorText = document.getElementById('errorText');
+    const messageContent = document.getElementById('messageContent');
+    const charCount = document.getElementById('charCount');
+    const moneyYes = document.getElementById('money-yes');
+    const moneyNo = document.getElementById('money-no');
+    const amountLostSection = document.getElementById('amountLostSection');
+    
+    // Character counter
+    messageContent.addEventListener('input', function() {
+        const count = this.value.length;
+        charCount.textContent = count;
+        
+        if (count > 4500) {
+            charCount.style.color = '#dc3545';
+        } else if (count > 3500) {
+            charCount.style.color = '#f5a623';
+        } else {
+            charCount.style.color = '#94a3b8';
+        }
+    });
+    
+    // Toggle amount lost section
+    moneyYes.addEventListener('change', function() {
+        amountLostSection.style.display = 'block';
+    });
+    
+    moneyNo.addEventListener('change', function() {
+        amountLostSection.style.display = 'none';
+        document.getElementById('amountLost').value = '';
+    });
+    
+    // Form submission
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        // Validate required fields
+        const scamType = document.getElementById('scamType').value;
+        const dateReceived = document.getElementById('dateReceived').value;
+        const messageContent = document.getElementById('messageContent').value.trim();
+        const consent = document.getElementById('consent').checked;
+        
+        if (!scamType) {
+            alert('Please select the type of scam.');
+            return;
+        }
+        
+        if (!dateReceived) {
+            alert('Please select when you received the scam.');
+            return;
+        }
+        
+        if (!messageContent) {
+            alert('Please enter the scam message content.');
+            return;
+        }
+        
+        if (!consent) {
+            alert('Please confirm that the information is accurate.');
+            return;
+        }
+        
+        // Show loading state
+        submitBtn.disabled = true;
+        loadingOverlay.style.display = 'flex';
+        
+        try {
+            // Get CSRF token
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+            
+            // Prepare form data
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData.entries());
+            
+            // Send API request
+            const response = await fetch('/api/submit-feedback/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken,
+                },
+                body: JSON.stringify(data)
+            });
+            
+            const result = await response.json();
+            
+            if (response.ok && result.status === 'success') {
+                // Show success message
+                form.style.display = 'none';
+                successMessage.style.display = 'flex';
+                
+                // Scroll to success message
+                successMessage.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                
+                // Reset form after 3 seconds
+                setTimeout(() => {
+                    form.reset();
+                    form.style.display = 'block';
+                    successMessage.style.display = 'none';
+                    charCount.textContent = '0';
+                    amountLostSection.style.display = 'none';
+                }, 5000);
+            } else {
+                throw new Error(result.message || 'Submission failed');
+            }
+        } catch (error) {
+            // Show error message
+            errorMessage.style.display = 'flex';
+            errorText.textContent = error.message || 'Something went wrong. Please try again later.';
+            
+            // Scroll to error message
+            errorMessage.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            
+            // Hide error after 5 seconds
+            setTimeout(() => {
+                errorMessage.style.display = 'none';
+            }, 5000);
+        } finally {
+            // Hide loading state
+            submitBtn.disabled = false;
+            loadingOverlay.style.display = 'none';
+        }
+    });
+});
+
+// Reset form function
+function resetForm() {
+    if (confirm('Are you sure you want to clear all form data?')) {
+        document.getElementById('reportForm').reset();
+        document.getElementById('charCount').textContent = '0';
+        document.getElementById('amountLostSection').style.display = 'none';
+        document.getElementById('successMessage').style.display = 'none';
+        document.getElementById('errorMessage').style.display = 'none';
+    }
+}
+</script>
 {% endblock %}

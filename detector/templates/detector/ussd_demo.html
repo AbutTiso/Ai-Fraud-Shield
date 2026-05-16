@@ -1,0 +1,30 @@
+<!-- detector/templates/detector/ussd_demo.html -->
+<h3>📱 Report Scam Number via USSD (Simulator)</h3>
+<form id="ussd-form">
+    <input type="text" id="phone" placeholder="Scam number (e.g., 0711222333)" required>
+    <button type="submit">Report Scam Number</button>
+</form>
+<div id="result"></div>
+
+<script>
+document.getElementById('ussd-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const phone = document.getElementById('phone').value;
+    
+    // Simulate the 3-step USSD flow
+    const params = new URLSearchParams();
+    params.append('sessionId', 'WEB-' + Date.now());
+    params.append('phoneNumber', '254700000000');
+    params.append('serviceCode', '*483*72#');
+    params.append('text', '1*' + phone);
+    
+    const response = await fetch('/ussd/callback/', {
+        method: 'POST',
+        body: params,
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+    });
+    
+    const result = await response.text();
+    document.getElementById('result').innerHTML = '<strong>USSD Response:</strong> ' + result;
+});
+</script>

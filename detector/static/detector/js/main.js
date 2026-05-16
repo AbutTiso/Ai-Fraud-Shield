@@ -671,6 +671,9 @@ async function loadEnhancedStats() {
         whatsappCount: s.whatsapp_count,
         callCount: s.call_count,
         telegramCount: s.telegram_count,
+        ussdReports: s.ussd_count,
+        takedownTotal: s.takedown_total,
+        takedownCompleted: s.takedown_completed,
         avgRiskScore: s.average_risk_score,
         statTotalReports: s.total_reports,
         statHighRisk: s.high_risk_count,
@@ -693,9 +696,7 @@ async function loadEnhancedStats() {
       // Update table
       updateRecentScamsTable(s.recent_scams || []);
 
-      // ============================================================
-      // UPDATE STAFF ACTIVITY TABLE (Company Admin)
-      // ============================================================
+      // Update staff activity table
       if (data.staff_scans && data.staff_scans.length > 0) {
         const staffBody = document.getElementById('staffActivityBody');
         if (staffBody) {
@@ -733,6 +734,10 @@ async function updateStatsInstant() {
         emailCount: s.email_count,
         whatsappCount: s.whatsapp_count,
         callCount: s.call_count,
+        telegramCount: s.telegram_count,
+        ussdReports: s.ussd_count,
+        takedownTotal: s.takedown_total,
+        takedownCompleted: s.takedown_completed,
         avgRiskScore: s.average_risk_score,
         statTotalReports: s.total_reports,
         statHighRisk: s.high_risk_count,

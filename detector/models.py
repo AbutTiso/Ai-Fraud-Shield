@@ -193,9 +193,8 @@ class BlockedNumber(models.Model):
         if self.confidence_score >= 70 and self.report_count >= 5:
             self.status = 'BLOCKED'
             self.auto_blocked = True
-        
-        self.save()
-    
+        # REMOVED self.save() from here - let caller decide when to save
+
     def save(self, *args, **kwargs):
         if not self.confidence_score:
             self.calculate_confidence()
@@ -285,3 +284,129 @@ class UserBadge(models.Model):
     
     class Meta:
         unique_together = ['user', 'badge']
+        
+class TakedownReport(models.Model):
+    """Track scam takedown requests"""
+    STATUS_CHOICES = [
+        ('PENDING', 'Pending Review'),
+        ('SUBMITTED', 'Submitted'),
+        ('IN_PROGRESS', 'In Progress'),
+        ('COMPLETED', 'Takedown Successful'),
+        ('FAILED', 'Takedown Failed'),
+        ('REJECTED', 'Rejected by Provider'),
+    ]
+    
+    url = models.URLField()
+    domain = models.CharField(max_length=255)
+    hosting_provider = models.CharField(max_length=255, blank=True)
+    scam_type = models.CharField(max_length=100, blank=True)
+    reported_by = models.CharField(max_length=100, blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING')
+    google_reported = models.BooleanField(default=False)
+    hosting_reported = models.BooleanField(default=False)
+    brand_notified = models.BooleanField(default=False)
+    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"{self.domain} - {self.status}"
+
+
+class TakedownProvider(models.Model):
+    """Hosting provider abuse contacts"""
+    name = models.CharField(max_length=200)
+    abuse_email = models.EmailField()
+    abuse_url = models.URLField(blank=True)
+    success_rate = models.FloatField(default=0.0)
+    avg_response_time = models.CharField(max_length=50, blank=True)
+    
+    def __str__(self):
+        return f"{self.name} ({self.success_rate}% success)"
+
+
+class ImpersonatedBrand(models.Model):
+    """Brands that scammers commonly impersonate"""
+    name = models.CharField(max_length=200)
+    official_domain = models.CharField(max_length=255)
+    notification_email = models.EmailField()
+    is_active = models.BooleanField(default=True)
+    
+    def __str__(self):
+        return self.name
+    
+    
+class CorporateAccount(models.Model):
+    """Enterprise/corporate client account"""
+    PLAN_CHOICES = [
+        ('FREE', 'Free Trial'),
+        ('BASIC', 'Basic - Ksh 5,000/mo'),
+        ('PRO', 'Professional - Ksh 15,000/mo'),
+        ('ENTERPRISE', 'Enterprise - Custom'),
+    ]
+    
+    company = models.OneToOneField(Company, on_delete=models.CASCADE)
+    plan = models.CharField(max_length=20, choices=PLAN_CHOICES, default='FREE')
+    max_employees = models.IntegerField(default=10)
+    bulk_verifications = models.IntegerField(default=0)
+    bulk_verification_limit = models.IntegerField(default=100)
+    api_key = models.CharField(max_length=100, unique=True, blank=True)
+    widget_enabled = models.BooleanField(default=False)
+    phishing_simulations = models.IntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+    trial_ends = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f"{self.company.name} - {self.plan}"
+    
+    def generate_api_key(self):
+        import uuid
+        self.api_key = f'afs_{uuid.uuid4().hex[:24]}'
+        self.save()
+
+
+class BulkVerification(models.Model):
+    """Bulk phone number verification jobs"""
+    STATUS_CHOICES = [
+        ('PENDING', 'Pending'),
+        ('PROCESSING', 'Processing'),
+        ('COMPLETED', 'Completed'),
+        ('FAILED', 'Failed'),
+    ]
+    
+    corporate = models.ForeignKey(CorporateAccount, on_delete=models.CASCADE)
+    total_numbers = models.IntegerField(default=0)
+    processed = models.IntegerField(default=0)
+    scam_found = models.IntegerField(default=0)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING')
+    result_file = models.FileField(upload_to='bulk_results/', blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    
+    def __str__(self):
+        return f"Bulk Verify #{self.id} - {self.total_numbers} numbers"
+
+
+class PhishingSimulation(models.Model):
+    """Phishing simulation campaigns for employee training"""
+    corporate = models.ForeignKey(CorporateAccount, on_delete=models.CASCADE)
+    template_name = models.CharField(max_length=200)
+    target_employees = models.IntegerField(default=0)
+    clicked_count = models.IntegerField(default=0)
+    reported_count = models.IntegerField(default=0)
+    ignored_count = models.IntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    @property
+    def click_rate(self):
+        if self.target_employees == 0: return 0
+        return round((self.clicked_count / self.target_employees) * 100, 1)
+    
+    @property
+    def report_rate(self):
+        if self.target_employees == 0: return 0
+        return round((self.reported_count / self.target_employees) * 100, 1)

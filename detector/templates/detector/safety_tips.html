@@ -3,74 +3,920 @@
 
 {% block title %}Safety Tips - AI Fraud Shield{% endblock %}
 
+{% block header %}{% endblock %}
+
 {% block content %}
-<div class="container mt-4">
-    <div class="main-card">
-        <div class="header">
-            <h1><i class="fas fa-shield-alt"></i> Safety Tips</h1>
-            <p>How to protect yourself from digital scams</p>
-        </div>
-        <div class="content p-4">
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="card mb-3">
-                        <div class="card-body">
-                            <h4><i class="fas fa-sms"></i> SMS Safety</h4>
-                            <ul>
-                                <li>Never click links in unsolicited SMS</li>
-                                <li>Never share your M-Pesa PIN</li>
-                                <li>Verify urgent requests by calling official numbers</li>
-                                <li>Report scam SMS to 333 (Safaricom) or 3333 (Airtel)</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="card mb-3">
-                        <div class="card-body">
-                            <h4><i class="fas fa-envelope"></i> Email Safety</h4>
-                            <ul>
-                                <li>Never click links in suspicious emails</li>
-                                <li>Check sender's email address carefully</li>
-                                <li>Hover over links to see real destination</li>
-                                <li>Forward phishing to report@kenyacic.go.ke</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="card mb-3">
-                        <div class="card-body">
-                            <h4><i class="fab fa-whatsapp"></i> WhatsApp Safety</h4>
-                            <ul>
-                                <li>Verify urgent money requests with a phone call</li>
-                                <li>Don't share verification codes</li>
-                                <li>Block and report suspicious contacts</li>
-                                <li>Enable two-step verification</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="card mb-3">
-                        <div class="card-body">
-                            <h4><i class="fas fa-money-bill-wave"></i> M-Pesa Safety</h4>
-                            <ul>
-                                <li>Never share your M-Pesa PIN with anyone</li>
-                                <li>Verify receipts in your official M-Pesa app</li>
-                                <li>Don't send money to unknown numbers</li>
-                                <li>Report fake receipts immediately</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
+<div class="safety-tips-page">
+    <!-- Hero Section -->
+    <div class="safety-hero">
+        <div class="safety-hero-content">
+            <div class="safety-hero-icon">
+                <i class="fas fa-shield-haltered"></i>
             </div>
-            
-            <div class="alert alert-danger mt-3">
-                <strong><i class="fas fa-exclamation-triangle"></i> Golden Rule:</strong>
-                If something seems too good to be true, it probably is. Always verify through official channels!
+            <div class="safety-hero-text">
+                <h1>Stay Safe from Digital Scams</h1>
+                <p>Essential tips to protect yourself and your money in Kenya's digital landscape</p>
+            </div>
+        </div>
+        <div class="safety-hero-stats">
+            <div class="hero-stat">
+                <span class="hero-stat-number">333</span>
+                <span class="hero-stat-label">Safaricom Report</span>
+            </div>
+            <div class="hero-stat">
+                <span class="hero-stat-number">3333</span>
+                <span class="hero-stat-label">Airtel Report</span>
+            </div>
+            <div class="hero-stat">
+                <span class="hero-stat-number">*334#</span>
+                <span class="hero-stat-label">M-Pesa Menu</span>
             </div>
         </div>
     </div>
+
+    <!-- Golden Rule Banner -->
+    <div class="golden-rule-banner">
+        <div class="golden-rule-icon">
+            <i class="fas fa-star"></i>
+        </div>
+        <div class="golden-rule-content">
+            <h2>The Golden Rule of Scam Prevention</h2>
+            <p>If something seems <strong>too good to be true</strong>, it probably is. <strong>Always verify</strong> through official channels before taking any action.</p>
+        </div>
+    </div>
+
+    <!-- Safety Cards Grid - Accordion Style -->
+    <div class="safety-accordion">
+        
+        <!-- SMS Safety -->
+        <div class="accordion-item">
+            <button class="accordion-header" onclick="toggleAccordion(this)">
+                <div class="accordion-header-left">
+                    <div class="accordion-icon sms">
+                        <i class="fas fa-sms"></i>
+                    </div>
+                    <div class="accordion-title">
+                        <h3>SMS Safety</h3>
+                        <span class="accordion-subtitle">Protect yourself from text message scams</span>
+                    </div>
+                </div>
+                <div class="accordion-header-right">
+                    <span class="accordion-badge">Most Common</span>
+                    <i class="fas fa-chevron-down accordion-arrow"></i>
+                </div>
+            </button>
+            <div class="accordion-body">
+                <ul class="safety-list">
+                    <li>
+                        <i class="fas fa-times-circle"></i>
+                        <div>
+                            <strong>Never click links</strong>
+                            <span>in unsolicited SMS messages</span>
+                        </div>
+                    </li>
+                    <li>
+                        <i class="fas fa-lock"></i>
+                        <div>
+                            <strong>Never share your PIN</strong>
+                            <span>or M-Pesa password with anyone</span>
+                        </div>
+                    </li>
+                    <li>
+                        <i class="fas fa-phone"></i>
+                        <div>
+                            <strong>Verify urgent requests</strong>
+                            <span>by calling official numbers directly</span>
+                        </div>
+                    </li>
+                    <li>
+                        <i class="fas fa-flag"></i>
+                        <div>
+                            <strong>Report scam SMS</strong>
+                            <span>to 333 (Safaricom) or 3333 (Airtel)</span>
+                        </div>
+                    </li>
+                </ul>
+                <div class="accordion-footer">
+                    <i class="fas fa-exclamation-triangle"></i> 
+                    <strong>Common scam:</strong> "Your M-Pesa account will be suspended"
+                </div>
+            </div>
+        </div>
+
+        <!-- Email Safety -->
+        <div class="accordion-item">
+            <button class="accordion-header" onclick="toggleAccordion(this)">
+                <div class="accordion-header-left">
+                    <div class="accordion-icon email">
+                        <i class="fas fa-envelope"></i>
+                    </div>
+                    <div class="accordion-title">
+                        <h3>Email Safety</h3>
+                        <span class="accordion-subtitle">Identify and avoid phishing emails</span>
+                    </div>
+                </div>
+                <div class="accordion-header-right">
+                    <span class="accordion-badge">Phishing Alert</span>
+                    <i class="fas fa-chevron-down accordion-arrow"></i>
+                </div>
+            </button>
+            <div class="accordion-body">
+                <ul class="safety-list">
+                    <li>
+                        <i class="fas fa-mouse-pointer"></i>
+                        <div>
+                            <strong>Never click suspicious links</strong>
+                            <span>hover first to see real URL destination</span>
+                        </div>
+                    </li>
+                    <li>
+                        <i class="fas fa-user-check"></i>
+                        <div>
+                            <strong>Check sender's email</strong>
+                            <span>carefully - scammers use similar addresses</span>
+                        </div>
+                    </li>
+                    <li>
+                        <i class="fas fa-paperclip"></i>
+                        <div>
+                            <strong>Don't open attachments</strong>
+                            <span>from unknown or unexpected senders</span>
+                        </div>
+                    </li>
+                    <li>
+                        <i class="fas fa-share"></i>
+                        <div>
+                            <strong>Forward phishing emails</strong>
+                            <span>to report@kenyacic.go.ke</span>
+                        </div>
+                    </li>
+                </ul>
+                <div class="accordion-footer">
+                    <i class="fas fa-exclamation-triangle"></i> 
+                    <strong>Common scam:</strong> "Your email account will be closed"
+                </div>
+            </div>
+        </div>
+
+        <!-- WhatsApp Safety -->
+        <div class="accordion-item">
+            <button class="accordion-header" onclick="toggleAccordion(this)">
+                <div class="accordion-header-left">
+                    <div class="accordion-icon whatsapp">
+                        <i class="fab fa-whatsapp"></i>
+                    </div>
+                    <div class="accordion-title">
+                        <h3>WhatsApp Safety</h3>
+                        <span class="accordion-subtitle">Stay safe on Kenya's most used messaging app</span>
+                    </div>
+                </div>
+                <div class="accordion-header-right">
+                    <span class="accordion-badge">Rising Threat</span>
+                    <i class="fas fa-chevron-down accordion-arrow"></i>
+                </div>
+            </button>
+            <div class="accordion-body">
+                <ul class="safety-list">
+                    <li>
+                        <i class="fas fa-phone-alt"></i>
+                        <div>
+                            <strong>Call to verify</strong>
+                            <span>urgent money requests from family/friends</span>
+                        </div>
+                    </li>
+                    <li>
+                        <i class="fas fa-key"></i>
+                        <div>
+                            <strong>Never share codes</strong>
+                            <span>verification codes are for YOU only</span>
+                        </div>
+                    </li>
+                    <li>
+                        <i class="fas fa-user-slash"></i>
+                        <div>
+                            <strong>Block & report</strong>
+                            <span>suspicious contacts immediately</span>
+                        </div>
+                    </li>
+                    <li>
+                        <i class="fas fa-shield-alt"></i>
+                        <div>
+                            <strong>Enable 2-step verification</strong>
+                            <span>in WhatsApp Settings > Account</span>
+                        </div>
+                    </li>
+                </ul>
+                <div class="accordion-footer">
+                    <i class="fas fa-exclamation-triangle"></i> 
+                    <strong>Common scam:</strong> "Mum/Dad I lost my phone, send money to this number"
+                </div>
+            </div>
+        </div>
+
+        <!-- M-Pesa Safety -->
+        <div class="accordion-item">
+            <button class="accordion-header" onclick="toggleAccordion(this)">
+                <div class="accordion-header-left">
+                    <div class="accordion-icon mpesa">
+                        <i class="fas fa-money-bill-wave"></i>
+                    </div>
+                    <div class="accordion-title">
+                        <h3>M-Pesa Safety</h3>
+                        <span class="accordion-subtitle">Protect your mobile money transactions</span>
+                    </div>
+                </div>
+                <div class="accordion-header-right">
+                    <span class="accordion-badge critical">Critical</span>
+                    <i class="fas fa-chevron-down accordion-arrow"></i>
+                </div>
+            </button>
+            <div class="accordion-body">
+                <ul class="safety-list">
+                    <li>
+                        <i class="fas fa-eye-slash"></i>
+                        <div>
+                            <strong>PIN is PRIVATE</strong>
+                            <span>never share with anyone - even "Safaricom staff"</span>
+                        </div>
+                    </li>
+                    <li>
+                        <i class="fas fa-mobile-alt"></i>
+                        <div>
+                            <strong>Use official app</strong>
+                            <span>verify receipts in M-Pesa app or *334#</span>
+                        </div>
+                    </li>
+                    <li>
+                        <i class="fas fa-user-friends"></i>
+                        <div>
+                            <strong>Know your recipient</strong>
+                            <span>don't send money to unknown numbers</span>
+                        </div>
+                    </li>
+                    <li>
+                        <i class="fas fa-camera"></i>
+                        <div>
+                            <strong>Verify screenshots</strong>
+                            <span>report fake M-Pesa receipts immediately</span>
+                        </div>
+                    </li>
+                </ul>
+                <div class="accordion-footer">
+                    <i class="fas fa-exclamation-triangle"></i> 
+                    <strong>Common scam:</strong> Fake M-Pesa payment confirmation messages
+                </div>
+            </div>
+        </div>
+
+        <!-- Social Media Safety -->
+        <div class="accordion-item">
+            <button class="accordion-header" onclick="toggleAccordion(this)">
+                <div class="accordion-header-left">
+                    <div class="accordion-icon social">
+                        <i class="fas fa-hashtag"></i>
+                    </div>
+                    <div class="accordion-title">
+                        <h3>Social Media Safety</h3>
+                        <span class="accordion-subtitle">Avoid scams on Facebook, Instagram, TikTok, X</span>
+                    </div>
+                </div>
+                <div class="accordion-header-right">
+                    <span class="accordion-badge">New</span>
+                    <i class="fas fa-chevron-down accordion-arrow"></i>
+                </div>
+            </button>
+            <div class="accordion-body">
+                <ul class="safety-list">
+                    <li>
+                        <i class="fas fa-user-secret"></i>
+                        <div>
+                            <strong>Fake profiles</strong>
+                            <span>verify accounts before engaging with them</span>
+                        </div>
+                    </li>
+                    <li>
+                        <i class="fas fa-gift"></i>
+                        <div>
+                            <strong>Fake giveaways</strong>
+                            <span>legitimate companies don't ask for fees to claim prizes</span>
+                        </div>
+                    </li>
+                    <li>
+                        <i class="fas fa-briefcase"></i>
+                        <div>
+                            <strong>Job scams</strong>
+                            <span>real employers don't ask for payment to hire you</span>
+                        </div>
+                    </li>
+                    <li>
+                        <i class="fas fa-cog"></i>
+                        <div>
+                            <strong>Privacy settings</strong>
+                            <span>limit who can see your personal information</span>
+                        </div>
+                    </li>
+                </ul>
+                <div class="accordion-footer">
+                    <i class="fas fa-exclamation-triangle"></i> 
+                    <strong>Common scam:</strong> "Work from home earn Ksh 5,000/day"
+                </div>
+            </div>
+        </div>
+
+        <!-- General Safety -->
+        <div class="accordion-item">
+            <button class="accordion-header" onclick="toggleAccordion(this)">
+                <div class="accordion-header-left">
+                    <div class="accordion-icon general">
+                        <i class="fas fa-lightbulb"></i>
+                    </div>
+                    <div class="accordion-title">
+                        <h3>General Tips</h3>
+                        <span class="accordion-subtitle">Universal safety practices for everyone</span>
+                    </div>
+                </div>
+                <div class="accordion-header-right">
+                    <span class="accordion-badge">Essential</span>
+                    <i class="fas fa-chevron-down accordion-arrow"></i>
+                </div>
+            </button>
+            <div class="accordion-body">
+                <ul class="safety-list">
+                    <li>
+                        <i class="fas fa-clock"></i>
+                        <div>
+                            <strong>Take your time</strong>
+                            <span>scammers create urgency to pressure you</span>
+                        </div>
+                    </li>
+                    <li>
+                        <i class="fas fa-search"></i>
+                        <div>
+                            <strong>Research first</strong>
+                            <span>search online for similar scams reported</span>
+                        </div>
+                    </li>
+                    <li>
+                        <i class="fas fa-credit-card"></i>
+                        <div>
+                            <strong>Protect financial info</strong>
+                            <span>never share bank details on calls or messages</span>
+                        </div>
+                    </li>
+                    <li>
+                        <i class="fas fa-headset"></i>
+                        <div>
+                            <strong>Use our tools</strong>
+                            <span>check suspicious messages with AI Fraud Shield</span>
+                        </div>
+                    </li>
+                </ul>
+                <div class="accordion-footer">
+                    <i class="fas fa-lightbulb"></i> 
+                    <strong>Tip:</strong> When in doubt, use our SMS/Email detection tools first!
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Emergency Contacts Section -->
+    <div class="emergency-section">
+        <h2><i class="fas fa-phone-alt"></i> Emergency Contacts</h2>
+        <div class="emergency-grid">
+            <div class="emergency-card">
+                <div class="emergency-icon safaricom">
+                    <i class="fas fa-sim-card"></i>
+                </div>
+                <h4>Safaricom</h4>
+                <p>Report scams: <strong>333</strong></p>
+                <p>Customer care: <strong>100</strong></p>
+            </div>
+            <div class="emergency-card">
+                <div class="emergency-icon airtel">
+                    <i class="fas fa-sim-card"></i>
+                </div>
+                <h4>Airtel</h4>
+                <p>Report scams: <strong>3333</strong></p>
+                <p>Customer care: <strong>100</strong></p>
+            </div>
+            <div class="emergency-card">
+                <div class="emergency-icon dci">
+                    <i class="fas fa-building"></i>
+                </div>
+                <h4>DCI Kenya</h4>
+                <p>Report fraud: <strong>0800 722 203</strong></p>
+                <p>Cyber crime unit</p>
+            </div>
+            <div class="emergency-card">
+                <div class="emergency-icon bank">
+                    <i class="fas fa-university"></i>
+                </div>
+                <h4>Your Bank</h4>
+                <p>Call immediately if</p>
+                <p>you've lost money</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Call to Action -->
+    <div class="cta-section">
+        <h2>Think You've Found a Scam?</h2>
+        <p>Use our free detection tools to check suspicious messages instantly</p>
+        <div class="cta-buttons">
+            <a href="/" class="cta-btn primary">
+                <i class="fas fa-search"></i> Check a Message
+            </a>
+            <a href="/report-scam/" class="cta-btn danger">
+                <i class="fas fa-flag"></i> Report a Scam
+            </a>
+        </div>
+    </div>
 </div>
+
+<style>
+    .safety-tips-page {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    /* Hero Section */
+    .safety-hero {
+        background: linear-gradient(135deg, #002855 0%, #001a3f 100%);
+        color: white;
+        border-radius: 20px;
+        padding: 40px;
+        margin-bottom: 24px;
+        border-bottom: 4px solid #f5a623;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 24px;
+    }
+
+    .safety-hero-content {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+
+    .safety-hero-icon {
+        width: 70px;
+        height: 70px;
+        background: rgba(245, 166, 35, 0.15);
+        border: 2px solid #f5a623;
+        border-radius: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        color: #f5a623;
+    }
+
+    .safety-hero-text h1 {
+        font-size: 2rem;
+        font-weight: 700;
+        margin: 0 0 8px 0;
+    }
+
+    .safety-hero-text p {
+        margin: 0;
+        opacity: 0.9;
+        font-size: 1rem;
+    }
+
+    .safety-hero-stats {
+        display: flex;
+        gap: 20px;
+    }
+
+    .hero-stat {
+        text-align: center;
+        background: rgba(255, 255, 255, 0.1);
+        padding: 12px 20px;
+        border-radius: 12px;
+        backdrop-filter: blur(10px);
+    }
+
+    .hero-stat-number {
+        display: block;
+        font-size: 1.3rem;
+        font-weight: 800;
+        color: #f5a623;
+    }
+
+    .hero-stat-label {
+        font-size: 0.75rem;
+        opacity: 0.8;
+    }
+
+    /* Golden Rule */
+    .golden-rule-banner {
+        background: linear-gradient(135deg, #fef3d5 0%, #fde68a 100%);
+        border: 2px solid #f5a623;
+        border-radius: 16px;
+        padding: 24px 32px;
+        margin-bottom: 24px;
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+
+    .golden-rule-icon {
+        width: 60px;
+        height: 60px;
+        background: #f5a623;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: white;
+        flex-shrink: 0;
+    }
+
+    .golden-rule-content h2 {
+        color: #002855;
+        font-weight: 700;
+        margin: 0 0 4px 0;
+        font-size: 1.2rem;
+    }
+
+    .golden-rule-content p {
+        margin: 0;
+        color: #4a5568;
+        font-size: 0.95rem;
+    }
+
+    /* Accordion */
+    .safety-accordion {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin-bottom: 32px;
+    }
+
+    .accordion-item {
+        background: white;
+        border-radius: 16px;
+        border: 1px solid #e5e7eb;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+
+    .accordion-item:hover {
+        box-shadow: 0 4px 20px rgba(0, 40, 85, 0.1);
+    }
+
+    .accordion-header {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px 24px;
+        background: white;
+        border: none;
+        cursor: pointer;
+        transition: background 0.2s ease;
+        text-align: left;
+        gap: 16px;
+    }
+
+    .accordion-header:hover {
+        background: #f8fafc;
+    }
+
+    .accordion-header-left {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        flex: 1;
+    }
+
+    .accordion-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        color: white;
+        flex-shrink: 0;
+    }
+
+    .accordion-icon.sms { background: #3b82f6; }
+    .accordion-icon.email { background: #f59e0b; }
+    .accordion-icon.whatsapp { background: #10b981; }
+    .accordion-icon.mpesa { background: #dc3545; }
+    .accordion-icon.social { background: #8b5cf6; }
+    .accordion-icon.general { background: #002855; }
+
+    .accordion-title h3 {
+        margin: 0;
+        font-weight: 700;
+        color: #002855;
+        font-size: 1.1rem;
+    }
+
+    .accordion-subtitle {
+        color: #64748b;
+        font-size: 0.85rem;
+    }
+
+    .accordion-header-right {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .accordion-badge {
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        padding: 4px 10px;
+        border-radius: 20px;
+        background: #e8f0fe;
+        color: #002855;
+        white-space: nowrap;
+    }
+
+    .accordion-badge.critical {
+        background: #fee2e2;
+        color: #dc3545;
+    }
+
+    .accordion-arrow {
+        color: #94a3b8;
+        font-size: 0.9rem;
+        transition: transform 0.3s ease;
+    }
+
+    .accordion-item.active .accordion-arrow {
+        transform: rotate(180deg);
+        color: #002855;
+    }
+
+    .accordion-body {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.4s ease, padding 0.3s ease;
+        padding: 0 24px;
+    }
+
+    .accordion-item.active .accordion-body {
+        max-height: 500px;
+        padding: 0 24px 20px;
+    }
+
+    .safety-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .safety-list li {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 10px 0;
+        border-bottom: 1px solid #f8fafc;
+    }
+
+    .safety-list li:last-child {
+        border-bottom: none;
+    }
+
+    .safety-list li i {
+        font-size: 1rem;
+        margin-top: 2px;
+        flex-shrink: 0;
+    }
+
+    .safety-list li i.fa-times-circle { color: #dc3545; }
+    .safety-list li i.fa-lock { color: #f5a623; }
+    .safety-list li i.fa-phone { color: #3b82f6; }
+    .safety-list li i.fa-flag { color: #dc3545; }
+    .safety-list li i.fa-mouse-pointer { color: #8b5cf6; }
+    .safety-list li i.fa-user-check { color: #10b981; }
+    .safety-list li i.fa-paperclip { color: #f59e0b; }
+    .safety-list li i.fa-share { color: #3b82f6; }
+    .safety-list li i.fa-phone-alt { color: #10b981; }
+    .safety-list li i.fa-key { color: #f5a623; }
+    .safety-list li i.fa-user-slash { color: #dc3545; }
+    .safety-list li i.fa-shield-alt { color: #002855; }
+    .safety-list li i.fa-eye-slash { color: #dc3545; }
+    .safety-list li i.fa-mobile-alt { color: #3b82f6; }
+    .safety-list li i.fa-user-friends { color: #8b5cf6; }
+    .safety-list li i.fa-camera { color: #f59e0b; }
+
+    .safety-list li div strong {
+        display: block;
+        color: #1e293b;
+        font-size: 0.9rem;
+    }
+
+    .safety-list li div span {
+        color: #64748b;
+        font-size: 0.8rem;
+    }
+
+    .accordion-footer {
+        margin-top: 12px;
+        padding-top: 12px;
+        border-top: 1px solid #f1f5f9;
+        font-size: 0.85rem;
+        color: #dc3545;
+        font-weight: 500;
+    }
+
+    .accordion-footer i {
+        margin-right: 4px;
+    }
+
+    /* Emergency Section */
+    .emergency-section {
+        background: white;
+        border-radius: 16px;
+        padding: 32px;
+        margin-bottom: 24px;
+        border: 1px solid #e5e7eb;
+    }
+
+    .emergency-section h2 {
+        color: #002855;
+        font-weight: 700;
+        margin-bottom: 24px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .emergency-section h2 i {
+        color: #dc3545;
+    }
+
+    .emergency-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 16px;
+    }
+
+    .emergency-card {
+        text-align: center;
+        padding: 24px;
+        border-radius: 12px;
+        background: #f8fafc;
+        border: 1px solid #e5e7eb;
+        transition: all 0.3s ease;
+    }
+
+    .emergency-card:hover {
+        background: #f1f5f9;
+        transform: translateY(-2px);
+    }
+
+    .emergency-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 12px;
+        font-size: 1.2rem;
+        color: white;
+    }
+
+    .emergency-icon.safaricom { background: #10b981; }
+    .emergency-icon.airtel { background: #dc3545; }
+    .emergency-icon.dci { background: #002855; }
+    .emergency-icon.bank { background: #f5a623; }
+
+    .emergency-card h4 {
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 8px;
+    }
+
+    .emergency-card p {
+        color: #64748b;
+        font-size: 0.9rem;
+        margin: 2px 0;
+    }
+
+    .emergency-card strong {
+        color: #002855;
+    }
+
+    /* CTA Section */
+    .cta-section {
+        text-align: center;
+        padding: 40px;
+        background: linear-gradient(135deg, #002855 0%, #001a3f 100%);
+        border-radius: 16px;
+        color: white;
+        border-bottom: 4px solid #f5a623;
+    }
+
+    .cta-section h2 {
+        font-weight: 700;
+        margin-bottom: 8px;
+    }
+
+    .cta-section p {
+        opacity: 0.9;
+        margin-bottom: 24px;
+    }
+
+    .cta-buttons {
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .cta-btn {
+        padding: 14px 28px;
+        border-radius: 12px;
+        font-weight: 700;
+        font-size: 1rem;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s ease;
+    }
+
+    .cta-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .cta-btn.primary {
+        background: #f5a623;
+        color: #002855;
+    }
+
+    .cta-btn.danger {
+        background: #dc3545;
+        color: white;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .safety-hero {
+            flex-direction: column;
+            text-align: center;
+            padding: 24px;
+        }
+
+        .safety-hero-content {
+            flex-direction: column;
+        }
+
+        .safety-hero-stats {
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .accordion-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .accordion-header-right {
+            width: 100%;
+            justify-content: space-between;
+        }
+
+        .golden-rule-banner {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .cta-section {
+            padding: 24px;
+        }
+    }
+</style>
+
+<script>
+function toggleAccordion(button) {
+    const item = button.parentElement;
+    const isActive = item.classList.contains('active');
+    
+    // Close all accordion items
+    document.querySelectorAll('.accordion-item').forEach(el => {
+        el.classList.remove('active');
+    });
+    
+    // Open clicked item if it wasn't already open
+    if (!isActive) {
+        item.classList.add('active');
+    }
+}
+</script>
 {% endblock %}

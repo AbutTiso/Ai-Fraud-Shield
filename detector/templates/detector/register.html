@@ -5,152 +5,568 @@
 
 {% block extra_css %}
 <style>
+  /* Reset base styles for this page */
   body {
-    background: linear-gradient(135deg, #002855, #001a3f);
+    background: linear-gradient(135deg, #002855 0%, #001a3f 100%);
     min-height: 100vh;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-family: 'Segoe UI', sans-serif;
+    font-family: 'Inter', 'Segoe UI', sans-serif;
+    padding: 20px;
   }
   
+  .register-container {
+    max-width: 550px;
+    width: 100%;
+    margin: 0 auto;
+  }
+  
+  /* Brand Header */
+  .brand-header {
+    text-align: center;
+    margin-bottom: 30px;
+  }
+  
+  .brand-logo {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 70px;
+    height: 70px;
+    background: linear-gradient(135deg, #f5a623, #e6951a);
+    border-radius: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 10px 25px rgba(245, 166, 35, 0.3);
+  }
+  
+  .brand-logo i {
+    font-size: 2.5rem;
+    color: #002855;
+  }
+  
+  .brand-header h1 {
+    color: white;
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin: 0 0 5px;
+  }
+  
+  .brand-header p {
+    color: rgba(255,255,255,0.8);
+    font-size: 0.9rem;
+  }
+  
+  /* Main Card */
   .register-card {
     background: white;
-    border-radius: 20px;
+    border-radius: 24px;
     padding: 40px;
-    max-width: 500px;
-    width: 100%;
-    box-shadow: 0 25px 60px rgba(0,0,0,0.3);
-    border-top: 5px solid #f5a623;
+    box-shadow: 0 30px 60px rgba(0,0,0,0.2);
+    animation: slideUp 0.5s ease-out;
+  }
+  
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
   
   .register-card h2 {
     color: #002855;
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0 0 8px;
     text-align: center;
-    margin-bottom: 10px;
-  }
-  .register-card h2 i { color: #f5a623; }
-  
-  .register-card p { text-align: center; color: #6b7280; margin-bottom: 25px; }
-  
-  .form-group { margin-bottom: 18px; }
-  .form-group label { display: block; font-weight: 600; color: #002855; margin-bottom: 6px; font-size: 0.9rem; }
-  .form-group input, .form-group select {
-    width: 100%; padding: 12px 15px;
-    border: 2px solid #e5e7eb; border-radius: 10px;
-    font-size: 1rem; transition: all 0.3s;
-  }
-  .form-group input:focus, .form-group select:focus {
-    border-color: #002855; outline: none;
-    box-shadow: 0 0 0 3px rgba(0,40,85,0.1);
   }
   
-  .btn-register {
-    width: 100%; padding: 14px;
-    background: linear-gradient(135deg, #002855, #001a3f);
-    color: white; border: none; border-radius: 50px;
-    font-weight: 700; font-size: 1rem; cursor: pointer;
-    transition: all 0.3s; margin-top: 10px;
-  }
-  .btn-register:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(0,40,85,0.3);
+  .register-card h2 i {
+    color: #f5a623;
+    margin-right: 10px;
   }
   
-  .login-link { text-align: center; margin-top: 20px; color: #6b7280; }
-  .login-link a { color: #002855; font-weight: 600; text-decoration: none; }
-  .login-link a:hover { color: #f5a623; }
+  .register-card > p {
+    text-align: center;
+    color: #6b7280;
+    font-size: 0.9rem;
+    margin-bottom: 30px;
+  }
+  
+  /* Form Groups */
+  .form-group {
+    margin-bottom: 20px;
+  }
+  
+  .form-group label {
+    display: block;
+    font-weight: 600;
+    color: #002855;
+    margin-bottom: 8px;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  
+  .form-group label i {
+    margin-right: 6px;
+    color: #f5a623;
+    width: 20px;
+  }
+  
+  .input-wrapper {
+    position: relative;
+  }
+  
+  .input-wrapper i {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #9ca3af;
+    font-size: 1rem;
+  }
+  
+  .form-group input, 
+  .form-group select {
+    width: 100%;
+    padding: 12px 15px 12px 42px;
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    background: #f9fafb;
+  }
+  
+  .form-group input:focus, 
+  .form-group select:focus {
+    border-color: #f5a623;
+    outline: none;
+    background: white;
+    box-shadow: 0 0 0 4px rgba(245, 166, 35, 0.1);
+  }
+  
+  /* Role Selector */
+  .role-label {
+    font-weight: 600;
+    color: #002855;
+    margin-bottom: 12px;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  .role-label i {
+    color: #f5a623;
+  }
   
   .role-selector {
-    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  
+  .role-option {
+    padding: 16px 12px;
+    border: 2px solid #e5e7eb;
+    border-radius: 14px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: #f9fafb;
+  }
+  
+  .role-option:hover {
+    border-color: #f5a623;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  }
+  
+  .role-option.selected {
+    border-color: #f5a623;
+    background: linear-gradient(135deg, #fefce8, #fef9c3);
+    box-shadow: 0 5px 15px rgba(245, 166, 35, 0.2);
+  }
+  
+  .role-option .icon {
+    font-size: 2rem;
+    margin-bottom: 6px;
+  }
+  
+  .role-option .label {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #002855;
+  }
+  
+  .role-option .desc {
+    font-size: 0.7rem;
+    color: #6b7280;
+    margin-top: 4px;
+  }
+  
+  /* Company Fields */
+  .company-fields {
+    background: #f9fafb;
+    border-radius: 16px;
+    padding: 20px;
+    margin: 20px 0;
+    border: 1px solid #e5e7eb;
+    transition: all 0.3s ease;
+  }
+  
+  .company-fields.show {
+    display: block;
+    animation: fadeIn 0.3s ease-out;
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+  .company-fields-title {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #002855;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #f5a623;
+    display: inline-block;
+  }
+  
+  .company-fields .form-group {
     margin-bottom: 15px;
   }
-  .role-option {
-    padding: 12px; border: 2px solid #e5e7eb; border-radius: 10px;
-    text-align: center; cursor: pointer; transition: all 0.2s;
-  }
-  .role-option:hover { border-color: #002855; }
-  .role-option.selected { border-color: #f5a623; background: #fefce8; }
-  .role-option .icon { font-size: 1.5rem; }
-  .role-option .label { font-size: 0.75rem; font-weight: 600; color: #002855; margin-top: 4px; }
   
-  #companyFields { display: none; }
-  #companyFields.show { display: block; }
-  
-  .message { 
-    padding: 12px; border-radius: 8px; margin-bottom: 15px; display: none;
-    text-align: center; font-weight: 500;
+  .company-fields .form-group:last-child {
+    margin-bottom: 0;
   }
-  .message.success { background: #d1fae5; color: #065f46; display: block; }
-  .message.error { background: #fee2e2; color: #991b1b; display: block; }
+  
+  .company-fields input {
+    background: white;
+  }
+  
+  .hint-text {
+    font-size: 0.7rem;
+    color: #6b7280;
+    margin-top: 5px;
+    display: block;
+  }
+  
+  /* Submit Button */
+  .btn-register {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, #002855 0%, #001a3f 100%);
+    color: white;
+    border: none;
+    border-radius: 50px;
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 10px;
+  }
+  
+  .btn-register:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(0, 40, 85, 0.3);
+    background: linear-gradient(135deg, #001a3f 0%, #002855 100%);
+  }
+  
+  .btn-register:active {
+    transform: translateY(0);
+  }
+  
+  /* Login Link */
+  .login-link {
+    text-align: center;
+    margin-top: 25px;
+    padding-top: 20px;
+    border-top: 1px solid #e5e7eb;
+    color: #6b7280;
+    font-size: 0.85rem;
+  }
+  
+  .login-link a {
+    color: #002855;
+    font-weight: 700;
+    text-decoration: none;
+    transition: color 0.3s;
+  }
+  
+  .login-link a:hover {
+    color: #f5a623;
+  }
+  
+  /* Message Alerts */
+  .message {
+    padding: 14px 18px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    display: none;
+    text-align: center;
+    font-weight: 500;
+    font-size: 0.85rem;
+    animation: slideDown 0.3s ease-out;
+  }
+  
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  .message.success {
+    background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+    color: #065f46;
+    display: block;
+    border-left: 4px solid #10b981;
+  }
+  
+  .message.error {
+    background: linear-gradient(135deg, #fee2e2, #fecaca);
+    color: #991b1b;
+    display: block;
+    border-left: 4px solid #dc3545;
+  }
+  
+  .message.info {
+    background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+    color: #1e40af;
+    display: block;
+    border-left: 4px solid #3b82f6;
+  }
+  
+  /* Loading State */
+  .btn-register.loading {
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
+  
+  .btn-register.loading i {
+    animation: spin 1s linear infinite;
+  }
+  
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+  
+  /* Responsive */
+  @media (max-width: 576px) {
+    .register-card {
+      padding: 30px 20px;
+    }
+    
+    .role-selector {
+      gap: 8px;
+    }
+    
+    .role-option {
+      padding: 12px 8px;
+    }
+    
+    .role-option .icon {
+      font-size: 1.5rem;
+    }
+    
+    .role-option .label {
+      font-size: 0.7rem;
+    }
+    
+    .role-option .desc {
+      display: none;
+    }
+  }
+  
+  /* Password strength indicator */
+  .password-strength {
+    margin-top: 8px;
+    height: 4px;
+    border-radius: 2px;
+    background: #e5e7eb;
+    overflow: hidden;
+  }
+  
+  .password-strength-bar {
+    width: 0%;
+    height: 100%;
+    transition: width 0.3s ease, background 0.3s ease;
+  }
+  
+  .password-strength-text {
+    font-size: 0.7rem;
+    margin-top: 4px;
+    display: block;
+  }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="register-card">
-  <h2><i class="fas fa-shield-alt"></i> AI Fraud Shield</h2>
-  <p>Create your account to start detecting scams</p>
+<div class="register-container">
+  <!-- Brand Header -->
+  <div class="brand-header">
+    <div class="brand-logo">
+      <i class="fas fa-shield-alt"></i>
+    </div>
+    <h1>AI Fraud Shield</h1>
+    <p>Kenya's Leading Scam Detection Platform</p>
+  </div>
   
-  <div class="message" id="message"></div>
-  
-  <form id="registerForm">
-    <div class="form-group">
-      <label>Username</label>
-      <input type="text" id="username" placeholder="Choose a username" required>
-    </div>
+  <!-- Registration Card -->
+  <div class="register-card">
+    <h2><i class="fas fa-user-plus"></i> Create Account</h2>
+    <p>Join thousands of Kenyans protecting themselves from scams</p>
     
-    <div class="form-group">
-      <label>Email</label>
-      <input type="email" id="email" placeholder="your@email.com" required>
-    </div>
+    <div class="message" id="message"></div>
     
-    <div class="form-group">
-      <label>Password</label>
-      <input type="password" id="password" placeholder="Min 6 characters" required minlength="6">
-    </div>
+    <form id="registerForm">
+      <div class="form-group">
+        <label><i class="fas fa-user"></i> Username</label>
+        <div class="input-wrapper">
+          <i class="fas fa-user"></i>
+          <input type="text" id="username" placeholder="Choose a unique username" required autocomplete="username">
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label><i class="fas fa-envelope"></i> Email Address</label>
+        <div class="input-wrapper">
+          <i class="fas fa-envelope"></i>
+          <input type="email" id="email" placeholder="your@email.com" required autocomplete="email">
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label><i class="fas fa-lock"></i> Password</label>
+        <div class="input-wrapper">
+          <i class="fas fa-lock"></i>
+          <input type="password" id="password" placeholder="Minimum 6 characters" required minlength="6">
+        </div>
+        <div class="password-strength">
+          <div class="password-strength-bar" id="passwordStrengthBar"></div>
+        </div>
+        <span class="password-strength-text" id="passwordStrengthText"></span>
+      </div>
+      
+      <!-- Role Selection -->
+      <div class="role-label">
+        <i class="fas fa-users"></i> Account Type
+      </div>
+      <div class="role-selector">
+        <div class="role-option selected" data-role="INDIVIDUAL" onclick="selectRole(this)">
+          <div class="icon">👤</div>
+          <div class="label">Individual</div>
+          <div class="desc">Personal use</div>
+        </div>
+        <div class="role-option" data-role="COMPANY_ADMIN" onclick="selectRole(this)">
+          <div class="icon">🏢</div>
+          <div class="label">Company Admin</div>
+          <div class="desc">For organizations</div>
+        </div>
+        <div class="role-option" data-role="STAFF" onclick="selectRole(this)">
+          <div class="icon">👥</div>
+          <div class="label">Staff Member</div>
+          <div class="desc">Join a company</div>
+        </div>
+      </div>
+      <input type="hidden" id="role" value="INDIVIDUAL">
+      
+      <!-- Dynamic Company Fields -->
+      <div id="companyFields" class="company-fields" style="display: none;">
+        <div class="company-fields-title">
+          <i class="fas fa-building"></i> Company Information
+        </div>
+        <div id="companyNameGroup" class="form-group">
+          <label>Company Name</label>
+          <div class="input-wrapper">
+            <i class="fas fa-building"></i>
+            <input type="text" id="companyName" placeholder="Enter your company name">
+          </div>
+          <span class="hint-text"><i class="fas fa-info-circle"></i> This will be your company's display name</span>
+        </div>
+        <div id="companyCodeGroup" class="form-group" style="display: none;">
+          <label>Company Code</label>
+          <div class="input-wrapper">
+            <i class="fas fa-key"></i>
+            <input type="text" id="companyCode" placeholder="Enter your company's invitation code">
+          </div>
+          <span class="hint-text"><i class="fas fa-question-circle"></i> Ask your company admin for the code</span>
+        </div>
+      </div>
+      
+      <button type="submit" class="btn-register" id="submitBtn">
+        <i class="fas fa-user-plus"></i> Create Free Account
+      </button>
+    </form>
     
-    <label style="font-weight:600;color:#002855;margin-bottom:8px;display:block;">I am a...</label>
-    <div class="role-selector">
-      <div class="role-option selected" data-role="INDIVIDUAL" onclick="selectRole(this)">
-        <div class="icon">👤</div>
-        <div class="label">Individual</div>
-      </div>
-      <div class="role-option" data-role="COMPANY_ADMIN" onclick="selectRole(this)">
-        <div class="icon">🏢</div>
-        <div class="label">Company Admin</div>
-      </div>
-      <div class="role-option" data-role="STAFF" onclick="selectRole(this)">
-        <div class="icon">👥</div>
-        <div class="label">Staff</div>
-      </div>
+    <div class="login-link">
+      <i class="fas fa-sign-in-alt"></i> Already have an account? <a href="/login/">Sign In</a>
     </div>
-    <input type="hidden" id="role" value="INDIVIDUAL">
-    
-    <!-- Company Fields -->
-    <div id="companyFields">
-      <div class="form-group" id="companyNameGroup">
-        <label>Company Name</label>
-        <input type="text" id="companyName" placeholder="Your company name">
-      </div>
-      <div class="form-group" id="companyCodeGroup">
-        <label>Company Code</label>
-        <input type="text" id="companyCode" placeholder="Enter company code to join">
-        <small style="color:#6b7280;">Ask your admin for the company code</small>
-      </div>
-    </div>
-    
-    <button type="submit" class="btn-register">
-      <i class="fas fa-user-plus"></i> Create Account
-    </button>
-  </form>
-  
-  <div class="login-link">
-    Already have an account? <a href="/admin/login/">Sign in</a>
   </div>
 </div>
 
 <script>
 let selectedRole = 'INDIVIDUAL';
+
+// Password strength checker
+function checkPasswordStrength(password) {
+  const bar = document.getElementById('passwordStrengthBar');
+  const text = document.getElementById('passwordStrengthText');
+  
+  if (!password) {
+    bar.style.width = '0%';
+    bar.style.background = '#e5e7eb';
+    text.textContent = '';
+    return;
+  }
+  
+  let strength = 0;
+  if (password.length >= 6) strength += 20;
+  if (password.length >= 8) strength += 20;
+  if (/[A-Z]/.test(password)) strength += 20;
+  if (/[0-9]/.test(password)) strength += 20;
+  if (/[^A-Za-z0-9]/.test(password)) strength += 20;
+  
+  bar.style.width = strength + '%';
+  
+  if (strength < 40) {
+    bar.style.background = '#dc3545';
+    text.textContent = '⚠️ Weak password';
+    text.style.color = '#dc3545';
+  } else if (strength < 70) {
+    bar.style.background = '#f5a623';
+    text.textContent = '⚡ Medium password';
+    text.style.color = '#f5a623';
+  } else {
+    bar.style.background = '#10b981';
+    text.textContent = '✅ Strong password';
+    text.style.color = '#10b981';
+  }
+}
+
+document.getElementById('password').addEventListener('input', function(e) {
+  checkPasswordStrength(e.target.value);
+});
 
 function selectRole(el) {
   document.querySelectorAll('.role-option').forEach(r => r.classList.remove('selected'));
@@ -163,14 +579,17 @@ function selectRole(el) {
   const companyCodeGroup = document.getElementById('companyCodeGroup');
   
   if (selectedRole === 'COMPANY_ADMIN') {
-    companyFields.classList.add('show');
+    companyFields.style.display = 'block';
     companyNameGroup.style.display = 'block';
     companyCodeGroup.style.display = 'none';
+    setTimeout(() => companyFields.classList.add('show'), 10);
   } else if (selectedRole === 'STAFF') {
-    companyFields.classList.add('show');
+    companyFields.style.display = 'block';
     companyNameGroup.style.display = 'none';
     companyCodeGroup.style.display = 'block';
+    setTimeout(() => companyFields.classList.add('show'), 10);
   } else {
+    companyFields.style.display = 'none';
     companyFields.classList.remove('show');
   }
 }
@@ -178,14 +597,42 @@ function selectRole(el) {
 document.getElementById('registerForm').addEventListener('submit', async function(e) {
   e.preventDefault();
   
+  const submitBtn = document.getElementById('submitBtn');
+  const originalHtml = submitBtn.innerHTML;
+  
+  // Validate password strength
+  const password = document.getElementById('password').value;
+  if (password.length < 6) {
+    showMessage('Password must be at least 6 characters long', 'error');
+    return;
+  }
+  
+  // Show loading state
+  submitBtn.innerHTML = '<i class="fas fa-spinner"></i> Creating account...';
+  submitBtn.classList.add('loading');
+  submitBtn.disabled = true;
+  
   const data = {
-    username: document.getElementById('username').value,
-    email: document.getElementById('email').value,
-    password: document.getElementById('password').value,
+    username: document.getElementById('username').value.trim(),
+    email: document.getElementById('email').value.trim(),
+    password: password,
     role: selectedRole,
-    company_name: document.getElementById('companyName').value,
-    company_code: document.getElementById('companyCode').value,
+    company_name: document.getElementById('companyName').value.trim(),
+    company_code: document.getElementById('companyCode').value.trim(),
   };
+  
+  // Validate based on role
+  if (selectedRole === 'COMPANY_ADMIN' && !data.company_name) {
+    showMessage('Please enter your company name', 'error');
+    resetButton();
+    return;
+  }
+  
+  if (selectedRole === 'STAFF' && !data.company_code) {
+    showMessage('Please enter your company code', 'error');
+    resetButton();
+    return;
+  }
   
   try {
     const res = await fetch('/api/register/', {
@@ -195,20 +642,44 @@ document.getElementById('registerForm').addEventListener('submit', async functio
     });
     
     const result = await res.json();
-    const msg = document.getElementById('message');
     
     if (result.success) {
-      msg.className = 'message success';
-      msg.textContent = '✅ ' + result.message;
-      setTimeout(() => { window.location.href = '/'; }, 1500);
+      showMessage('✅ ' + (result.message || 'Registration successful! Redirecting...'), 'success');
+      setTimeout(() => { window.location.href = result.redirect || '/'; }, 1500);
     } else {
-      msg.className = 'message error';
-      msg.textContent = '❌ ' + (result.error || 'Registration failed');
+      showMessage('❌ ' + (result.error || 'Registration failed. Please try again.'), 'error');
+      resetButton();
     }
   } catch(err) {
-    document.getElementById('message').className = 'message error';
-    document.getElementById('message').textContent = '❌ Network error. Please try again.';
+    console.error('Registration error:', err);
+    showMessage('❌ Network error. Please check your connection and try again.', 'error');
+    resetButton();
+  }
+  
+  function resetButton() {
+    submitBtn.innerHTML = originalHtml;
+    submitBtn.classList.remove('loading');
+    submitBtn.disabled = false;
   }
 });
+
+function showMessage(msg, type) {
+  const msgDiv = document.getElementById('message');
+  msgDiv.textContent = msg;
+  msgDiv.className = 'message ' + type;
+  
+  setTimeout(() => {
+    if (msgDiv.className === 'message ' + type) {
+      msgDiv.style.opacity = '0';
+      setTimeout(() => {
+        msgDiv.style.display = 'none';
+        msgDiv.style.opacity = '1';
+      }, 300);
+    }
+  }, 5000);
+}
+
+// Initialize company fields state
+selectRole(document.querySelector('.role-option.selected'));
 </script>
 {% endblock %}

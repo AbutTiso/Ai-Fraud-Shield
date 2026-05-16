@@ -1,0 +1,254 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Sign In - AI Fraud Shield{% endblock %}
+
+{% block header %}{% endblock %}
+
+{% block content %}
+<div class="auth-wrapper">
+    <div class="auth-card">
+        <div class="auth-header">
+            <div class="auth-logo">
+                <i class="fas fa-shield-alt"></i>
+            </div>
+            <h2>Welcome Back</h2>
+            <p>Sign in to your AI Fraud Shield account</p>
+        </div>
+        
+        <div id="message" class="auth-message" style="display:none;"></div>
+        
+        <form id="loginForm" method="post" action="/api/login/">
+            {% csrf_token %}
+            <div class="form-group">
+                <label><i class="fas fa-user"></i> Username</label>
+                <input type="text" name="username" id="username" class="form-control" placeholder="Enter your username" required autocomplete="username">
+            </div>
+            <div class="form-group">
+                <label><i class="fas fa-lock"></i> Password</label>
+                <input type="password" name="password" id="password" class="form-control" placeholder="Enter your password" required autocomplete="current-password">
+                <a href="/password-reset/" class="forgot-link">Forgot password?</a>
+            </div>
+            <button type="submit" class="btn-auth" id="loginBtn">
+                <i class="fas fa-sign-in-alt"></i> Sign In
+            </button>
+        </form>
+        
+        <div class="auth-footer">
+            Don't have an account? <a href="{% url 'register' %}">Create one</a>
+        </div>
+        <div class="auth-footer mt-2">
+            <a href="/"><i class="fas fa-arrow-left"></i> Back to Home</a>
+        </div>
+    </div>
+</div>
+
+<style>
+    .auth-wrapper {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    }
+    
+    .auth-card {
+        background: white;
+        border-radius: 20px;
+        padding: 40px;
+        max-width: 440px;
+        width: 100%;
+        box-shadow: 0 25px 60px rgba(0,0,0,0.15);
+        border-top: 5px solid #f5a623;
+    }
+    
+    .auth-header {
+        text-align: center;
+        margin-bottom: 30px;
+    }
+    
+    .auth-logo {
+        width: 70px;
+        height: 70px;
+        background: linear-gradient(135deg, #002855, #001a3f);
+        border-radius: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 16px;
+        font-size: 2rem;
+        color: #f5a623;
+        border: 2px solid #f5a623;
+    }
+    
+    .auth-header h2 {
+        color: #002855;
+        font-weight: 700;
+        margin: 0 0 4px;
+    }
+    
+    .auth-header p {
+        color: #6b7280;
+        margin: 0;
+        font-size: 0.9rem;
+    }
+    
+    .auth-message {
+        padding: 12px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        text-align: center;
+        font-weight: 500;
+        font-size: 0.9rem;
+    }
+    
+    .auth-message.success {
+        background: #d1fae5;
+        color: #065f46;
+        display: block;
+    }
+    
+    .auth-message.error {
+        background: #fee2e2;
+        color: #991b1b;
+        display: block;
+    }
+    
+    .form-group {
+        margin-bottom: 18px;
+    }
+    
+    .form-group label {
+        display: block;
+        font-weight: 600;
+        color: #002855;
+        margin-bottom: 6px;
+        font-size: 0.9rem;
+    }
+    
+    .form-group label i {
+        width: 18px;
+        color: #f5a623;
+    }
+    
+    .form-control {
+        width: 100%;
+        padding: 12px 15px;
+        border: 2px solid #e5e7eb;
+        border-radius: 10px;
+        font-size: 1rem;
+        transition: all 0.3s;
+    }
+    
+    .form-control:focus {
+        border-color: #002855;
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(0,40,85,0.1);
+    }
+    
+    .forgot-link {
+        font-size: 0.8rem;
+        color: #6b7280;
+        text-decoration: none;
+        float: right;
+        margin-top: 4px;
+    }
+    
+    .forgot-link:hover {
+        color: #002855;
+    }
+    
+    .btn-auth {
+        width: 100%;
+        padding: 14px;
+        background: linear-gradient(135deg, #002855, #001a3f);
+        color: white;
+        border: none;
+        border-radius: 50px;
+        font-weight: 700;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.3s;
+        margin-top: 10px;
+        border-bottom: 3px solid #f5a623;
+    }
+    
+    .btn-auth:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0,40,85,0.3);
+    }
+    
+    .btn-auth:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+    }
+    
+    .auth-footer {
+        text-align: center;
+        margin-top: 20px;
+        color: #6b7280;
+        font-size: 0.9rem;
+    }
+    
+    .auth-footer a {
+        color: #002855;
+        font-weight: 600;
+        text-decoration: none;
+    }
+    
+    .auth-footer a:hover {
+        color: #f5a623;
+    }
+</style>
+
+<script>
+document.getElementById('loginForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const btn = document.getElementById('loginBtn');
+    const msg = document.getElementById('message');
+    const formData = new FormData(this);
+    
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Signing in...';
+    msg.style.display = 'none';
+    
+    try {
+        const response = await fetch('/api/login/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            },
+            body: JSON.stringify({
+                username: formData.get('username'),
+                password: formData.get('password'),
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            msg.className = 'auth-message success';
+            msg.textContent = '✅ ' + result.message;
+            msg.style.display = 'block';
+            setTimeout(() => {
+                window.location.href = result.redirect || '/';
+            }, 1000);
+        } else {
+            msg.className = 'auth-message error';
+            msg.textContent = '❌ ' + (result.error || 'Login failed');
+            msg.style.display = 'block';
+        }
+    } catch (error) {
+        msg.className = 'auth-message error';
+        msg.textContent = '❌ Network error. Please try again.';
+        msg.style.display = 'block';
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Sign In';
+    }
+});
+</script>
+{% endblock %}

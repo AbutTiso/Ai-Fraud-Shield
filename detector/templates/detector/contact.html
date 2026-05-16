@@ -4,47 +4,125 @@
 {% block title %}Contact Us - AI Fraud Shield{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <div class="main-card">
-        <div class="header">
-            <h1><i class="fas fa-envelope"></i> Contact Us</h1>
-            <p>Get in touch with our support team</p>
-        </div>
-        <div class="content p-4">
-            <div class="row">
-                <div class="col-md-6">
-                    <h4><i class="fas fa-info-circle"></i> Quick Support</h4>
-                    <p>For scam reporting, please use the <a href="/report-scam/">Report Scam</a> page.</p>
-                    <hr>
-                    <h4><i class="fas fa-phone-alt"></i> Emergency Contacts</h4>
-                    <ul class="list-unstyled">
-                        <li><strong>Safaricom:</strong> 100 (Customer Care) or 333 (Report Scams)</li>
-                        <li><strong>Airtel:</strong> 100 (Customer Care) or 3333 (Report Scams)</li>
-                        <li><strong>DCI Hotline:</strong> 0800 722 203 (Toll-Free)</li>
-                        <li><strong>Cybercrime Unit:</strong> report@kenyacic.go.ke</li>
-                    </ul>
-                </div>
-                <div class="col-md-6">
-                    <div class="card">
-                        <div class="card-body">
-                            <h5><i class="fas fa-comment"></i> Send us a message</h5>
-                            <form>
-                                <div class="mb-3">
-                                    <input type="text" class="form-control" placeholder="Your Name">
-                                </div>
-                                <div class="mb-3">
-                                    <input type="email" class="form-control" placeholder="Your Email">
-                                </div>
-                                <div class="mb-3">
-                                    <textarea class="form-control" rows="4" placeholder="Your Message"></textarea>
-                                </div>
-                                <button type="submit" class="btn-analyze">Send Message</button>
-                            </form>
-                        </div>
+<div class="main-card">
+    <div class="content p-4">
+        <div class="row">
+            <div class="col-md-6">
+                <h4><i class="fas fa-info-circle"></i> Quick Support</h4>
+                <p>For scam reporting, please use the <a href="/report-scam/">Report Scam</a> page.</p>
+                <hr>
+                <h4><i class="fas fa-phone-alt"></i> Emergency Contacts</h4>
+                <ul class="list-unstyled">
+                    <li><strong>Safaricom:</strong> 100 (Customer Care) or 333 (Report Scams)</li>
+                    <li><strong>Airtel:</strong> 100 (Customer Care) or 3333 (Report Scams)</li>
+                    <li><strong>DCI Hotline:</strong> 0800 722 203 (Toll-Free)</li>
+                    <li><strong>Cybercrime Unit:</strong> report@kenyacic.go.ke</li>
+                </ul>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h5><i class="fas fa-comment"></i> Send us a message</h5>
+                        <form method="post" action="{% url 'contact' %}">
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                <input type="text" class="form-control" name="name" placeholder="Your Name" required>
+                            </div>
+                            <div class="mb-3">
+                                <input type="email" class="form-control" name="email" placeholder="Your Email" required>
+                            </div>
+                            <div class="mb-3">
+                                <textarea class="form-control" name="message" rows="4" placeholder="Your Message" required></textarea>
+                            </div>
+                            <button type="submit" class="btn-analyze">Send Message</button>
+                        </form>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Contact page specific styles */
+    .btn-analyze {
+        background: linear-gradient(135deg, var(--usiu-navy) 0%, var(--usiu-navy-dark) 100%);
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 50px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        width: 100%;
+    }
+    
+    .btn-analyze:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 40, 85, 0.3);
+        background: linear-gradient(135deg, var(--usiu-navy-dark) 0%, var(--usiu-navy) 100%);
+    }
+    
+    .card {
+        border: none;
+        border-radius: 16px;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        background: white;
+    }
+    
+    .card-body h5 {
+        color: var(--usiu-navy);
+        margin-bottom: 20px;
+        font-weight: 600;
+    }
+    
+    .card-body h5 i {
+        color: var(--usiu-gold);
+        margin-right: 8px;
+    }
+    
+    .form-control {
+        border-radius: 10px;
+        border: 1px solid #e5e7eb;
+        padding: 12px;
+        transition: all 0.3s ease;
+    }
+    
+    .form-control:focus {
+        border-color: var(--usiu-gold);
+        box-shadow: 0 0 0 3px rgba(245, 166, 35, 0.1);
+    }
+    
+    h4 i, h5 i {
+        margin-right: 8px;
+    }
+    
+    h4 i {
+        color: var(--usiu-gold);
+    }
+    
+    hr {
+        border-color: #e5e7eb;
+        margin: 20px 0;
+    }
+    
+    ul.list-unstyled li {
+        margin-bottom: 12px;
+        padding: 8px;
+        background: #f9fafb;
+        border-radius: 8px;
+    }
+    
+    a {
+        color: var(--usiu-navy);
+        text-decoration: none;
+        font-weight: 500;
+    }
+    
+    a:hover {
+        color: var(--usiu-gold);
+        text-decoration: underline;
+    }
+</style>
 {% endblock %}

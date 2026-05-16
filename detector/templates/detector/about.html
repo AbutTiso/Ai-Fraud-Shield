@@ -1,751 +1,695 @@
+{% extends 'base.html' %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>About - AI Fraud Shield | Protecting Kenya from Digital Scams</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        /* USIU Theme Colors */
-        :root {
-            --usiu-navy: #002855;
-            --usiu-navy-light: #1a3f6e;
-            --usiu-navy-dark: #001a3a;
-            --usiu-gold: #F5A623;
-            --usiu-gold-light: #f7b94e;
-            --usiu-gold-dark: #e6951a;
-        }
-        
-        body {
-            background: linear-gradient(135deg, #fefce8 0%, #fef9c3 30%, var(--usiu-gold-light) 100%);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            min-height: 100vh;
-            padding: 20px;
-        }
-        
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-        
-        .main-card {
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
-            overflow: hidden;
-            animation: fadeInUp 0.6s ease-out;
-        }
-        
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        
-        /* Navbar - USIU Navy */
-        .navbar-custom {
-            background: white;
-            padding: 12px 30px;
-            border-bottom: 3px solid var(--usiu-gold);
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-        }
-        
-        .navbar-custom .nav-link {
-            color: #4a5568;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            border-radius: 8px;
-            margin: 0 2px;
-        }
-        
-        .navbar-custom .nav-link:hover {
-            color: var(--usiu-navy);
-            background: rgba(0, 40, 85, 0.08);
-        }
-        
-        .navbar-custom .nav-link.active {
-            color: var(--usiu-gold-dark);
-            background: rgba(0, 40, 85, 0.05);
-            font-weight: 600;
-        }
-        
-        .navbar-brand {
-            font-weight: 700;
-            font-size: 1.3rem;
-            color: var(--usiu-navy);
-            text-decoration: none;
-        }
-        
-        .navbar-brand i {
-            color: var(--usiu-gold);
-        }
-        
-        .btn-emergency {
-            background: linear-gradient(135deg, #dc3545, #c82333);
-            color: white;
-            border-radius: 50px;
-            padding: 6px 16px;
-            font-size: 0.85rem;
-            transition: all 0.3s ease;
-            text-decoration: none;
-        }
-        
-        .btn-emergency:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(220, 53, 69, 0.3);
-            color: white;
-        }
-        
-        /* Header - USIU Navy Gradient */
-        .header {
-            background: linear-gradient(135deg, var(--usiu-navy) 0%, var(--usiu-navy-dark) 100%);
-            color: white;
-            padding: 50px 30px;
+
+{% block title %}About Us - AI Fraud Shield | Protecting Kenya from Digital Scams{% endblock %}
+
+{% block header %}{% endblock %}
+
+{% block content %}
+<div class="about-page">
+    <!-- Hero Section -->
+    <div class="about-hero">
+        <div class="about-hero-content">
+            <div class="about-hero-icon">
+                <i class="fas fa-shield-haltered"></i>
+            </div>
+            <div class="about-hero-text">
+                <h1>About AI Fraud Shield</h1>
+                <p>Kenya's first line of defense against digital scams - powered by AI, built for Kenyans</p>
+            </div>
+        </div>
+        <div class="about-hero-badge">
+            <i class="fas fa-check-circle"></i> Trusted by Thousands
+        </div>
+    </div>
+
+    <div class="about-content">
+        <!-- Mission Section -->
+        <div class="mission-section">
+            <div class="mission-icon">
+                <i class="fas fa-bullseye"></i>
+            </div>
+            <div class="mission-text">
+                <h2>Our Mission</h2>
+                <p>In a digital age where scams are becoming increasingly sophisticated, AI Fraud Shield stands as a beacon of protection. Our mission is to <strong>empower every Kenyan</strong> with free, accessible, and powerful tools to detect and avoid digital fraud before it happens.</p>
+            </div>
+        </div>
+
+        <!-- Story Section -->
+        <div class="story-section">
+            <h2><i class="fas fa-book-open"></i> Our Story</h2>
+            <div class="story-grid">
+                <div class="story-card">
+                    <div class="story-year">2024</div>
+                    <h3>The Beginning</h3>
+                    <p>AI Fraud Shield was born from a simple observation: Kenyans were losing millions to increasingly sophisticated digital scams, and existing solutions weren't accessible or tailored to local threats.</p>
+                </div>
+                <div class="story-card">
+                    <div class="story-year">2025</div>
+                    <h3>Growth & Impact</h3>
+                    <p>We expanded to detect SMS, email, WhatsApp, and call scams with 200+ Kenyan-specific patterns. Our community grew to thousands of users reporting and blocking scam numbers.</p>
+                </div>
+                <div class="story-card">
+                    <div class="story-year">2026</div>
+                    <h3>Innovation</h3>
+                    <p>Launched Corporate Shield for businesses, ML-powered hybrid detection, USSD service (*483*72#) for feature phones, and automated scam takedown systems.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Features Grid -->
+        <h2 class="section-title"><i class="fas fa-cogs"></i> What We Offer</h2>
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon"><i class="fas fa-sms"></i></div>
+                <h3>SMS Detection</h3>
+                <p>Instantly analyze text messages for 200+ Kenyan scam patterns, urgency tactics, and suspicious links in both English and Swahili.</p>
+                <span class="feature-badge">200+ Patterns</span>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon"><i class="fas fa-envelope"></i></div>
+                <h3>Email Analysis</h3>
+                <p>Safely examine emails without clicking links. We analyze headers, content patterns, and URLs without compromising your security.</p>
+                <span class="feature-badge">100% Safe</span>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon"><i class="fab fa-whatsapp"></i></div>
+                <h3>WhatsApp Scanner</h3>
+                <p>Export and analyze WhatsApp chat history to identify scam conversations, suspicious links, and fraudulent patterns.</p>
+                <span class="feature-badge">Chat Analysis</span>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon"><i class="fas fa-camera"></i></div>
+                <h3>M-Pesa Receipt Checker</h3>
+                <p>Upload screenshots to verify if M-Pesa receipts are genuine or fake using OCR text extraction and validation.</p>
+                <span class="feature-badge">OCR Powered</span>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon"><i class="fas fa-link"></i></div>
+                <h3>URL Safety Checker</h3>
+                <p>Check if links are safe before clicking. We analyze URLs without visiting them - your safety is our priority.</p>
+                <span class="feature-badge">30+ TLDs Checked</span>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon"><i class="fas fa-chart-bar"></i></div>
+                <h3>Real-time Dashboard</h3>
+                <p>Track scam trends, view detailed analysis, and monitor your organization's security posture with live statistics.</p>
+                <span class="feature-badge">Live Stats</span>
+            </div>
+        </div>
+
+        <!-- Statistics Section -->
+        <div class="stats-section">
+            <h2><i class="fas fa-chart-line"></i> Our Impact</h2>
+            <p>Making Kenya safer, one detection at a time</p>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fas fa-shield-alt"></i></div>
+                    <div class="stat-value" id="scamsDetected">--</div>
+                    <div class="stat-label">Scams Detected</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fas fa-exclamation-triangle"></i></div>
+                    <div class="stat-value" id="highRiskCount">--</div>
+                    <div class="stat-label">High Risk Alerts</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fas fa-sms"></i></div>
+                    <div class="stat-value" id="smsCount">--</div>
+                    <div class="stat-label">SMS Analyzed</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fas fa-envelope"></i></div>
+                    <div class="stat-value" id="emailCount">--</div>
+                    <div class="stat-label">Emails Analyzed</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fab fa-whatsapp"></i></div>
+                    <div class="stat-value" id="whatsappCount">--</div>
+                    <div class="stat-label">WhatsApp Chats</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fas fa-percentage"></i></div>
+                    <div class="stat-value" id="avgRiskScore">--</div>
+                    <div class="stat-label">Avg Risk Score</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Why Choose Us -->
+        <h2 class="section-title"><i class="fas fa-star"></i> Why Choose AI Fraud Shield</h2>
+        <div class="benefits-grid">
+            <div class="benefit-card">
+                <i class="fas fa-check-circle"></i>
+                <span>100% Free to Use</span>
+            </div>
+            <div class="benefit-card">
+                <i class="fas fa-lock"></i>
+                <span>No Personal Data Stored</span>
+            </div>
+            <div class="benefit-card">
+                <i class="fas fa-shield-alt"></i>
+                <span>Never Clicks Suspicious Links</span>
+            </div>
+            <div class="benefit-card">
+                <i class="fas fa-flag"></i>
+                <span>Kenyan-Focused Scam Patterns</span>
+            </div>
+            <div class="benefit-card">
+                <i class="fas fa-bolt"></i>
+                <span>Instant Results in Seconds</span>
+            </div>
+            <div class="benefit-card">
+                <i class="fas fa-mobile-alt"></i>
+                <span>Works on All Devices</span>
+            </div>
+            <div class="benefit-card">
+                <i class="fas fa-sync-alt"></i>
+                <span>Regularly Updated Patterns</span>
+            </div>
+            <div class="benefit-card">
+                <i class="fas fa-users"></i>
+                <span>Community-Driven Protection</span>
+            </div>
+        </div>
+
+        <!-- Disclaimer -->
+        <div class="disclaimer-section">
+            <div class="disclaimer-icon">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div class="disclaimer-content">
+                <h3>Important Disclaimer</h3>
+                <p>While our AI-powered detection system is highly accurate, no automated system is perfect. Always exercise caution when dealing with suspicious messages. When in doubt, verify through official channels or contact your service provider directly.</p>
+            </div>
+        </div>
+
+        <!-- CTA Section -->
+        <div class="about-cta">
+            <h2>Ready to Protect Yourself?</h2>
+            <p>Start detecting scams in seconds - it's free and always will be</p>
+            <div class="about-cta-buttons">
+                <a href="/" class="cta-btn primary">
+                    <i class="fas fa-search"></i> Check a Message
+                </a>
+                <a href="/report-scam/" class="cta-btn danger">
+                    <i class="fas fa-flag"></i> Report a Scam
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .about-page {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    /* Hero */
+    .about-hero {
+        background: linear-gradient(135deg, #002855 0%, #001a3f 100%);
+        color: white;
+        border-radius: 20px;
+        padding: 40px;
+        margin-bottom: 24px;
+        border-bottom: 4px solid #f5a623;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 20px;
+    }
+
+    .about-hero-content {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+
+    .about-hero-icon {
+        width: 70px;
+        height: 70px;
+        background: rgba(245, 166, 35, 0.15);
+        border: 2px solid #f5a623;
+        border-radius: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        color: #f5a623;
+    }
+
+    .about-hero-text h1 {
+        font-size: 2rem;
+        font-weight: 700;
+        margin: 0 0 8px 0;
+    }
+
+    .about-hero-text p {
+        margin: 0;
+        opacity: 0.9;
+        font-size: 1rem;
+    }
+
+    .about-hero-badge {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        padding: 10px 20px;
+        border-radius: 50px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .about-hero-badge i {
+        color: #f5a623;
+    }
+
+    .about-content {
+        padding: 0;
+    }
+
+    /* Mission */
+    .mission-section {
+        background: linear-gradient(135deg, #fef3d5, #fde68a);
+        border: 2px solid #f5a623;
+        border-radius: 16px;
+        padding: 32px;
+        margin-bottom: 32px;
+        display: flex;
+        gap: 20px;
+        align-items: flex-start;
+    }
+
+    .mission-icon {
+        width: 60px;
+        height: 60px;
+        background: #f5a623;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: white;
+        flex-shrink: 0;
+    }
+
+    .mission-text h2 {
+        color: #002855;
+        font-weight: 700;
+        margin-bottom: 8px;
+    }
+
+    .mission-text p {
+        color: #4a5568;
+        font-size: 1rem;
+        line-height: 1.7;
+        margin: 0;
+    }
+
+    /* Story */
+    .story-section {
+        margin-bottom: 32px;
+    }
+
+    .story-section h2 {
+        color: #002855;
+        font-weight: 700;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .story-section h2 i {
+        color: #f5a623;
+    }
+
+    .story-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 20px;
+    }
+
+    .story-card {
+        background: white;
+        border-radius: 16px;
+        padding: 24px;
+        border: 1px solid #e5e7eb;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        transition: all 0.3s;
+    }
+
+    .story-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 25px rgba(0,40,85,0.1);
+    }
+
+    .story-year {
+        display: inline-block;
+        background: #f5a623;
+        color: #002855;
+        padding: 4px 14px;
+        border-radius: 20px;
+        font-weight: 700;
+        font-size: 0.85rem;
+        margin-bottom: 10px;
+    }
+
+    .story-card h3 {
+        color: #002855;
+        font-weight: 700;
+        margin-bottom: 8px;
+    }
+
+    .story-card p {
+        color: #64748b;
+        font-size: 0.9rem;
+        line-height: 1.6;
+    }
+
+    /* Section Title */
+    .section-title {
+        color: #002855;
+        font-weight: 700;
+        font-size: 1.3rem;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .section-title i {
+        color: #f5a623;
+    }
+
+    /* Features */
+    .features-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
+        margin-bottom: 32px;
+    }
+
+    .feature-card {
+        background: white;
+        border-radius: 16px;
+        padding: 28px;
+        border: 1px solid #e5e7eb;
+        text-align: center;
+        transition: all 0.3s;
+        position: relative;
+    }
+
+    .feature-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 35px rgba(0,40,85,0.12);
+        border-color: #f5a623;
+    }
+
+    .feature-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        margin: 0 auto 16px;
+        color: white;
+    }
+
+    .feature-card:nth-child(1) .feature-icon { background: #3b82f6; }
+    .feature-card:nth-child(2) .feature-icon { background: #f59e0b; }
+    .feature-card:nth-child(3) .feature-icon { background: #10b981; }
+    .feature-card:nth-child(4) .feature-icon { background: #8b5cf6; }
+    .feature-card:nth-child(5) .feature-icon { background: #dc3545; }
+    .feature-card:nth-child(6) .feature-icon { background: #002855; }
+
+    .feature-card h3 {
+        color: #002855;
+        font-weight: 700;
+        margin-bottom: 8px;
+    }
+
+    .feature-card p {
+        color: #64748b;
+        font-size: 0.9rem;
+        line-height: 1.5;
+    }
+
+    .feature-badge {
+        display: inline-block;
+        margin-top: 12px;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        background: #e8f0fe;
+        color: #002855;
+    }
+
+    /* Stats */
+    .stats-section {
+        background: linear-gradient(135deg, #002855, #001a3f);
+        border-radius: 16px;
+        padding: 40px;
+        margin-bottom: 32px;
+        color: white;
+        text-align: center;
+        border: 2px solid #f5a623;
+    }
+
+    .stats-section h2 {
+        color: white;
+        font-weight: 700;
+        margin-bottom: 8px;
+    }
+
+    .stats-section h2 i {
+        color: #f5a623;
+    }
+
+    .stats-section > p {
+        opacity: 0.8;
+        margin-bottom: 30px;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 20px;
+    }
+
+    .stat-card {
+        background: rgba(255,255,255,0.1);
+        border-radius: 12px;
+        padding: 20px;
+        transition: all 0.3s;
+    }
+
+    .stat-card:hover {
+        background: rgba(255,255,255,0.2);
+        transform: translateY(-3px);
+    }
+
+    .stat-icon {
+        font-size: 1.5rem;
+        color: #f5a623;
+        margin-bottom: 8px;
+    }
+
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 800;
+        color: #f5a623;
+    }
+
+    .stat-label {
+        font-size: 0.8rem;
+        opacity: 0.8;
+        margin-top: 4px;
+    }
+
+    /* Benefits */
+    .benefits-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 12px;
+        margin-bottom: 32px;
+    }
+
+    .benefit-card {
+        background: white;
+        border-radius: 12px;
+        padding: 16px 20px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        border: 1px solid #e5e7eb;
+        transition: all 0.3s;
+    }
+
+    .benefit-card:hover {
+        transform: translateX(5px);
+        border-color: #f5a623;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+    }
+
+    .benefit-card i {
+        color: #10b981;
+        font-size: 1.2rem;
+    }
+
+    .benefit-card span {
+        font-weight: 600;
+        color: #1e293b;
+        font-size: 0.9rem;
+    }
+
+    /* Disclaimer */
+    .disclaimer-section {
+        background: linear-gradient(135deg, #fff3e0, #ffe0b2);
+        border-left: 4px solid #ff9800;
+        border-radius: 12px;
+        padding: 24px;
+        display: flex;
+        gap: 16px;
+        align-items: flex-start;
+        margin-bottom: 32px;
+    }
+
+    .disclaimer-icon {
+        font-size: 1.5rem;
+        color: #e65100;
+        flex-shrink: 0;
+    }
+
+    .disclaimer-content h3 {
+        color: #e65100;
+        font-weight: 700;
+        margin-bottom: 4px;
+    }
+
+    .disclaimer-content p {
+        color: #4a5568;
+        margin: 0;
+        font-size: 0.9rem;
+    }
+
+    /* CTA */
+    .about-cta {
+        text-align: center;
+        padding: 40px;
+        background: linear-gradient(135deg, #002855, #001a3f);
+        border-radius: 16px;
+        color: white;
+        border-bottom: 4px solid #f5a623;
+    }
+
+    .about-cta h2 {
+        font-weight: 700;
+        margin-bottom: 8px;
+    }
+
+    .about-cta p {
+        opacity: 0.9;
+        margin-bottom: 24px;
+    }
+
+    .about-cta-buttons {
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .cta-btn {
+        padding: 14px 28px;
+        border-radius: 12px;
+        font-weight: 700;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s;
+    }
+
+    .cta-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+    }
+
+    .cta-btn.primary {
+        background: #f5a623;
+        color: #002855;
+    }
+
+    .cta-btn.danger {
+        background: #dc3545;
+        color: white;
+    }
+
+    @media (max-width: 768px) {
+        .about-hero {
+            flex-direction: column;
             text-align: center;
-            position: relative;
-            overflow: hidden;
-            border-bottom: 4px solid var(--usiu-gold);
         }
-        
-        .header::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            right: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(255, 255, 255, 0.05) 1%, transparent 1%);
-            background-size: 50px 50px;
-            animation: shimmer 20s linear infinite;
+        .about-hero-content {
+            flex-direction: column;
         }
-        
-        @keyframes shimmer {
-            from { transform: translate(0, 0); }
-            to { transform: translate(50px, 50px); }
-        }
-        
-        .header h1 {
-            font-size: 2.5rem;
-            margin-bottom: 15px;
-            position: relative;
-            z-index: 1;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
-        }
-        
-        .header h1 i {
-            color: var(--usiu-gold);
-        }
-        
-        .header p {
-            font-size: 1.1rem;
-            opacity: 0.95;
-            position: relative;
-            z-index: 1;
-        }
-        
-        .header .badge-container {
-            position: relative;
-            z-index: 1;
-            margin-top: 20px;
-        }
-        
-        .header .badge {
-            background: var(--usiu-gold);
-            padding: 8px 20px;
-            border-radius: 50px;
-            font-size: 0.9rem;
-            color: var(--usiu-navy);
-            font-weight: 700;
-        }
-        
-        .content {
-            padding: 40px;
-        }
-        
-        /* Mission Section */
         .mission-section {
+            flex-direction: column;
             text-align: center;
-            margin-bottom: 40px;
-            padding: 30px;
-            background: linear-gradient(135deg, #fefce8 0%, #fef9c3 100%);
-            border-radius: 15px;
-            border-left: 4px solid var(--usiu-gold);
         }
-        
-        .mission-section h2 {
-            color: var(--usiu-navy);
-            margin-bottom: 20px;
-            font-size: 1.8rem;
-        }
-        
-        .mission-section h2 i {
-            color: var(--usiu-gold);
-        }
-        
-        .mission-section p {
-            font-size: 1rem;
-            color: #555;
-            line-height: 1.8;
-            max-width: 800px;
+        .mission-icon {
             margin: 0 auto;
         }
-        
-        /* Features Grid */
         .features-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 25px;
-            margin: 40px 0;
+            grid-template-columns: 1fr;
         }
-        
-        .feature-card {
-            background: white;
-            border-radius: 15px;
-            padding: 25px;
-            text-align: center;
-            transition: all 0.3s ease;
-            border: 2px solid #e0e0e0;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
-        }
-        
-        .feature-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 35px rgba(0, 40, 85, 0.15);
-            border-color: var(--usiu-gold);
-        }
-        
-        .feature-icon {
-            font-size: 2.5rem;
-            margin-bottom: 15px;
-        }
-        
-        .feature-card h4 {
-            color: var(--usiu-navy);
-            margin-bottom: 12px;
-            font-weight: 600;
-            font-size: 1.1rem;
-        }
-        
-        .feature-card p {
-            color: #666;
-            font-size: 0.85rem;
-            line-height: 1.5;
-        }
-        
-        /* Stats Section - USIU Navy */
-        .stats-section {
-            background: linear-gradient(135deg, var(--usiu-navy) 0%, var(--usiu-navy-dark) 100%);
-            color: white;
-            padding: 40px;
-            border-radius: 15px;
-            margin: 40px 0;
-            text-align: center;
-            border: 2px solid var(--usiu-gold);
-        }
-        
-        .stats-section h3 {
-            font-size: 1.5rem;
-            margin-bottom: 10px;
-        }
-        
-        .stats-section h3 i {
-            color: var(--usiu-gold);
-        }
-        
         .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 30px;
-            margin-top: 30px;
+            grid-template-columns: repeat(2, 1fr);
         }
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadRealStats();
+});
+
+async function loadRealStats() {
+    try {
+        const response = await fetch('/api/stats/');
+        const data = await response.json();
         
-        .stat-item {
-            text-align: center;
-            padding: 15px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
-            transition: transform 0.3s;
+        if (data.status === 'success' && data.stats) {
+            document.getElementById('scamsDetected').textContent = (data.stats.total_reports || 0).toLocaleString();
+            document.getElementById('highRiskCount').textContent = (data.stats.high_risk_count || 0).toLocaleString();
+            document.getElementById('smsCount').textContent = (data.stats.sms_count || 0).toLocaleString();
+            document.getElementById('emailCount').textContent = (data.stats.email_count || 0).toLocaleString();
+            document.getElementById('whatsappCount').textContent = (data.stats.whatsapp_count || 0).toLocaleString();
+            document.getElementById('avgRiskScore').textContent = (data.stats.average_risk_score || 0) + '%';
+        } else {
+            useFallbackData();
         }
-        
-        .stat-item:hover {
-            transform: translateY(-3px);
-        }
-        
-        .stat-number {
-            font-size: 2rem;
-            font-weight: bold;
-            display: block;
-            color: var(--usiu-gold);
-        }
-        
-        .stat-label {
-            font-size: 0.85rem;
-            opacity: 0.9;
-            margin-top: 5px;
-        }
-        
-        /* Why Choose Us */
-        .why-choose-us {
-            background: #fefce8;
-            border-radius: 15px;
-            padding: 30px;
-            margin: 40px 0;
-            border-left: 4px solid var(--usiu-navy);
-        }
-        
-        .why-choose-us h3 {
-            color: var(--usiu-navy);
-            margin-bottom: 25px;
-            text-align: center;
-            font-size: 1.5rem;
-        }
-        
-        .why-choose-us h3 i {
-            color: var(--usiu-gold);
-        }
-        
-        .benefits-list {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 15px;
-        }
-        
-        .benefit-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 10px 15px;
-            background: white;
-            border-radius: 10px;
-            transition: all 0.3s ease;
-            border: 1px solid #fef08a;
-        }
-        
-        .benefit-item:hover {
-            transform: translateX(5px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-            border-color: var(--usiu-gold);
-        }
-        
-        .benefit-icon {
-            font-size: 1.2rem;
-        }
-        
-        .benefit-text {
-            font-size: 0.9rem;
-            color: #333;
-        }
-        
-        /* Alert */
-        .alert-custom {
-            background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
-            border-left: 4px solid #ff9800;
-            border-radius: 10px;
-            padding: 20px;
-            margin-top: 30px;
-        }
-        
-        .alert-custom strong {
-            color: #e65100;
-        }
-        
-        /* Footer Buttons */
-        .footer-buttons {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            margin-top: 40px;
-            flex-wrap: wrap;
-        }
-        
-        .btn-custom {
-            padding: 10px 25px;
-            border-radius: 50px;
-            text-decoration: none;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 0.9rem;
-        }
-        
-        .btn-primary-custom {
-            background: linear-gradient(135deg, var(--usiu-navy) 0%, var(--usiu-navy-dark) 100%);
-            color: white;
-            border: none;
-            box-shadow: 0 4px 15px rgba(0, 40, 85, 0.3);
-        }
-        
-        .btn-primary-custom:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0, 40, 85, 0.4);
-            color: white;
-            background: linear-gradient(135deg, var(--usiu-navy-light) 0%, var(--usiu-navy) 100%);
-        }
-        
-        .btn-outline-custom {
-            border: 2px solid var(--usiu-navy);
-            color: var(--usiu-navy);
-            background: transparent;
-        }
-        
-        .btn-outline-custom:hover {
-            background: var(--usiu-gold);
-            color: var(--usiu-navy);
-            transform: translateY(-2px);
-            border-color: var(--usiu-gold);
-        }
-        
-        /* Footer */
-        .footer {
-            text-align: center;
-            padding: 25px;
-            background: linear-gradient(135deg, #fefce8 0%, #fef9c3 100%);
-            color: var(--usiu-navy);
-            font-size: 0.8rem;
-            border-top: 2px solid var(--usiu-gold);
-        }
-        
-        .footer strong {
-            color: var(--usiu-navy-dark);
-        }
-        
-        /* Modal */
-        .modal-header {
-            background: linear-gradient(135deg, #dc3545, #c82333);
-            color: white;
-        }
-        
-        @media (max-width: 768px) {
-            .header h1 { font-size: 1.8rem; }
-            .content { padding: 25px 20px; }
-            .features-grid { grid-template-columns: 1fr; }
-            .stats-grid { grid-template-columns: 1fr 1fr; }
-            .benefits-list { grid-template-columns: 1fr; }
-            .navbar-custom { padding: 10px 15px; }
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="main-card">
-            <!-- Navbar -->
-            <nav class="navbar-custom">
-                <div class="d-flex flex-wrap align-items-center justify-content-between">
-                    <a class="navbar-brand" href="/">
-                        <i class="fas fa-shield-alt"></i> AI Fraud Shield
-                    </a>
-                    
-                    <div class="d-flex flex-wrap gap-3 align-items-center">
-                        <a href="/" class="nav-link">Home</a>
-                        <a href="/about/" class="nav-link active">About</a>
-                        <a href="/how-it-works/" class="nav-link">How It Works</a>
-                        <a href="/faq/" class="nav-link">FAQ</a>
-                        <a href="/scam-alerts/" class="nav-link">Alerts</a>
-                        <a href="#" class="btn-emergency" data-bs-toggle="modal" data-bs-target="#emergencyModal">
-                            <i class="fas fa-phone-alt"></i> Emergency
-                        </a>
-                    </div>
-                </div>
-            </nav>
-            
-            <!-- Header -->
-            <div class="header">
-                <h1>
-                    <i class="fas fa-shield-alt"></i> 
-                    About AI Fraud Shield
-                </h1>
-                <p>Kenya's first line of defense against digital scams</p>
-                <div class="badge-container">
-                    <span class="badge">
-                        <i class="fas fa-check-circle"></i> Trusted by Thousands
-                    </span>
-                </div>
-            </div>
-            
-            <!-- Content -->
-            <div class="content">
-                <!-- Mission -->
-                <div class="mission-section">
-                    <h2>
-                        <i class="fas fa-bullseye"></i> Our Mission
-                    </h2>
-                    <p>
-                        In a digital age where scams are becoming increasingly sophisticated, 
-                        AI Fraud Shield stands as a beacon of protection. Our mission is to 
-                        empower every Kenyan with free, accessible, and powerful tools to 
-                        detect and avoid digital fraud before it happens.
-                    </p>
-                </div>
-                
-                <!-- Features -->
-                <h3 style="text-align: center; margin-bottom: 30px; color: var(--usiu-navy);">
-                    <i class="fas fa-cogs"></i> How It Works
-                </h3>
-                <div class="features-grid">
-                    <div class="feature-card">
-                        <div class="feature-icon">📱</div>
-                        <h4>SMS Detection</h4>
-                        <p>Instantly analyze text messages for scam patterns, urgency tactics, and suspicious links.</p>
-                    </div>
-                    <div class="feature-card">
-                        <div class="feature-icon">📧</div>
-                        <h4>Email Analysis</h4>
-                        <p>Safely examine emails without clicking any links. We analyze patterns, not content.</p>
-                    </div>
-                    <div class="feature-card">
-                        <div class="feature-icon">💬</div>
-                        <h4>WhatsApp Scanner</h4>
-                        <p>Export and analyze WhatsApp chat history to identify scam conversations.</p>
-                    </div>
-                    <div class="feature-card">
-                        <div class="feature-icon">📸</div>
-                        <h4>M-Pesa Receipt Checker</h4>
-                        <p>Upload screenshots to verify if M-Pesa receipts are genuine or fake.</p>
-                    </div>
-                    <div class="feature-card">
-                        <div class="feature-icon">🔗</div>
-                        <h4>URL Safety</h4>
-                        <p>Check if a link is safe before clicking. We analyze URLs without visiting them.</p>
-                    </div>
-                    <div class="feature-card">
-                        <div class="feature-icon">📊</div>
-                        <h4>Real-time Dashboard</h4>
-                        <p>Track scam trends and view detailed analysis reports for all detections.</p>
-                    </div>
-                </div>
-                
-                <!-- Statistics -->
-                <div class="stats-section">
-                    <h3>
-                        <i class="fas fa-chart-line"></i> Our Impact
-                    </h3>
-                    <p style="opacity: 0.9; margin-bottom: 20px;">Making Kenya safer, one detection at a time</p>
-                    <div class="stats-grid">
-                        <div class="stat-item">
-                            <span class="stat-number" id="scamsDetected">--</span>
-                            <span class="stat-label">Scams Detected</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-number" id="highRiskCount">--</span>
-                            <span class="stat-label">High Risk Alerts</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-number" id="smsCount">--</span>
-                            <span class="stat-label">SMS Analyzed</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-number" id="emailCount">--</span>
-                            <span class="stat-label">Emails Analyzed</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-number" id="whatsappCount">--</span>
-                            <span class="stat-label">WhatsApp Chats</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-number" id="avgRiskScore">--</span>
-                            <span class="stat-label">Avg Risk Score</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Why Choose Us -->
-                <div class="why-choose-us">
-                    <h3>
-                        <i class="fas fa-star"></i> Why Choose AI Fraud Shield
-                    </h3>
-                    <div class="benefits-list">
-                        <div class="benefit-item">
-                            <span class="benefit-icon">✅</span>
-                            <span class="benefit-text">100% Free to use</span>
-                        </div>
-                        <div class="benefit-item">
-                            <span class="benefit-icon">🔒</span>
-                            <span class="benefit-text">No account required</span>
-                        </div>
-                        <div class="benefit-item">
-                            <span class="benefit-icon">🛡️</span>
-                            <span class="benefit-text">No personal data stored</span>
-                        </div>
-                        <div class="benefit-item">
-                            <span class="benefit-icon">🚫</span>
-                            <span class="benefit-text">Never click suspicious links</span>
-                        </div>
-                        <div class="benefit-item">
-                            <span class="benefit-icon">🇰🇪</span>
-                            <span class="benefit-text">Kenyan-focused scam patterns</span>
-                        </div>
-                        <div class="benefit-item">
-                            <span class="benefit-icon">⚡</span>
-                            <span class="benefit-text">Instant results</span>
-                        </div>
-                        <div class="benefit-item">
-                            <span class="benefit-icon">📱</span>
-                            <span class="benefit-text">Mobile-friendly design</span>
-                        </div>
-                        <div class="benefit-item">
-                            <span class="benefit-icon">🔄</span>
-                            <span class="benefit-text">Regularly updated patterns</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Disclaimer -->
-                <div class="alert-custom">
-                    <strong>
-                        <i class="fas fa-exclamation-triangle"></i> Disclaimer:
-                    </strong>
-                    <br>
-                    While our AI-powered detection system is highly accurate, no automated system is perfect. 
-                    Always exercise caution when dealing with suspicious messages. When in doubt, verify through 
-                    official channels or contact your service provider directly.
-                </div>
-                
-                <!-- CTA Buttons -->
-                <div class="footer-buttons">
-                    <a href="/" class="btn-custom btn-primary-custom">
-                        <i class="fas fa-arrow-left"></i> Back to Dashboard
-                    </a>
-                    <a href="/api/health" class="btn-custom btn-outline-custom" target="_blank">
-                        <i class="fas fa-heartbeat"></i> System Status
-                    </a>
-                    <a href="/api/export" class="btn-custom btn-outline-custom">
-                        <i class="fas fa-download"></i> Export Reports
-                    </a>
-                </div>
-            </div>
-            
-            <!-- Footer -->
-            <div class="footer">
-                <p>
-                    <i class="fas fa-copyright"></i> 2025 AI Fraud Shield | 
-                    Protecting Kenyans from Digital Scams
-                </p>
-                <p class="mt-2">
-                    <small>
-                        Report scams to <strong>Safaricom: 333</strong> | 
-                        <strong>Airtel: 3333</strong> | 
-                        <strong>Telkom: 100</strong>
-                    </small>
-                </p>
-                <p class="mt-2">
-                    <small>
-                        <i class="fas fa-envelope"></i> 
-                        Report phishing emails to: <strong>report@kenyacic.go.ke</strong>
-                    </small>
-                </p>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Emergency Contacts Modal -->
-    <div class="modal fade" id="emergencyModal" tabindex="-1" aria-labelledby="emergencyModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="emergencyModalLabel">
-                        <i class="fas fa-phone-alt"></i> Emergency Contacts
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="list-group">
-                        <div class="list-group-item">
-                            <h6><i class="fas fa-shield-alt"></i> Safaricom Customer Care</h6>
-                            <p class="mb-0"><strong>Call:</strong> 100 (toll-free)</p>
-                            <p><strong>Report Scams:</strong> Forward to 333</p>
-                        </div>
-                        <div class="list-group-item">
-                            <h6><i class="fas fa-shield-alt"></i> Airtel Customer Care</h6>
-                            <p class="mb-0"><strong>Call:</strong> 100</p>
-                            <p><strong>Report Scams:</strong> Forward to 3333</p>
-                        </div>
-                        <div class="list-group-item">
-                            <h6><i class="fas fa-shield-alt"></i> Telkom Customer Care</h6>
-                            <p class="mb-0"><strong>Call:</strong> 100</p>
-                        </div>
-                        <div class="list-group-item">
-                            <h6><i class="fas fa-envelope"></i> Report Phishing Emails</h6>
-                            <p class="mb-0"><strong>Email:</strong> report@kenyacic.go.ke</p>
-                        </div>
-                        <div class="list-group-item">
-                            <h6><i class="fas fa-balance-scale"></i> DCI Reporting</h6>
-                            <p class="mb-0"><strong>Call:</strong> 0800 722 203 (Toll-Free)</p>
-                            <p><strong>Email:</strong> dci@cid.go.ke</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        // Fetch real statistics from API
-        async function loadRealStats() {
-            try {
-                const response = await fetch('/api/stats/');
-                const data = await response.json();
-                
-                if (data.status === 'success') {
-                    if (data.total_reports) {
-                        document.getElementById('scamsDetected').innerHTML = data.total_reports.toLocaleString();
-                    }
-                    if (data.high_risk_count) {
-                        document.getElementById('highRiskCount').innerHTML = data.high_risk_count.toLocaleString();
-                    }
-                    if (data.sms_count) {
-                        document.getElementById('smsCount').innerHTML = data.sms_count.toLocaleString();
-                    }
-                    if (data.email_count) {
-                        document.getElementById('emailCount').innerHTML = data.email_count.toLocaleString();
-                    }
-                    if (data.whatsapp_count) {
-                        document.getElementById('whatsappCount').innerHTML = data.whatsapp_count.toLocaleString();
-                    }
-                    if (data.average_risk_score) {
-                        document.getElementById('avgRiskScore').innerHTML = data.average_risk_score.toLocaleString() + '%';
-                    }
-                } else {
-                    useFallbackData();
-                }
-            } catch (error) {
-                console.log('API not available, using fallback data');
-                useFallbackData();
-            }
-        }
-        
-        function useFallbackData() {
-            document.getElementById('scamsDetected').innerHTML = '10,000+';
-            document.getElementById('highRiskCount').innerHTML = '2,500+';
-            document.getElementById('smsCount').innerHTML = '4,200+';
-            document.getElementById('emailCount').innerHTML = '3,800+';
-            document.getElementById('whatsappCount').innerHTML = '2,000+';
-            document.getElementById('avgRiskScore').innerHTML = '42%';
-        }
-        
-        document.addEventListener('DOMContentLoaded', function() {
-            loadRealStats();
-        });
-    </script>
-</body>
-</html>
+    } catch (error) {
+        useFallbackData();
+    }
+}
+
+function useFallbackData() {
+    document.getElementById('scamsDetected').textContent = '10,000+';
+    document.getElementById('highRiskCount').textContent = '2,500+';
+    document.getElementById('smsCount').textContent = '4,200+';
+    document.getElementById('emailCount').textContent = '3,800+';
+    document.getElementById('whatsappCount').textContent = '2,000+';
+    document.getElementById('avgRiskScore').textContent = '42%';
+}
+</script>
+{% endblock %}

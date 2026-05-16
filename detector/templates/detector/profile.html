@@ -1,0 +1,606 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}My Profile - AI Fraud Shield{% endblock %}
+
+{% block header %}{% endblock %}
+
+{% block content %}
+<div class="profile-page">
+    <!-- Profile Header -->
+    <div class="profile-header">
+        <div class="profile-header-bg"></div>
+        <div class="profile-header-content">
+            <div class="profile-avatar">
+                <i class="fas fa-user-circle"></i>
+            </div>
+            <div class="profile-info">
+                <h1>{{ user.username }}</h1>
+                <p>
+                    <span class="badge-role {{ profile.role|default:'INDIVIDUAL' }}">
+                        {{ profile.get_role_display|default:'User' }}
+                    </span>
+                    {% if company %}
+                    <span class="badge-company">
+                        <i class="fas fa-building"></i> {{ company.name }}
+                    </span>
+                    {% endif %}
+                </p>
+                <p class="profile-meta">
+                    <i class="fas fa-envelope"></i> {{ user.email|default:'No email' }} |
+                    <i class="fas fa-calendar"></i> Joined {{ user.date_joined|date:"M Y" }}
+                </p>
+            </div>
+            <div class="profile-actions">
+                <a href="/" class="btn btn-primary-custom">
+                    <i class="fas fa-search"></i> Scan Messages
+                </a>
+                <a href="/logout/" class="btn btn-outline-custom">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="profile-content">
+        <!-- Stats Row -->
+        <div class="profile-stats">
+            <div class="profile-stat-card">
+                <div class="stat-icon navy"><i class="fas fa-shield-alt"></i></div>
+                <div class="stat-value">{{ total_scans }}</div>
+                <div class="stat-label">Total Scans</div>
+            </div>
+            <div class="profile-stat-card">
+                <div class="stat-icon danger"><i class="fas fa-exclamation-triangle"></i></div>
+                <div class="stat-value">{{ high_risk_found }}</div>
+                <div class="stat-label">High Risk Found</div>
+            </div>
+            <div class="profile-stat-card">
+                <div class="stat-icon gold"><i class="fas fa-clock"></i></div>
+                <div class="stat-value">{{ scans_today }}</div>
+                <div class="stat-label">Scans Today</div>
+            </div>
+            <div class="profile-stat-card">
+                <div class="stat-icon success"><i class="fas fa-star"></i></div>
+                <div class="stat-value">{{ user_points.total_points|default:0 }}</div>
+                <div class="stat-label">Points Earned</div>
+            </div>
+        </div>
+
+        <div class="profile-grid">
+            <!-- Left Column -->
+            <div class="profile-left">
+                <!-- Points & Level -->
+                <div class="profile-card">
+                    <h3><i class="fas fa-trophy"></i> Achievement Level</h3>
+                    <div class="level-display">
+                        <div class="level-badge">{{ user_points.get_level|default:'🌱 Newcomer' }}</div>
+                        <div class="points-bar-wrapper">
+                            <div class="points-bar" style="width: {% widthratio user_points.total_points|default:0 5000 100 %}%;"></div>
+                        </div>
+                        <p class="points-text">{{ user_points.total_points|default:0 }} / 5000 points</p>
+                    </div>
+                    
+                    <div class="mini-stats">
+                        <div class="mini-stat">
+                            <span class="mini-value">{{ user_points.reports_submitted|default:0 }}</span>
+                            <span class="mini-label">Reports</span>
+                        </div>
+                        <div class="mini-stat">
+                            <span class="mini-value">{{ user_points.scams_verified|default:0 }}</span>
+                            <span class="mini-label">Verified</span>
+                        </div>
+                        <div class="mini-stat">
+                            <span class="mini-value">{{ user_points.numbers_blocked|default:0 }}</span>
+                            <span class="mini-label">Blocked</span>
+                        </div>
+                        <div class="mini-stat">
+                            <span class="mini-value">{{ user_points.current_streak|default:0 }}d</span>
+                            <span class="mini-label">Streak</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Badges -->
+                <div class="profile-card">
+                    <h3><i class="fas fa-medal"></i> Badges Earned</h3>
+                    {% if badges %}
+                    <div class="badges-grid">
+                        {% for user_badge in badges %}
+                        <div class="badge-item" title="{{ user_badge.badge.description }}">
+                            <span class="badge-icon">{{ user_badge.badge.icon }}</span>
+                            <span class="badge-name">{{ user_badge.badge.name }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="empty-state">
+                        <i class="fas fa-medal"></i>
+                        <p>No badges yet. Start scanning to earn badges!</p>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Company Info -->
+                {% if company %}
+                <div class="profile-card">
+                    <h3><i class="fas fa-building"></i> Company</h3>
+                    <div class="company-info">
+                        <p><strong>{{ company.name }}</strong></p>
+                        <p><i class="fas fa-envelope"></i> {{ company.email }}</p>
+                        <p><i class="fas fa-phone"></i> {{ company.phone|default:'N/A' }}</p>
+                        {% if profile.role == 'COMPANY_ADMIN' %}
+                        <a href="/corporate/" class="btn btn-sm btn-primary-custom mt-2">
+                            <i class="fas fa-building-shield"></i> Corporate Dashboard
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Right Column -->
+            <div class="profile-right">
+                <!-- Recent Activity -->
+                <div class="profile-card">
+                    <h3><i class="fas fa-history"></i> Recent Scans</h3>
+                    {% if user_reports %}
+                    <div class="activity-list">
+                        {% for report in user_reports %}
+                        <div class="activity-item">
+                            <div class="activity-dot {% if report.risk_score >= 70 %}danger{% elif report.risk_score >= 40 %}warning{% else %}success{% endif %}"></div>
+                            <div class="activity-content">
+                                <div class="activity-type">{{ report.get_report_type_display }}</div>
+                                <div class="activity-preview">{{ report.content|truncatechars:60 }}</div>
+                                <div class="activity-meta">
+                                    <span class="badge-risk {% if report.risk_score >= 70 %}HIGH{% elif report.risk_score >= 40 %}MEDIUM{% else %}LOW{% endif %}">
+                                        {{ report.risk_score }}/100
+                                    </span>
+                                    <span class="activity-date">{{ report.date_reported|date:"M d, H:i" }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="empty-state">
+                        <i class="fas fa-search"></i>
+                        <p>No scans yet. <a href="/">Start scanning now!</a></p>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Colleagues (for company users) -->
+                {% if colleagues %}
+                <div class="profile-card">
+                    <h3><i class="fas fa-users"></i> Colleagues</h3>
+                    <div class="colleagues-list">
+                        {% for colleague in colleagues %}
+                        <div class="colleague-item">
+                            <i class="fas fa-user-circle"></i>
+                            <span>{{ colleague.user.username }}</span>
+                            <span class="badge-role {{ colleague.role }}">{{ colleague.get_role_display }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .profile-page {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    /* Profile Header */
+    .profile-header {
+        background: linear-gradient(135deg, #002855 0%, #001a3f 100%);
+        border-radius: 20px;
+        overflow: hidden;
+        margin-bottom: 24px;
+        border-bottom: 4px solid #f5a623;
+        position: relative;
+    }
+
+    .profile-header-bg {
+        position: absolute;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: radial-gradient(circle at top right, rgba(245,166,35,0.1), transparent 60%);
+    }
+
+    .profile-header-content {
+        position: relative;
+        padding: 40px;
+        display: flex;
+        align-items: center;
+        gap: 24px;
+        flex-wrap: wrap;
+        color: white;
+    }
+
+    .profile-avatar {
+        width: 80px;
+        height: 80px;
+        background: rgba(255,255,255,0.15);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 3rem;
+        color: #f5a623;
+        border: 3px solid #f5a623;
+        flex-shrink: 0;
+    }
+
+    .profile-info h1 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin: 0 0 6px;
+    }
+
+    .profile-info p {
+        margin: 0;
+        opacity: 0.9;
+    }
+
+    .profile-meta {
+        font-size: 0.85rem;
+        opacity: 0.7;
+        margin-top: 4px !important;
+    }
+
+    .badge-role {
+        display: inline-block;
+        padding: 3px 12px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        background: #f5a623;
+        color: #002855;
+    }
+
+    .badge-company {
+        display: inline-block;
+        padding: 3px 12px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        background: rgba(255,255,255,0.2);
+        margin-left: 6px;
+    }
+
+    .profile-actions {
+        margin-left: auto;
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .btn-primary-custom {
+        background: #f5a623;
+        color: #002855;
+        padding: 10px 20px;
+        border-radius: 50px;
+        font-weight: 700;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.3s;
+    }
+
+    .btn-primary-custom:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+        color: #002855;
+    }
+
+    .btn-outline-custom {
+        background: transparent;
+        color: white;
+        border: 2px solid rgba(255,255,255,0.3);
+        padding: 10px 20px;
+        border-radius: 50px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.3s;
+    }
+
+    .btn-outline-custom:hover {
+        background: rgba(255,255,255,0.1);
+        color: white;
+    }
+
+    /* Stats */
+    .profile-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+
+    .profile-stat-card {
+        background: white;
+        border-radius: 16px;
+        padding: 20px;
+        border: 1px solid #e5e7eb;
+        text-align: center;
+    }
+
+    .profile-stat-card .stat-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        margin: 0 auto 10px;
+    }
+
+    .stat-icon.navy { background: #e8f0fe; color: #002855; }
+    .stat-icon.danger { background: #fee2e2; color: #dc3545; }
+    .stat-icon.gold { background: #fef3d5; color: #f5a623; }
+    .stat-icon.success { background: #d1fae5; color: #10b981; }
+
+    .profile-stat-card .stat-value {
+        font-size: 1.8rem;
+        font-weight: 800;
+        color: #1e293b;
+    }
+
+    .profile-stat-card .stat-label {
+        font-size: 0.8rem;
+        color: #64748b;
+        font-weight: 600;
+        text-transform: uppercase;
+        margin-top: 4px;
+    }
+
+    /* Profile Grid */
+    .profile-grid {
+        display: grid;
+        grid-template-columns: 1fr 1.5fr;
+        gap: 20px;
+    }
+
+    .profile-card {
+        background: white;
+        border-radius: 16px;
+        padding: 24px;
+        border: 1px solid #e5e7eb;
+        margin-bottom: 20px;
+    }
+
+    .profile-card h3 {
+        color: #002855;
+        font-weight: 700;
+        font-size: 1rem;
+        margin-bottom: 16px;
+        padding-bottom: 12px;
+        border-bottom: 2px solid #f5a623;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .profile-card h3 i { color: #f5a623; }
+
+    /* Level Display */
+    .level-badge {
+        text-align: center;
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #002855;
+        margin-bottom: 12px;
+    }
+
+    .points-bar-wrapper {
+        height: 10px;
+        background: #e5e7eb;
+        border-radius: 5px;
+        overflow: hidden;
+        margin-bottom: 8px;
+    }
+
+    .points-bar {
+        height: 100%;
+        background: linear-gradient(90deg, #f5a623, #10b981);
+        border-radius: 5px;
+        transition: width 0.5s ease;
+    }
+
+    .points-text {
+        text-align: center;
+        font-size: 0.8rem;
+        color: #64748b;
+    }
+
+    .mini-stats {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 8px;
+        margin-top: 16px;
+    }
+
+    .mini-stat {
+        text-align: center;
+        padding: 10px;
+        background: #f8fafc;
+        border-radius: 10px;
+    }
+
+    .mini-value {
+        display: block;
+        font-weight: 700;
+        color: #002855;
+        font-size: 1rem;
+    }
+
+    .mini-label {
+        font-size: 0.7rem;
+        color: #64748b;
+    }
+
+    /* Badges */
+    .badges-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+        gap: 10px;
+    }
+
+    .badge-item {
+        text-align: center;
+        padding: 12px 8px;
+        background: #f8fafc;
+        border-radius: 12px;
+        transition: all 0.3s;
+        cursor: pointer;
+    }
+
+    .badge-item:hover {
+        background: #e8f0fe;
+        transform: translateY(-2px);
+    }
+
+    .badge-icon {
+        font-size: 1.5rem;
+    }
+
+    .badge-name {
+        font-size: 0.7rem;
+        color: #002855;
+        font-weight: 600;
+        display: block;
+        margin-top: 4px;
+    }
+
+    /* Activity */
+    .activity-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .activity-item {
+        display: flex;
+        gap: 12px;
+        padding: 10px 0;
+        border-bottom: 1px solid #f1f5f9;
+    }
+
+    .activity-item:last-child {
+        border-bottom: none;
+    }
+
+    .activity-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        margin-top: 6px;
+        flex-shrink: 0;
+    }
+
+    .activity-dot.danger { background: #dc3545; }
+    .activity-dot.warning { background: #f5a623; }
+    .activity-dot.success { background: #10b981; }
+
+    .activity-type {
+        font-weight: 600;
+        font-size: 0.85rem;
+        color: #1e293b;
+    }
+
+    .activity-preview {
+        font-size: 0.8rem;
+        color: #64748b;
+    }
+
+    .activity-meta {
+        font-size: 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 4px;
+    }
+
+    .badge-risk {
+        font-size: 0.65rem;
+        font-weight: 700;
+        padding: 2px 8px;
+        border-radius: 10px;
+    }
+
+    .badge-risk.HIGH { background: #fee2e2; color: #dc3545; }
+    .badge-risk.MEDIUM { background: #fef3c7; color: #92400e; }
+    .badge-risk.LOW { background: #d1fae5; color: #065f46; }
+
+    .activity-date {
+        color: #94a3b8;
+    }
+
+    /* Colleagues */
+    .colleagues-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .colleague-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px;
+        background: #f8fafc;
+        border-radius: 10px;
+    }
+
+    .colleague-item i {
+        color: #002855;
+        font-size: 1.2rem;
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 30px;
+        color: #94a3b8;
+    }
+
+    .empty-state i {
+        font-size: 2rem;
+        margin-bottom: 8px;
+        opacity: 0.5;
+    }
+
+    .empty-state a {
+        color: #f5a623;
+        font-weight: 600;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .profile-grid {
+            grid-template-columns: 1fr;
+        }
+        .profile-header-content {
+            flex-direction: column;
+            text-align: center;
+        }
+        .profile-actions {
+            margin-left: 0;
+        }
+        .mini-stats {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+</style>
+{% endblock %}

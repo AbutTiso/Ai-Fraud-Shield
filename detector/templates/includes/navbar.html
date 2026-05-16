@@ -21,33 +21,41 @@
           <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown"><i class="fas fa-search"></i> Detection Tools</a>
           <ul class="dropdown-menu">
             <li>
-              <a class="dropdown-item" href="/#smsTab" onclick="setTimeout(() => switchTab('sms'), 100);"><i class="fas fa-sms" style="color:#E67E22;"></i> SMS Detection</a>
+              <a class="dropdown-item" href="/#smsTab" onclick="switchTab('sms')"><i class="fas fa-sms" style="color:#E67E22;"></i> SMS Detection</a>
             </li>
             <li>
-              <a class="dropdown-item" href="/#emailTab" onclick="setTimeout(() => switchTab('email'), 100);"><i class="fas fa-envelope" style="color:#6366F1;"></i> Email Detection</a>
+              <a class="dropdown-item" href="/#emailTab" onclick="switchTab('email')"><i class="fas fa-envelope" style="color:#6366F1;"></i> Email Detection</a>
             </li>
             <li>
-              <a class="dropdown-item" href="/#whatsappTab" onclick="setTimeout(() => switchTab('whatsapp'), 100);"><i class="fab fa-whatsapp" style="color:#25D366;"></i> WhatsApp Detection</a>
+              <a class="dropdown-item" href="/#whatsappTab" onclick="switchTab('whatsapp')"><i class="fab fa-whatsapp" style="color:#25D366;"></i> WhatsApp Detection</a>
             </li>
             <li>
-              <a class="dropdown-item" href="/#callTab" onclick="setTimeout(() => switchTab('call'), 100);"><i class="fas fa-phone-alt" style="color:#0D9488;"></i> Call Monitor</a>
+              <a class="dropdown-item" href="/#callTab" onclick="switchTab('call')"><i class="fas fa-phone-alt" style="color:#0D9488;"></i> Call Monitor</a>
             </li>
             <li>
-              <a class="dropdown-item" href="/#telegramTab" onclick="setTimeout(() => switchTab('telegram'), 100);"><i class="fab fa-telegram-plane" style="color:#0088CC;"></i> Telegram Checker</a>
+              <a class="dropdown-item" href="/#telegramTab" onclick="switchTab('telegram')"><i class="fab fa-telegram-plane" style="color:#0088CC;"></i> Telegram Checker</a>
             </li>
             <li>
               <hr class="dropdown-divider" />
             </li>
             <li>
-              <a class="dropdown-item" href="/#screenshotTab" onclick="setTimeout(() => switchTab('screenshot'), 100);"><i class="fas fa-camera" style="color:#8B5CF6;"></i> M-Pesa Screenshot</a>
+              <a class="dropdown-item" href="/#screenshotTab" onclick="switchTab('screenshot')"><i class="fas fa-camera" style="color:#8B5CF6;"></i> M-Pesa Screenshot</a>
             </li>
             <li>
-              <a class="dropdown-item" href="/#urlTab" onclick="setTimeout(() => switchTab('url'), 100);"><i class="fas fa-link" style="color:#3B82F6;"></i> URL Checker</a>
+              <a class="dropdown-item" href="/#urlTab" onclick="switchTab('url')"><i class="fas fa-link" style="color:#3B82F6;"></i> URL Checker</a>
             </li>
           </ul>
         </li>
+
+        <!-- Corporate Shield (Only for company users) -->
+        {% if user.is_authenticated and user.userprofile.company and user.userprofile.role != 'INDIVIDUAL' %}
+          <li class="nav-item">
+            <a class="nav-link {% if request.path == '/corporate/' %}active fw-bold{% endif %}" href="/corporate/" style="{% if request.path == '/corporate/' %}color: #F5A623 !important;{% endif %}"><i class="fas fa-building-shield"></i> Corporate Shield</a>
+          </li>
+        {% endif %}
+
         <li class="nav-item">
-          <a class="nav-link" href="/#statsTab" onclick="setTimeout(() => switchTab('stats'), 100);"><i class="fas fa-chart-bar"></i> Statistics</a>
+          <a class="nav-link" href="/#statsTab" onclick="switchTab('stats')"><i class="fas fa-chart-bar"></i> Statistics</a>
         </li>
         <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown"><i class="fas fa-book-open"></i> Resources</a>
@@ -70,6 +78,15 @@
             <li>
               <a class="dropdown-item" href="/safety-tips/"><i class="fas fa-lightbulb"></i> Safety Tips</a>
             </li>
+            <li>
+              <hr class="dropdown-divider" />
+            </li>
+            <li>
+              <a class="dropdown-item" href="/heatmap/"><i class="fas fa-map-marked-alt"></i> Scam Heatmap</a>
+            </li>
+            <li>
+              <a class="dropdown-item" href="/leaderboard/"><i class="fas fa-trophy"></i> Leaderboard</a>
+            </li>
           </ul>
         </li>
         <li class="nav-item">
@@ -77,55 +94,109 @@
         </li>
       </ul>
 
-      <!-- ============ RIGHT SIDE: LOGIN/LOGOUT ============ -->
+      <!-- ============ RIGHT SIDE: USER MENU ============ -->
       <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-center">
         {% if user.is_authenticated %}
+          <!-- User Dropdown -->
           <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
-              <i class="fas fa-user-shield" style="color:#f5a623;"></i>
+            <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" style="padding: 8px 12px; border-radius: 10px;">
+              <i class="fas fa-user-circle" style="color:#f5a623; font-size:1.2rem;"></i>
               <strong>{{ user.username }}</strong>
               {% if user.userprofile.company %}
-                <span class="badge" style="background:#f5a623;color:#002855;font-size:0.65rem;">{{ user.userprofile.company.name }}</span>
+                <span class="badge" style="background:#f5a623;color:#002855;font-size:0.65rem;margin-left:4px;">{{ user.userprofile.company.name }}</span>
               {% endif %}
             </a>
-            <ul class="dropdown-menu dropdown-menu-end">
+            <ul class="dropdown-menu dropdown-menu-end" style="min-width:220px;">
+              <!-- User Info Header -->
               <li>
-                <span class="dropdown-item-text"><small><i class="fas fa-user-tag"></i> {{ user.userprofile.get_role_display|default:'User' }}</small></span>
+                <div class="px-3 py-2">
+                  <small class="text-muted">
+                    <i class="fas fa-user-tag"></i> <strong>{{ user.userprofile.get_role_display|default:'User' }}</strong>
+                    {% if user.userprofile.company %}
+                      <br /><i class="fas fa-building"></i> {{ user.userprofile.company.name }}
+                    {% endif %}
+                    {% if user.userprofile.department %}
+                      <br /><i class="fas fa-briefcase"></i> {{ user.userprofile.department }}
+                    {% endif %}
+                  </small>
+                </div>
               </li>
               <li>
                 <hr class="dropdown-divider" />
               </li>
+
+              <!-- 👤 My Profile -->
               <li>
-                <a class="dropdown-item" href="#" onclick="document.querySelector('[data-tab=stats]').click()"><i class="fas fa-chart-bar"></i> My Dashboard</a>
+                <a class="dropdown-item" href="/profile/"><i class="fas fa-user"></i> My Profile</a>
               </li>
-              {% if user.is_superuser or user.userprofile.role == 'COMPANY_ADMIN' %}
+
+              <!-- 📊 My Dashboard -->
+              <li>
+                <a class="dropdown-item" href="/"><i class="fas fa-chart-bar"></i> My Dashboard</a>
+              </li>
+
+              <!-- 🏢 Corporate Shield (if applicable) -->
+              {% if user.userprofile.company and user.userprofile.role != 'INDIVIDUAL' %}
+                <li>
+                  <a class="dropdown-item" href="/corporate/"><i class="fas fa-building-shield"></i> Corporate Shield</a>
+                </li>
+              {% endif %}
+
+              <li>
+                <hr class="dropdown-divider" />
+              </li>
+
+              <!-- ⚙️ Admin Panel (for staff/superusers) -->
+              {% if user.is_staff or user.is_superuser %}
                 <li>
                   <a class="dropdown-item" href="{% url 'admin:index' %}"><i class="fas fa-cog"></i> Admin Panel</a>
                 </li>
               {% endif %}
+
+              <!-- 🚩 View Reports (for admins) -->
+              {% if user.is_superuser or user.userprofile.role == 'COMPANY_ADMIN' %}
+                <li>
+                  <a class="dropdown-item" href="/reports-dashboard/"><i class="fas fa-flag"></i> View Reports</a>
+                </li>
+              {% endif %}
+
               <li>
                 <hr class="dropdown-divider" />
               </li>
+
+              <!-- 🏆 Leaderboard -->
               <li>
-                <form method="post" action="{% url 'admin:logout' %}">
-                  {% csrf_token %}
-                  <button type="submit" class="dropdown-item"><i class="fas fa-sign-out-alt"></i> Logout</button>
-                </form>
+                <a class="dropdown-item" href="/leaderboard/"><i class="fas fa-trophy"></i> Leaderboard</a>
+              </li>
+
+              <!-- 🗺️ Heatmap -->
+              <li>
+                <a class="dropdown-item" href="/heatmap/"><i class="fas fa-map-marked-alt"></i> Scam Heatmap</a>
+              </li>
+
+              <li>
+                <hr class="dropdown-divider" />
+              </li>
+
+              <!-- 🚪 Logout -->
+              <li>
+                <a class="dropdown-item" href="/logout/"><i class="fas fa-sign-out-alt"></i> Logout</a>
               </li>
             </ul>
           </li>
         {% else %}
+          <!-- Not logged in -->
           <li class="nav-item">
-            <a href="/register/" class="btn btn-sm me-2" style="background:#f5a623;color:#002855;font-weight:700;border-radius:50px;"><i class="fas fa-user-plus"></i> Sign Up</a>
+            <a href="/register/" class="btn btn-sm me-2" style="background:#f5a623;color:#002855;font-weight:700;border-radius:50px;padding:8px 18px;"><i class="fas fa-user-plus"></i> Sign Up</a>
           </li>
           <li class="nav-item">
-            <a href="/admin/login/?next=/" class="btn btn-sm" style="background:transparent;color:#002855;border:2px solid #002855;font-weight:600;border-radius:50px;"><i class="fas fa-sign-in-alt"></i> Login</a>
+            <a href="/login/" class="btn btn-sm me-2" style="background:transparent;color:#002855;border:2px solid #002855;font-weight:600;border-radius:50px;padding:8px 18px;"><i class="fas fa-sign-in-alt"></i> Login</a>
           </li>
         {% endif %}
 
         <!-- Help Dropdown -->
         <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown"><i class="fas fa-headset"></i> Help</a>
+          <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown"><i class="fas fa-headset"></i></a>
           <ul class="dropdown-menu dropdown-menu-end">
             <li>
               <a class="dropdown-item" href="/contact/"><i class="fas fa-envelope"></i> Contact Support</a>
@@ -137,21 +208,30 @@
               <hr class="dropdown-divider" />
             </li>
             <li>
-              <a class="dropdown-item" href="/api/health" target="_blank"><i class="fas fa-heartbeat"></i> System Status</a>
+              <a class="dropdown-item" href="/safety-tips/"><i class="fas fa-lightbulb"></i> Safety Tips</a>
+            </li>
+            <li>
+              <a class="dropdown-item" href="/faq/"><i class="fas fa-question-circle"></i> FAQ</a>
+            </li>
+            <li>
+              <hr class="dropdown-divider" />
+            </li>
+            <li>
+              <a class="dropdown-item" href="/api/health/" target="_blank"><i class="fas fa-heartbeat"></i> System Status</a>
             </li>
           </ul>
         </li>
 
         <!-- Emergency Button -->
         <li class="nav-item">
-          <a class="nav-link btn btn-danger-custom text-white" href="#" data-bs-toggle="modal" data-bs-target="#emergencyModal"><i class="fas fa-phone-alt"></i> Emergency</a>
+          <a class="nav-link btn btn-danger-custom text-white" href="#" data-bs-toggle="modal" data-bs-target="#emergencyModal" style="background:linear-gradient(135deg,#dc3545,#a71d2a);border-radius:50px;padding:8px 16px;font-weight:600;"><i class="fas fa-phone-alt"></i> Emergency</a>
         </li>
       </ul>
     </div>
   </div>
 </nav>
 
-<!-- Emergency Modal (keep existing) -->
+<!-- Emergency Modal -->
 <div class="modal fade" id="emergencyModal" tabindex="-1">
   <div class="modal-dialog">
     <div class="modal-content">
@@ -162,7 +242,8 @@
       <div class="modal-body">
         <div class="list-group">
           <div class="list-group-item">
-            <h6><i class="fas fa-shield-alt" style="color:#002855;"></i> Safaricom</h6><p class="mb-0">
+            <h6><i class="fas fa-shield-alt" style="color:#002855;"></i> Safaricom</h6>
+            <p class="mb-0">
               <strong>Customer Care:</strong> 100
             </p>
             <p>
@@ -170,17 +251,20 @@
             </p>
           </div>
           <div class="list-group-item">
-            <h6><i class="fas fa-shield-alt" style="color:#002855;"></i> Airtel</h6><p>
+            <h6><i class="fas fa-shield-alt" style="color:#002855;"></i> Airtel</h6>
+            <p>
               <strong>Report Scams:</strong> Forward to <strong>3333</strong>
             </p>
           </div>
           <div class="list-group-item">
-            <h6><i class="fas fa-envelope" style="color:#dc3545;"></i> Report Phishing</h6><p class="mb-0">
+            <h6><i class="fas fa-envelope" style="color:#dc3545;"></i> Report Phishing</h6>
+            <p class="mb-0">
               <strong>Email:</strong> report@kenyacic.go.ke
             </p>
           </div>
           <div class="list-group-item">
-            <h6><i class="fas fa-balance-scale" style="color:#F5A623;"></i> DCI</h6><p>
+            <h6><i class="fas fa-balance-scale" style="color:#F5A623;"></i> DCI Kenya</h6>
+            <p>
               <strong>Call:</strong> 0800 722 203
             </p>
           </div>
@@ -193,7 +277,22 @@
   </div>
 </div>
 
-<!-- Keep existing CSS styles -->
+<script>
+  function switchTab(tabName) {
+    if (window.location.pathname === '/') {
+      document.querySelectorAll('.side-link[data-tab]').forEach((l) => l.classList.remove('active'))
+      document.querySelectorAll('.tab-content').forEach((t) => t.classList.remove('active'))
+      const tabLink = document.querySelector(`[data-tab="${tabName}"]`)
+      const tabContent = document.getElementById(tabName + 'Tab')
+      if (tabLink) tabLink.classList.add('active')
+      if (tabContent) tabContent.classList.add('active')
+      if (tabName === 'stats' && typeof loadEnhancedStats === 'function') loadEnhancedStats()
+    } else {
+      window.location.href = '/#' + tabName + 'Tab'
+    }
+  }
+</script>
+
 <style>
   .navbar-nav .nav-link {
     font-weight: 500;
@@ -237,10 +336,6 @@
     background: rgba(245, 166, 35, 0.1);
     transform: translateX(5px);
     color: #002855;
-  }
-  .dropdown-item.active {
-    background: linear-gradient(135deg, #002855, #001a3a);
-    color: white;
   }
   .dropdown-item i {
     width: 20px;
