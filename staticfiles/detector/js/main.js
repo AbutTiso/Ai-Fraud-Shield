@@ -1,4 +1,8 @@
-// detector/static/detector/js/main.js - COMPLETE UPDATED VERSION
+// detector/static/detector/js/main.js - CLEANED & FIXED VERSION WITH LIVE TERMINATION WARNINGS
+
+// ============================================================
+// UTILITY FUNCTIONS
+// ============================================================
 
 // Get CSRF token
 function getCSRFToken() {
@@ -16,11 +20,6 @@ function getCSRFToken() {
   return cookieValue;
 }
 
-// Chart instances
-let scamTypeChart = null;
-let riskDistributionChart = null;
-let trendChart = null;
-
 // Show toast notification
 function showToast(message, type = "success") {
   const toast = document.createElement("div");
@@ -36,9 +35,7 @@ function showToast(message, type = "success") {
 
   toast.innerHTML = `
         <div class="d-flex">
-            <div class="toast-body">
-                ${message}
-            </div>
+            <div class="toast-body">${message}</div>
             <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
         </div>
     `;
@@ -52,14 +49,20 @@ function showToast(message, type = "success") {
   });
 }
 
+// Escape HTML
+function escapeHtml(text) {
+  if (!text) return "";
+  const div = document.createElement("div");
+  div.textContent = text;
+  return div.innerHTML;
+}
+
 // Export reports as CSV
 async function exportReports() {
   try {
     showToast("📥 Preparing export...", "info");
     const response = await fetch("/api/export/", {
-      headers: {
-        "X-CSRFToken": getCSRFToken(),
-      },
+      headers: { "X-CSRFToken": getCSRFToken() },
       credentials: "same-origin",
     });
 
@@ -88,669 +91,32 @@ async function exportReports() {
 
 // Tab switching
 function switchTab(tabName) {
-  document.querySelectorAll(".tab-content").forEach((tab) => {
-    tab.classList.remove("active");
-  });
+  document
+    .querySelectorAll(".tab-content")
+    .forEach((tab) => tab.classList.remove("active"));
 
   const activeTab = document.getElementById(`${tabName}Tab`);
-  if (activeTab) {
-    activeTab.classList.add("active");
-  }
+  if (activeTab) activeTab.classList.add("active");
 
   document.querySelectorAll(".tab-btn").forEach((btn) => {
     btn.classList.remove("active");
-    if (btn.getAttribute("data-tab") === tabName) {
-      btn.classList.add("active");
-    }
+    if (btn.getAttribute("data-tab") === tabName) btn.classList.add("active");
   });
 
   if (tabName === "stats") {
-    setTimeout(() => {
-      loadStats();
-      loadActivityFeed();
-      refreshCharts();
-    }, 100);
-  }
+    loadStats();
+    loadActivityFeed();
+}
 }
 
-// Refresh charts (resize/update)
-function refreshCharts() {
-  if (scamTypeChart) scamTypeChart.update();
-  if (riskDistributionChart) riskDistributionChart.update();
-  if (trendChart) trendChart.update();
-}
-
-// Create Scam Type Pie Chart
-function createScamTypeChart(stats) {
-  const ctx = document.getElementById("scamTypeChart");
-  if (!ctx) return;
-
-  if (scamTypeChart) scamTypeChart.destroy();
-
-  scamTypeChart = new Chart(ctx, {
-    type: "pie",
-    data: {
-      labels: ["SMS", "Email", "WhatsApp", "Phone Calls", "URLs", "Telegram"],
-      datasets: [
-        {
-          data: [
-            stats.sms_count || 0,
-            stats.email_count || 0,
-            stats.whatsapp_count || 0,
-            stats.call_count || 0,
-            stats.url_count || 0,
-            stats.telegram_count || 0 
-          ],
-          backgroundColor: [
-            "#3b82f6",
-            "#ef4444",
-            "#10b981",
-            "#f59e0b",
-            "#8b5cf6",
-            '#0088cc',
-          ],
-          borderWidth: 0,
-        },
-      ],
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: true,
-      plugins: {
-        legend: { position: "bottom", labels: { color: "#f3f4f6" } },
-      },
-    },
-  });
-}
-
-// Create Risk Distribution Bar Chart
-function createRiskChart(stats) {
-  const ctx = document.getElementById("riskDistributionChart");
-  if (!ctx) return;
-
-  if (riskDistributionChart) riskDistributionChart.destroy();
-
-  riskDistributionChart = new Chart(ctx, {
-    type: "bar",
-    data: {
-      labels: ["High Risk (70-100)", "Medium Risk (40-69)", "Low Risk (0-39)"],
-      datasets: [
-        {
-          label: "Number of Reports",
-          data: [
-            stats.high_risk_count || 0,
-            stats.medium_risk_count || 0,
-            stats.low_risk_count || 0,
-          ],
-          backgroundColor: ["#ef4444", "#f59e0b", "#10b981"],
-          borderRadius: 8,
-        },
-      ],
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: true,
-      scales: {
-        y: {
-          beginAtZero: true,
-          ticks: { color: "#9ca3af" },
-          grid: { color: "#374151" },
-        },
-        x: { ticks: { color: "#9ca3af" }, grid: { color: "#374151" } },
-      },
-      plugins: {
-        legend: { labels: { color: "#f3f4f6" } },
-      },
-    },
-  });
-}
-
-// Create Weekly Trend Line Chart
-function createTrendChart(stats) {
-  const ctx = document.getElementById("trendChart");
-  if (!ctx) return;
-
-  if (trendChart) trendChart.destroy();
-
-  trendChart = new Chart(ctx, {
-    type: "line",
-    data: {
-      labels: stats.weekly_labels || [
-        "Mon",
-        "Tue",
-        "Wed",
-        "Thu",
-        "Fri",
-        "Sat",
-        "Sun",
-      ],
-      datasets: [
-        {
-          label: "Scam Reports",
-          data: stats.weekly_trend || [0, 0, 0, 0, 0, 0, 0],
-          borderColor: "#3b82f6",
-          backgroundColor: "rgba(59, 130, 246, 0.1)",
-          tension: 0.4,
-          fill: true,
-        },
-      ],
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: true,
-      plugins: {
-        legend: { labels: { color: "#f3f4f6" } },
-      },
-      scales: {
-        y: {
-          beginAtZero: true,
-          ticks: { color: "#9ca3af" },
-          grid: { color: "#374151" },
-        },
-        x: { ticks: { color: "#9ca3af" }, grid: { color: "#374151" } },
-      },
-    },
-  });
-}
-
-// Update all charts with new data
-function updateCharts(stats) {
-  if (scamTypeChart) {
-    scamTypeChart.data.datasets[0].data = [
-      stats.sms_count || 0,
-      stats.email_count || 0,
-      stats.whatsapp_count || 0,
-      stats.call_count || 0,
-      stats.url_count || 0,
-      stats.telegram_count || 0,
-    ];
-    scamTypeChart.update();
-  } else {
-    createScamTypeChart(stats);
-  }
-
-  if (riskDistributionChart) {
-    riskDistributionChart.data.datasets[0].data = [
-      stats.high_risk_count || 0,
-      stats.medium_risk_count || 0,
-      stats.low_risk_count || 0,
-    ];
-    riskDistributionChart.update();
-  } else {
-    createRiskChart(stats);
-  }
-
-  if (trendChart) {
-    trendChart.data.datasets[0].data = stats.weekly_trend || [
-      0, 0, 0, 0, 0, 0, 0,
-    ];
-    if (stats.weekly_labels) trendChart.data.labels = stats.weekly_labels;
-    trendChart.update();
-  } else {
-    createTrendChart(stats);
-  }
-}
-
-// Update recent scams table
-function updateRecentScamsTable(recentScams) {
-  const tbody = document.getElementById("recentScamsBody");
-  if (!tbody) return;
-
-  if (!recentScams || recentScams.length === 0) {
-    tbody.innerHTML =
-      '<tr><td colspan="5" class="text-center">No scam reports yet</td></tr>';
-    return;
-  }
-
-  tbody.innerHTML = recentScams
-    .map(
-      (scam) => `
-        <tr>
-            <td>${escapeHtml(scam.date || "")}</td>
-            <td><span class="badge bg-secondary">${escapeHtml(scam.type || "Unknown")}</span></td>
-            <td>${escapeHtml(scam.preview || scam.content || "No content").substring(0, 80)}${(scam.preview || scam.content || "").length > 80 ? "..." : ""}</td>
-            <td><span class="badge ${getRiskBadgeClass(scam.score)}">${scam.score || 0}</span></td>
-            <td><span class="badge ${getRiskLevelClass(scam.level)}">${scam.level || "Unknown"}</span></td>
-        </tr>
-    `,
-    )
-    .join("");
-}
-
-function getRiskBadgeClass(score) {
-  if (score >= 70) return "bg-danger";
-  if (score >= 40) return "bg-warning text-dark";
-  return "bg-success";
-}
-
-function getRiskLevelClass(level) {
-  if (level === "HIGH") return "bg-danger";
-  if (level === "MEDIUM") return "bg-warning text-dark";
-  return "bg-success";
-}
-
-// Load statistics (ENHANCED VERSION)
-async function loadStats() {
-  try {
-    const response = await fetch("/api/stats/", {
-      headers: {
-        "X-CSRFToken": getCSRFToken(),
-      },
-      credentials: "same-origin",
-    });
-    const data = await response.json();
-
-    // Check if we have the new stats structure (with success and stats objects)
-    let stats;
-    if (data.success && data.stats) {
-      stats = data.stats;
-    } else if (data.status === "success") {
-      // Old format fallback
-      stats = data;
-    } else {
-      stats = data;
-    }
-
-    // Update stats cards on main page (top row)
-    const totalReportsEl = document.getElementById("totalReports");
-    if (totalReportsEl) totalReportsEl.textContent = stats.total_reports || 0;
-
-    const highRiskEl = document.getElementById("highRisk");
-    if (highRiskEl) highRiskEl.textContent = stats.high_risk_count || 0;
-
-    const smsCountEl = document.getElementById("smsCount");
-    if (smsCountEl) smsCountEl.textContent = stats.sms_count || 0;
-
-    const emailCountEl = document.getElementById("emailCount");
-    if (emailCountEl) emailCountEl.textContent = stats.email_count || 0;
-
-    const whatsappCountEl = document.getElementById("whatsappCount");
-    if (whatsappCountEl)
-      whatsappCountEl.textContent = stats.whatsapp_count || 0;
-
-    const callCountEl = document.getElementById("callCount");
-    if (callCountEl) callCountEl.textContent = stats.call_count || 0;
-
-    const telegramCountEl = document.getElementById("telegramCount");
-    if (telegramCountEl)
-      telegramCountEl.textContent = stats.telegram_count || 0;
-
-    const avgRiskScoreEl = document.getElementById("avgRiskScore");
-    if (avgRiskScoreEl)
-      avgRiskScoreEl.textContent = stats.average_risk_score || 0;
-
-    // Update stats tab (Dashboard tab) cards
-    const statTotalReports = document.getElementById("statTotalReports");
-    if (statTotalReports)
-      statTotalReports.textContent = stats.total_reports || 0;
-
-    const statHighRisk = document.getElementById("statHighRisk");
-    if (statHighRisk) statHighRisk.textContent = stats.high_risk_count || 0;
-
-    const statAvgScore = document.getElementById("statAvgScore");
-    if (statAvgScore) statAvgScore.textContent = stats.average_risk_score || 0;
-
-    // Update recent scams list on main page (old location)
-    const recentDiv = document.getElementById("recentScams");
-    if (recentDiv) {
-      const recentScams = stats.recent_scams || [];
-      if (recentScams.length === 0) {
-        recentDiv.innerHTML =
-          '<p class="text-muted">No reports yet. Start detecting scams!</p>';
-      } else {
-        recentDiv.innerHTML = recentScams
-          .map(
-            (scam) => `
-                    <div class="scam-item">
-                        <strong>[${escapeHtml(scam.type)}]</strong> 
-                        <span class="badge ${scam.score >= 70 ? "bg-danger" : scam.score >= 40 ? "bg-warning" : "bg-success"}">
-                            Score: ${scam.score}/100
-                        </span><br>
-                        <small>${escapeHtml(scam.date)}</small><br>
-                        <small class="text-muted">${escapeHtml((scam.preview || scam.content || "No content").substring(0, 80))}...</small>
-                    </div>
-                `,
-          )
-          .join("");
-      }
-    }
-
-    // Update recent scams table (in Dashboard tab)
-    if (stats.recent_scams) {
-      updateRecentScamsTable(stats.recent_scams);
-    }
-
-        // Update charts
-    updateCharts(stats);
-    
-    // Trigger enhanced dashboard charts (in dashboard.js)
-    if (typeof updateEnhancedStats === 'function') {
-        updateEnhancedStats(stats);
-    }
-  } catch (error) {
-    console.error("Error loading stats:", error);
-    const recentDiv = document.getElementById("recentScams");
-    if (recentDiv) {
-      recentDiv.innerHTML =
-        '<p class="text-danger">Error loading statistics. Make sure the server is running.</p>';
-    }
-  }
-}
-
-
-
-
-function escapeHtml(text) {
-  if (!text) return "";
-  const div = document.createElement("div");
-  div.textContent = text;
-  return div.innerHTML;
-}
-
-// Enhanced Email Result Display (Shows links as NON-clickable text)
-function displayEmailResult(data, resultDivId) {
-  const resultDiv = document.getElementById(resultDivId);
-
-  let headerClass = "success";
-  if (data.color === "danger" || data.score >= 60) headerClass = "danger";
-  else if (data.color === "warning" || data.score >= 30)
-    headerClass = "warning";
-
-  let warningsHtml = "";
-  const warningsList = data.warnings || data.reasons || [];
-  if (warningsList.length > 0) {
-    warningsHtml = '<h6 class="mt-3">🚨 Issues Detected:</h6>';
-    warningsList.slice(0, 8).forEach((warning) => {
-      warningsHtml += `<div class="reason-item" style="border-left-color: ${headerClass === "danger" ? "#dc3545" : headerClass === "warning" ? "#ffc107" : "#28a745"};">${escapeHtml(warning)}</div>`;
-    });
-  }
-
-  let urlHtml = "";
-  if (data.url_analyses && data.url_analyses.length > 0) {
-    urlHtml =
-      '<h6 class="mt-3">🔗 Links Found in This Email (Analyzed as TEXT - NOT Clickable):</h6>';
-    urlHtml +=
-      '<div class="alert alert-secondary" style="font-size: 0.85rem; background: #f8f9fa;">';
-    urlHtml +=
-      "<strong>⚠️ Important:</strong> These links are shown as PLAIN TEXT for your safety. ";
-    urlHtml +=
-      "Do NOT type them into your browser unless you are 100% sure they are safe.<br><br>";
-
-    data.url_analyses.forEach((url, index) => {
-      const urlColor =
-        url.risk === "DANGEROUS"
-          ? "#dc3545"
-          : url.risk === "SUSPICIOUS"
-            ? "#ffc107"
-            : "#28a745";
-      urlHtml += `
-                <div class="reason-item" style="border-left-color: ${urlColor}; margin-top: 10px;">
-                    <div><strong>${url.emoji || "🔗"} Link ${index + 1}: ${url.risk || "UNKNOWN"}</strong></div>
-                    <div class="url-text-display">
-                        <strong>URL (TEXT only - not clickable):</strong><br>
-                        <span style="color: #666;">${escapeHtml(url.url)}</span>
-                    </div>
-                    <div style="margin-top: 5px;"><strong>Domain:</strong> ${escapeHtml(url.domain)}</div>
-                    <div><strong>Message:</strong> ${escapeHtml(url.message)}</div>
-                    ${url.reasons ? `<div><strong>⚠️ Issues:</strong><br>${url.reasons.map((r) => `• ${escapeHtml(r)}`).join("<br>")}</div>` : ""}
-                </div>
-            `;
-    });
-    urlHtml += "</div>";
-  } else if (data.urls_found > 0) {
-    urlHtml = `<div class="alert alert-info mt-3"><strong>🔗 Found ${data.urls_found} URL(s)</strong> in this email.</div>`;
-  }
-
-  let recommendationsHtml = "";
-  if (data.recommendations && data.recommendations.length > 0) {
-    recommendationsHtml = '<h6 class="mt-3">💡 What To Do:</h6>';
-    recommendationsHtml +=
-      '<div style="background: #f8f9fa; padding: 12px; border-radius: 8px;">';
-    data.recommendations.forEach((rec) => {
-      recommendationsHtml += `<div style="margin-bottom: 8px;">✓ ${escapeHtml(rec)}</div>`;
-    });
-    recommendationsHtml += "</div>";
-  } else if (data.action) {
-    recommendationsHtml = `<div class="alert alert-warning mt-3"><strong>⚠️ Recommended Action:</strong> ${escapeHtml(data.action)}</div>`;
-  } else if (data.recommendation) {
-    recommendationsHtml = `<div class="alert alert-info mt-3"><strong>Recommendation:</strong> ${escapeHtml(data.recommendation)}</div>`;
-  }
-
-  resultDiv.innerHTML = `
-        <div class="result-header ${headerClass}">
-            <h3>${data.emoji || "🔍"} ${data.risk_level || "Analysis Complete"}</h3>
-        </div>
-        <div class="result-body">
-            <p class="fw-bold">${escapeHtml(data.summary || data.message || "Email analyzed successfully")}</p>
-            
-            <div class="risk-score">Risk Score: <span style="color: ${headerClass === "danger" ? "#dc3545" : headerClass === "warning" ? "#ffc107" : "#28a745"};">${data.score || 0}</span> / 100</div>
-            <div class="progress risk-progress"><div class="progress-bar bg-${headerClass}" style="width: ${data.score || 0}%;"></div></div>
-            
-            ${warningsHtml}
-            ${urlHtml}
-            ${recommendationsHtml}
-            
-            <hr>
-            <div style="background: #fff3cd; padding: 12px; border-radius: 8px; margin-top: 15px;">
-                <small style="color: #856404;">
-                    <strong>⚠️ REMEMBER:</strong> The links above are shown as TEXT only. 
-                    Do NOT copy them into your browser unless you have verified they are safe. 
-                    Legitimate companies will never ask for your PIN, password, or M-Pesa code via email.
-                </small>
-            </div>
-        </div>
-    `;
-
-  resultDiv.classList.add("show");
-  resultDiv.scrollIntoView({ behavior: "smooth", block: "nearest" });
-}
-
-// Display SMS/URL/General results
-function displayGeneralResult(data, resultDivId) {
-  const resultDiv = document.getElementById(resultDivId);
-
-  let headerClass = "success";
-  if (data.color === "danger" || data.score >= 60) headerClass = "danger";
-  else if (data.color === "warning" || data.score >= 30)
-    headerClass = "warning";
-
-  let warningsHtml = "";
-  const warningsList = data.warnings || data.reasons || [];
-  if (warningsList.length > 0) {
-    warningsHtml = '<h6 class="mt-3">⚠️ Details:</h6>';
-    warningsList.slice(0, 8).forEach((warning) => {
-      warningsHtml += `<div class="reason-item" style="border-left-color: ${headerClass === "danger" ? "#dc3545" : headerClass === "warning" ? "#ffc107" : "#28a745"};">${escapeHtml(warning)}</div>`;
-    });
-  }
-
-  let urlSpecificHtml = "";
-  if (data.type === "URL" || data.domain) {
-    urlSpecificHtml = `
-            <div class="row mt-3">
-                <div class="col-md-6">
-                    <div class="alert alert-secondary">
-                        <strong>🌐 Domain:</strong><br>
-                        <code>${escapeHtml(data.domain || "Unknown")}</code>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="alert ${data.has_https ? "alert-success" : "alert-warning"}">
-                        <strong>🔒 HTTPS:</strong><br>
-                        ${data.has_https ? "✅ Secure connection" : "⚠️ Not using HTTPS (insecure)"}
-                    </div>
-                </div>
-            </div>
-        `;
-
-    if (data.url) {
-      urlSpecificHtml += `
-                <div class="alert alert-info">
-                    <strong>🔗 Checked URL:</strong><br>
-                    <code style="word-break: break-all;">${escapeHtml(data.url)}</code>
-                </div>
-            `;
-    }
-  }
-
-  let recommendationsHtml = "";
-  if (data.recommendations && data.recommendations.length > 0) {
-    recommendationsHtml =
-      '<h6 class="mt-3">💡 What To Do:</h6><div style="background: #f8f9fa; padding: 12px; border-radius: 8px;">';
-    data.recommendations.forEach((rec) => {
-      recommendationsHtml += `<div>✓ ${escapeHtml(rec)}</div>`;
-    });
-    recommendationsHtml += "</div>";
-  } else if (data.recommendation) {
-    recommendationsHtml = `<div class="alert alert-info mt-3"><strong>Recommendation:</strong> ${escapeHtml(data.recommendation)}</div>`;
-  }
-
-  resultDiv.innerHTML = `
-        <div class="result-header ${headerClass}">
-            <h3>${data.emoji || "🔍"} ${data.risk_level || "Analysis Complete"}</h3>
-            ${data.score ? `<div class="score-circle"><div class="score-value">${data.score}%</div><div class="score-label">Risk Score</div></div>` : ""}
-        </div>
-        <div class="result-body">
-            <p class="fw-bold">${escapeHtml(data.message || data.summary || "Analysis complete")}</p>
-            
-            ${
-              data.score
-                ? `
-            <div class="risk-score">Risk Score: <span style="color: ${headerClass === "danger" ? "#dc3545" : headerClass === "warning" ? "#ffc107" : "#28a745"};">${data.score}</span> / 100</div>
-            <div class="progress risk-progress"><div class="progress-bar bg-${headerClass}" style="width: ${data.score}%;"></div></div>
-            `
-                : ""
-            }
-            
-            ${urlSpecificHtml}
-            ${warningsHtml}
-            ${recommendationsHtml}
-            
-            ${data.analysis_time ? `<div class="text-muted mt-3"><small>Analyzed at: ${data.analysis_time}</small></div>` : ""}
-        </div>
-    `;
-  resultDiv.classList.add("show");
-}
-
-// Display WhatsApp results
-function displayWhatsAppResult(data, resultDivId) {
-  const resultDiv = document.getElementById(resultDivId);
-
-  const scorePercent = data.score;
-  let headerClass = "success";
-  if (scorePercent >= 50) headerClass = "danger";
-  else if (scorePercent >= 25) headerClass = "warning";
-
-  let suspiciousHtml = "";
-  if (data.suspicious_messages && data.suspicious_messages.length > 0) {
-    suspiciousHtml = `
-            <div class="mt-3">
-                <strong>Suspicious messages detected:</strong>
-                <ul class="mt-2">
-                    ${data.suspicious_messages.map((msg) => `<li class="text-danger">"${escapeHtml(msg)}..."</li>`).join("")}
-                </ul>
-            </div>
-        `;
-  }
-
-  const reasonsHtml = data.reasons
-    ? data.reasons.map((reason) => `<li>${escapeHtml(reason)}</li>`).join("")
-    : "<li>No specific indicators found</li>";
-
-  resultDiv.innerHTML = `
-        <div class="result-header ${data.color || headerClass}">
-            <h3>${data.emoji} ${data.risk_level}</h3>
-            <div class="score-circle">
-                <div class="score-value">${scorePercent}%</div>
-                <div class="score-label">Risk Score</div>
-            </div>
-        </div>
-        <div class="result-body">
-            <div class="alert alert-${data.color === "danger" ? "danger" : data.color === "warning" ? "warning" : "success"}">
-                <strong>${escapeHtml(data.message)}</strong>
-            </div>
-            
-            ${data.recommendation ? `<div class="alert alert-info"><strong>Recommendation:</strong> ${escapeHtml(data.recommendation)}</div>` : ""}
-            
-            <div class="row mb-3">
-                <div class="col-md-6">
-                    <strong>📊 Statistics:</strong>
-                    <ul class="mt-2">
-                        <li>Messages analyzed: ${data.message_count || 0}</li>
-                        <li>Unique senders: ${data.unique_senders || "N/A"}</li>
-                        ${data.grammar_issues ? `<li>Grammar issues: ${data.grammar_issues}</li>` : ""}
-                    </ul>
-                </div>
-                <div class="col-md-6">
-                    <div class="progress mb-2" style="height: 30px;">
-                        <div class="progress-bar bg-${headerClass}" role="progressbar" 
-                             style="width: ${scorePercent}%;" 
-                             aria-valuenow="${scorePercent}" aria-valuemin="0" aria-valuemax="100">
-                            ${scorePercent}% Risk
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <strong>⚠️ Indicators Found:</strong>
-            <ul>${reasonsHtml}</ul>
-            
-            ${suspiciousHtml}
-            
-            <div class="alert alert-secondary mt-3">
-                <strong>💡 Safety Tips:</strong>
-                <ul class="mb-0 mt-2">
-                    <li>Never share your M-PESA PIN or OTP with anyone</li>
-                    <li>Verify urgent money requests through a phone call</li>
-                    <li>Don't click on suspicious links - they may steal your data</li>
-                    <li>Report scam numbers to your mobile service provider</li>
-                    <li>Block and report scammers on WhatsApp immediately</li>
-                </ul>
-            </div>
-        </div>
-    `;
-
-  resultDiv.classList.add("show");
-  resultDiv.scrollIntoView({ behavior: "smooth", block: "nearest" });
-}
-
-// Unified display result function
-function displayResult(data, resultDivId, spinnerId) {
-  const resultDiv = document.getElementById(resultDivId);
-  const spinner = document.getElementById(spinnerId);
-
-  if (spinner) spinner.classList.remove("show");
-
-  if (!data || data.error) {
-    resultDiv.innerHTML = `
-            <div style="background: #f8d7da; color: #721c24; padding: 20px; border-radius: 10px;">
-                <h3>⚠️ Error</h3>
-                <p>${escapeHtml(data?.error || "An error occurred during analysis")}</p>
-            </div>
-        `;
-    resultDiv.classList.add("show");
-    return;
-  }
-
-  if (data.type === "EMAIL" || data.url_analyses) {
-    displayEmailResult(data, resultDivId);
-  } else if (
-    data.suspicious_messages !== undefined ||
-    data.message_count !== undefined
-  ) {
-    displayWhatsAppResult(data, resultDivId);
-  } else {
-    displayGeneralResult(data, resultDivId);
-  }
-}
-
-// Load example texts
+// Load examples
 function loadExample(type, exampleType) {
   const examples = {
     sms: {
       scam: "URGENT: Your M-Pesa account has been suspended due to suspicious activity. Click http://mpesa-update.co.ke to verify your details immediately or your account will be deactivated.",
       prize:
         "CONGRATULATIONS! You have won Ksh 250,000 in our Safaricom promotion. Click https://bit.ly/claim-prize to claim your prize now!",
-      safe: "Safaricom: Your M-Pesa transaction of Ksh 500 to John Mwangi on 25/04/2026 was successful. New balance: Ksh 2,450. Thank you for using M-Pesa.",
+      safe: "Safaricom: Your M-Pesa transaction of Ksh 500 to John Mwangi was successful. New balance: Ksh 2,450. Thank you for using M-Pesa.",
     },
     email: {
       phishing: `From: "Safaricom Support" <no-reply@safaricom-secure.tk>
@@ -788,10 +154,11 @@ This is a system generated message.`,
     },
 
     telegram: {
-    scam: 'URGENT: Your M-Pesa account has been suspended. Send your PIN to 0712345678 immediately to verify and restore access.',
-    prize: 'CONGRATULATIONS! You have been selected as winner of our Telegram promotion! Send Ksh 500 to claim your iPhone 15 Pro.',
-    safe: 'Hey, are we still meeting for lunch at 1pm? Let me know if you can make it.',
-},
+      scam: "URGENT: Your M-Pesa account has been suspended. Send your PIN to 0712345678 immediately to verify and restore access.",
+      prize:
+        "CONGRATULATIONS! You have been selected as winner of our Telegram promotion! Send Ksh 500 to claim your iPhone 15 Pro.",
+      safe: "Hey, are we still meeting for lunch at 1pm? Let me know if you can make it.",
+    },
   };
 
   const textarea = document.getElementById(`${type}Text`);
@@ -802,167 +169,1456 @@ This is a system generated message.`,
   }
 }
 
-// Initialize all event listeners when DOM is ready
+// ============================================================
+// DISPLAY FUNCTIONS
+// ============================================================
+
+// Display Email Result (with non-clickable links)
+function displayEmailResult(data, resultDivId) {
+  const resultDiv = document.getElementById(resultDivId);
+  if (!resultDiv) return;
+
+  let headerClass = "success";
+  if (data.color === "danger" || data.score >= 60) headerClass = "danger";
+  else if (data.color === "warning" || data.score >= 30)
+    headerClass = "warning";
+
+  let warningsHtml = "";
+  const warningsList = data.warnings || data.reasons || [];
+  if (warningsList.length > 0) {
+    warningsHtml = '<h6 class="mt-3">🚨 Issues Detected:</h6>';
+    warningsList.slice(0, 8).forEach((warning) => {
+      warningsHtml += `<div class="reason-item" style="border-left-color: ${headerClass === "danger" ? "#dc3545" : headerClass === "warning" ? "#ffc107" : "#28a745"};">${escapeHtml(warning)}</div>`;
+    });
+  }
+
+  let urlHtml = "";
+  if (data.url_analyses && data.url_analyses.length > 0) {
+    urlHtml =
+      '<h6 class="mt-3">🔗 Links Found (TEXT only - NOT clickable):</h6>';
+    urlHtml +=
+      '<div class="alert alert-secondary" style="font-size: 0.85rem; background: #f8f9fa;">';
+    urlHtml +=
+      "<strong>⚠️ Important:</strong> These links are shown as PLAIN TEXT for your safety.<br><br>";
+
+    data.url_analyses.forEach((url, index) => {
+      const urlColor =
+        url.risk === "DANGEROUS"
+          ? "#dc3545"
+          : url.risk === "SUSPICIOUS"
+            ? "#ffc107"
+            : "#28a745";
+      urlHtml += `
+                <div class="reason-item" style="border-left-color: ${urlColor}; margin-top: 10px;">
+                    <div><strong>${url.emoji || "🔗"} Link ${index + 1}: ${url.risk || "UNKNOWN"}</strong></div>
+                    <div><strong>URL (TEXT only):</strong><br><span style="color: #666;">${escapeHtml(url.url)}</span></div>
+                    <div><strong>Domain:</strong> ${escapeHtml(url.domain)}</div>
+                    <div><strong>Message:</strong> ${escapeHtml(url.message)}</div>
+                    ${url.reasons ? `<div><strong>⚠️ Issues:</strong><br>${url.reasons.map((r) => `• ${escapeHtml(r)}`).join("<br>")}</div>` : ""}
+                </div>
+            `;
+    });
+    urlHtml += "</div>";
+  } else if (data.urls_found > 0) {
+    urlHtml = `<div class="alert alert-info mt-3"><strong>🔗 Found ${data.urls_found} URL(s)</strong> in this email.</div>`;
+  }
+
+  let recommendationsHtml = "";
+  if (data.recommendations && data.recommendations.length > 0) {
+    recommendationsHtml =
+      '<h6 class="mt-3">💡 What To Do:</h6><div style="background: #f8f9fa; padding: 12px; border-radius: 8px;">';
+    data.recommendations.forEach((rec) => {
+      recommendationsHtml += `<div>✓ ${escapeHtml(rec)}</div>`;
+    });
+    recommendationsHtml += "</div>";
+  } else if (data.action) {
+    recommendationsHtml = `<div class="alert alert-warning mt-3"><strong>⚠️ Recommended Action:</strong> ${escapeHtml(data.action)}</div>`;
+  } else if (data.recommendation) {
+    recommendationsHtml = `<div class="alert alert-info mt-3"><strong>Recommendation:</strong> ${escapeHtml(data.recommendation)}</div>`;
+  }
+
+  resultDiv.innerHTML = `
+        <div class="result-header ${headerClass}">
+            <h3>${data.emoji || "🔍"} ${data.risk_level || "Analysis Complete"}</h3>
+        </div>
+        <div class="result-body">
+            <p class="fw-bold">${escapeHtml(data.summary || data.message || "Email analyzed successfully")}</p>
+            <div class="risk-score">Risk Score: <span style="color: ${headerClass === "danger" ? "#dc3545" : headerClass === "warning" ? "#ffc107" : "#28a745"};">${data.score || 0}</span> / 100</div>
+            <div class="progress risk-progress"><div class="progress-bar bg-${headerClass}" style="width: ${data.score || 0}%;"></div></div>
+            ${warningsHtml}
+            ${urlHtml}
+            ${recommendationsHtml}
+            <hr>
+            <div style="background: #fff3cd; padding: 12px; border-radius: 8px; margin-top: 15px;">
+                <small style="color: #856404;"><strong>⚠️ REMEMBER:</strong> Don't copy links into your browser. Never share PIN, password, or M-Pesa code via email.</small>
+            </div>
+        </div>
+    `;
+
+  resultDiv.classList.add("show");
+  resultDiv.scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+
+// Display SMS/URL/General results
+function displayGeneralResult(data, resultDivId) {
+  const resultDiv = document.getElementById(resultDivId);
+  if (!resultDiv) return;
+
+  let headerClass = "success";
+  if (data.color === "danger" || data.score >= 60) headerClass = "danger";
+  else if (data.color === "warning" || data.score >= 30)
+    headerClass = "warning";
+
+  let warningsHtml = "";
+  const warningsList = data.warnings || data.reasons || [];
+  if (warningsList.length > 0) {
+    warningsHtml = '<h6 class="mt-3">⚠️ Details:</h6>';
+    warningsList.slice(0, 8).forEach((warning) => {
+      warningsHtml += `<div class="reason-item" style="border-left-color: ${headerClass === "danger" ? "#dc3545" : headerClass === "warning" ? "#ffc107" : "#28a745"};">${escapeHtml(warning)}</div>`;
+    });
+  }
+
+  let urlSpecificHtml = "";
+  if (data.type === "URL" || data.domain) {
+    urlSpecificHtml = `
+            <div class="row mt-3">
+                <div class="col-md-6">
+                    <div class="alert alert-secondary"><strong>🌐 Domain:</strong><br><code>${escapeHtml(data.domain || "Unknown")}</code></div>
+                </div>
+                <div class="col-md-6">
+                    <div class="alert ${data.has_https ? "alert-success" : "alert-warning"}"><strong>🔒 HTTPS:</strong><br>${data.has_https ? "✅ Secure" : "⚠️ Insecure"}</div>
+                </div>
+            </div>`;
+    if (data.url)
+      urlSpecificHtml += `<div class="alert alert-info"><strong>🔗 URL:</strong><br><code style="word-break: break-all;">${escapeHtml(data.url)}</code></div>`;
+  }
+
+  let recommendationsHtml = "";
+  if (data.recommendations && data.recommendations.length > 0) {
+    recommendationsHtml =
+      '<h6 class="mt-3">💡 What To Do:</h6><div style="background: #f8f9fa; padding: 12px; border-radius: 8px;">';
+    data.recommendations.forEach((rec) => {
+      recommendationsHtml += `<div>✓ ${escapeHtml(rec)}</div>`;
+    });
+    recommendationsHtml += "</div>";
+  } else if (data.recommendation) {
+    recommendationsHtml = `<div class="alert alert-info mt-3"><strong>Recommendation:</strong> ${escapeHtml(data.recommendation)}</div>`;
+  }
+
+  resultDiv.innerHTML = `
+        <div class="result-header ${headerClass}">
+            <h3>${data.emoji || "🔍"} ${data.risk_level || "Analysis Complete"}</h3>
+            ${data.score ? `<div class="score-circle"><div class="score-value">${data.score}%</div><div class="score-label">Risk Score</div></div>` : ""}
+        </div>
+        <div class="result-body">
+            <p class="fw-bold">${escapeHtml(data.message || data.summary || "Analysis complete")}</p>
+            ${
+              data.score
+                ? `<div class="risk-score">Risk Score: <span style="color: ${headerClass === "danger" ? "#dc3545" : headerClass === "warning" ? "#ffc107" : "#28a745"};">${data.score}</span> / 100</div>
+            <div class="progress risk-progress"><div class="progress-bar bg-${headerClass}" style="width: ${data.score}%;"></div></div>`
+                : ""
+            }
+            ${urlSpecificHtml}
+            ${warningsHtml}
+            ${recommendationsHtml}
+            ${data.analysis_time ? `<div class="text-muted mt-3"><small>Analyzed at: ${data.analysis_time}</small></div>` : ""}
+        </div>
+    `;
+  resultDiv.classList.add("show");
+}
+
+// Display WhatsApp results
+function displayWhatsAppResult(data, resultDivId) {
+  const resultDiv = document.getElementById(resultDivId);
+  if (!resultDiv) return;
+
+  const scorePercent = data.score || 0;
+  let headerClass = "success";
+  if (scorePercent >= 50) headerClass = "danger";
+  else if (scorePercent >= 25) headerClass = "warning";
+
+  let suspiciousHtml = "";
+  if (data.suspicious_messages && data.suspicious_messages.length > 0) {
+    suspiciousHtml = `<div class="mt-3"><strong>Suspicious messages:</strong><ul class="mt-2">${data.suspicious_messages.map((msg) => `<li class="text-danger">"${escapeHtml(msg)}..."</li>`).join("")}</ul></div>`;
+  }
+
+  const reasonsHtml = data.reasons
+    ? data.reasons.map((r) => `<li>${escapeHtml(r)}</li>`).join("")
+    : "<li>No specific indicators found</li>";
+
+  resultDiv.innerHTML = `
+        <div class="result-header ${data.color || headerClass}">
+            <h3>${data.emoji || "🔍"} ${data.risk_level || "Analysis Complete"}</h3>
+            <div class="score-circle"><div class="score-value">${scorePercent}%</div><div class="score-label">Risk Score</div></div>
+        </div>
+        <div class="result-body">
+            <div class="alert alert-${data.color === "danger" ? "danger" : data.color === "warning" ? "warning" : "success"}"><strong>${escapeHtml(data.message || "")}</strong></div>
+            ${data.recommendation ? `<div class="alert alert-info"><strong>Recommendation:</strong> ${escapeHtml(data.recommendation)}</div>` : ""}
+            <div class="row mb-3">
+                <div class="col-md-6"><strong>📊 Stats:</strong><ul><li>Messages: ${data.message_count || 0}</li><li>Senders: ${data.unique_senders || "N/A"}</li>${data.grammar_issues ? `<li>Grammar issues: ${data.grammar_issues}</li>` : ""}</ul></div>
+                <div class="col-md-6"><div class="progress mb-2" style="height: 30px;"><div class="progress-bar bg-${headerClass}" style="width: ${scorePercent}%;">${scorePercent}% Risk</div></div></div>
+            </div>
+            <strong>⚠️ Indicators:</strong><ul>${reasonsHtml}</ul>
+            ${suspiciousHtml}
+            <div class="alert alert-secondary mt-3"><strong>💡 Safety Tips:</strong><ul class="mb-0 mt-2"><li>Never share M-PESA PIN or OTP</li><li>Verify urgent money requests by phone</li><li>Don't click suspicious links</li><li>Report scam numbers to your provider</li><li>Block & report scammers on WhatsApp</li></ul></div>
+        </div>
+    `;
+  resultDiv.classList.add("show");
+  resultDiv.scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+
+// Display Call Result
+function displayCallResult(data, resultDivId) {
+  const resultDiv = document.getElementById(resultDivId);
+  if (!resultDiv) return;
+
+  const headerClass =
+    data.color === "danger"
+      ? "danger"
+      : data.color === "warning"
+        ? "warning"
+        : "success";
+  let warningsHtml = "";
+  if (data.warnings && data.warnings.length > 0) {
+    warningsHtml = '<h6 class="mt-3">🚨 Red Flags:</h6>';
+    data.warnings.forEach((w) => {
+      warningsHtml += `<div class="reason-item" style="border-left-color: ${data.color === "danger" ? "#dc3545" : data.color === "warning" ? "#ffc107" : "#28a745"};">${escapeHtml(w)}</div>`;
+    });
+  }
+
+  let recommendationsHtml = "";
+  if (data.recommendations && data.recommendations.length > 0) {
+    recommendationsHtml =
+      '<h6 class="mt-3">💡 What To Do:</h6><div style="background: #f8f9fa; padding: 12px; border-radius: 8px;">';
+    data.recommendations.forEach((rec) => {
+      recommendationsHtml += `<div>✓ ${escapeHtml(rec)}</div>`;
+    });
+    recommendationsHtml += "</div>";
+  }
+
+  resultDiv.innerHTML = `
+        <div class="result-header ${headerClass}">
+            <h3>${data.emoji || "📞"} ${data.risk_level || "Analysis Complete"}</h3>
+            <div class="score-circle"><div class="score-value">${data.score || 0}%</div><div class="score-label">Risk Score</div></div>
+        </div>
+        <div class="result-body">
+            <p class="fw-bold">${escapeHtml(data.message || "")}</p>
+            <div class="risk-score">Score: <span style="color: ${data.color === "danger" ? "#dc3545" : data.color === "warning" ? "#ffc107" : "#28a745"};">${data.score || 0}</span> / 100</div>
+            <div class="progress risk-progress"><div class="progress-bar bg-${headerClass}" style="width: ${data.score || 0}%;"></div></div>
+            ${warningsHtml}
+            ${recommendationsHtml}
+            ${data.number_analysis ? `<hr><div class="alert alert-secondary"><strong>📞 Caller Number:</strong><br>Score: ${data.number_analysis.score || 0}%<br>${data.number_analysis.message || ""}</div>` : ""}
+            <div class="alert alert-danger mt-3" style="background: #f8d7da; border-left: 4px solid #dc3545;">
+                <strong><i class="fas fa-exclamation-triangle"></i> Remember:</strong>
+                <ul class="mb-0 mt-2"><li>🚫 NEVER share M-PESA PIN or OTP</li><li>🚫 NEVER send money to "verify" account</li><li>✅ Hang up & call official numbers</li><li>📞 Report to 333 (Safaricom) or 3333 (Airtel)</li></ul>
+            </div>
+        </div>
+    `;
+  resultDiv.classList.add("show");
+  resultDiv.scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+
+// Unified display result - routes to correct display function
+function displayResult(data, resultDivId, spinnerId) {
+  const resultDiv = document.getElementById(resultDivId);
+  const spinner = document.getElementById(spinnerId);
+
+  if (spinner) spinner.classList.remove("show");
+
+  if (!data || data.error) {
+    resultDiv.innerHTML = `<div style="background: #f8d7da; color: #721c24; padding: 20px; border-radius: 10px;"><h3>⚠️ Error</h3><p>${escapeHtml(data?.error || "An error occurred")}</p></div>`;
+    resultDiv.classList.add("show");
+    return;
+  }
+
+  if (data.type === "EMAIL" || data.url_analyses) {
+    displayEmailResult(data, resultDivId);
+  } else if (
+    data.suspicious_messages !== undefined ||
+    data.message_count !== undefined
+  ) {
+    displayWhatsAppResult(data, resultDivId);
+  } else {
+    displayGeneralResult(data, resultDivId);
+  }
+}
+
+// ============================================================
+// CHART FUNCTIONS
+// ============================================================
+
+let scamTypeChart = null;
+let riskDistributionChart = null;
+let trendChart = null;
+
+function getLast7Days() {
+  const days = [];
+  for (let i = 6; i >= 0; i--) {
+    const date = new Date();
+    date.setDate(date.getDate() - i);
+    days.push(
+      date.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+    );
+  }
+  return days;
+}
+
+function initCharts() {
+  console.log("Initializing charts...");
+
+  const typeCanvas = document.getElementById("scamTypeChart");
+  if (typeCanvas) {
+    const typeCtx = typeCanvas.getContext("2d");
+    if (scamTypeChart) scamTypeChart.destroy();
+    scamTypeChart = new Chart(typeCtx, {
+      type: "doughnut",
+      data: {
+        labels: [
+          "SMS",
+          "Email",
+          "WhatsApp",
+          "Screenshot",
+          "URL",
+          "Calls",
+          "Telegram",
+        ],
+        datasets: [
+          {
+            data: [0, 0, 0, 0, 0, 0, 0],
+            backgroundColor: [
+              "#17a2b8",
+              "#fd7e14",
+              "#20c997",
+              "#6f42c1",
+              "#6610f2",
+              "#dc3545",
+              "#0088cc",
+            ],
+            borderWidth: 0,
+            hoverOffset: 10,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+          legend: { position: "bottom", labels: { font: { size: 11 } } },
+          tooltip: {
+            callbacks: {
+              label: function (ctx) {
+                const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                const pct =
+                  total > 0 ? ((ctx.raw / total) * 100).toFixed(1) : 0;
+                return `${ctx.label}: ${ctx.raw} (${pct}%)`;
+              },
+            },
+          },
+        },
+      },
+    });
+  }
+
+  const riskCanvas = document.getElementById("riskDistributionChart");
+  if (riskCanvas) {
+    const riskCtx = riskCanvas.getContext("2d");
+    if (riskDistributionChart) riskDistributionChart.destroy();
+    riskDistributionChart = new Chart(riskCtx, {
+      type: "bar",
+      data: {
+        labels: [
+          "High Risk (70-100)",
+          "Medium Risk (40-69)",
+          "Low Risk (0-39)",
+        ],
+        datasets: [
+          {
+            label: "Reports",
+            data: [0, 0, 0],
+            backgroundColor: ["#dc3545", "#ffc107", "#28a745"],
+            borderRadius: 8,
+            barPercentage: 0.6,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: { legend: { position: "top" } },
+        scales: {
+          y: {
+            beginAtZero: true,
+            grid: { color: "#e9ecef" },
+            title: { display: true, text: "Reports" },
+          },
+          x: {
+            grid: { display: false },
+            title: { display: true, text: "Risk Level" },
+          },
+        },
+      },
+    });
+  }
+
+  const trendCanvas = document.getElementById("trendChart");
+  if (trendCanvas) {
+    const trendCtx = trendCanvas.getContext("2d");
+    if (trendChart) trendChart.destroy();
+    trendChart = new Chart(trendCtx, {
+      type: "line",
+      data: {
+        labels: getLast7Days(),
+        datasets: [
+          {
+            label: "Scams Detected",
+            data: [0, 0, 0, 0, 0, 0, 0],
+            borderColor: "#2563eb",
+            backgroundColor: "rgba(37, 99, 235, 0.1)",
+            borderWidth: 3,
+            fill: true,
+            tension: 0.4,
+            pointBackgroundColor: "#2563eb",
+            pointBorderColor: "white",
+            pointBorderWidth: 2,
+            pointRadius: 5,
+            pointHoverRadius: 7,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: { legend: { position: "top" } },
+        scales: {
+          y: {
+            beginAtZero: true,
+            grid: { color: "#e9ecef" },
+            title: { display: true, text: "Scams" },
+          },
+          x: {
+            grid: { display: false },
+            title: { display: true, text: "Date" },
+          },
+        },
+      },
+    });
+  }
+}
+
+// Update charts with new data
+function updateChartsInstant(s) {
+  if (scamTypeChart) {
+    scamTypeChart.data.datasets[0].data = [
+      s.sms_count || 0,
+      s.email_count || 0,
+      s.whatsapp_count || 0,
+      s.screenshot_count || 0,
+      s.url_count || 0,
+      s.call_count || 0,
+      s.telegram_count || 0,
+    ];
+    scamTypeChart.update();
+  }
+
+  if (riskDistributionChart && s.risk_distribution) {
+    riskDistributionChart.data.datasets[0].data = [
+      s.risk_distribution.high || 0,
+      s.risk_distribution.medium || 0,
+      s.risk_distribution.low || 0,
+    ];
+    riskDistributionChart.update();
+  }
+
+  if (trendChart && s.weekly_trend) {
+    trendChart.data.datasets[0].data = s.weekly_trend;
+    trendChart.update();
+  }
+}
+
+// Update charts (alias for compatibility)
+function updateCharts(data) {
+  if (data && data.stats) {
+    updateChartsInstant(data.stats);
+  } else {
+    updateChartsInstant(data);
+  }
+}
+
+// ============================================================
+// STATS UPDATE FUNCTIONS
+// ============================================================
+async function loadEnhancedStats() {
+  console.log("Loading enhanced stats...");
+  try {
+    const response = await fetch("/api/stats/", {
+      headers: {
+        "X-CSRFToken": getCSRFToken(),
+        "Content-Type": "application/json",
+      },
+      credentials: "same-origin",
+    });
+    const data = await response.json();
+
+    if (data.success && data.stats) {
+      const s = data.stats;
+
+      // Update stat cards
+      const updates = {
+        totalReports: s.total_reports,
+        highRisk: s.high_risk_count,
+        smsCount: s.sms_count,
+        emailCount: s.email_count,
+        whatsappCount: s.whatsapp_count,
+        callCount: s.call_count,
+        telegramCount: s.telegram_count,
+        ussdReports: s.ussd_count,
+        takedownTotal: s.takedown_total,
+        takedownCompleted: s.takedown_completed,
+        avgRiskScore: s.average_risk_score,
+        statTotalReports: s.total_reports,
+        statHighRisk: s.high_risk_count,
+        statAvgScore: s.average_risk_score,
+      };
+
+      Object.entries(updates).forEach(([id, value]) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = value || 0;
+      });
+
+      // Update charts
+      updateChartsInstant(s);
+
+      // Trigger enhanced dashboard charts
+      if (typeof updateEnhancedStats === 'function') {
+          updateEnhancedStats(s);
+      }
+
+      // Update table
+      updateRecentScamsTable(s.recent_scams || []);
+
+      // Update staff activity table
+      if (data.staff_scans && data.staff_scans.length > 0) {
+        const staffBody = document.getElementById('staffActivityBody');
+        if (staffBody) {
+          staffBody.innerHTML = data.staff_scans.map(staff => `
+            <tr>
+              <td><i class="fas fa-user"></i> ${staff.name || 'Unknown'}</td>
+              <td><span class="badge bg-info">${staff.scans || 0}</span></td>
+              <td><span class="badge bg-danger">${staff.high_risk || 0}</span></td>
+              <td><span class="badge bg-success">${staff.today || 0}</span></td>
+            </tr>
+          `).join('');
+        }
+      }
+    }
+  } catch (error) {
+    console.error("Error loading stats:", error);
+  }
+}
+
+
+// Instant stats update (for real-time call monitoring)
+async function updateStatsInstant() {
+  console.log("🔄 Instant stats update...");
+  try {
+    const response = await fetch("/api/stats/");
+    const data = await response.json();
+
+    if (data.success && data.stats) {
+      const s = data.stats;
+
+      const updates = {
+        totalReports: s.total_reports,
+        highRisk: s.high_risk_count,
+        smsCount: s.sms_count,
+        emailCount: s.email_count,
+        whatsappCount: s.whatsapp_count,
+        callCount: s.call_count,
+        telegramCount: s.telegram_count,
+        ussdReports: s.ussd_count,
+        takedownTotal: s.takedown_total,
+        takedownCompleted: s.takedown_completed,
+        avgRiskScore: s.average_risk_score,
+        statTotalReports: s.total_reports,
+        statHighRisk: s.high_risk_count,
+        statAvgScore: s.average_risk_score,
+      };
+
+      Object.entries(updates).forEach(([id, value]) => {
+        const el = document.getElementById(id);
+        if (el && el.textContent != value) el.textContent = value || 0;
+      });
+
+      updateChartsInstant(s);
+      updateRecentScamsTable(s.recent_scams || []);
+    }
+  } catch (error) {
+    console.error("Stats update error:", error);
+  }
+}
+
+function updateRecentScamsTable(scams) {
+  const tbody = document.getElementById("recentScamsBody");
+  if (!tbody) return;
+
+  if (!scams || scams.length === 0) {
+    tbody.innerHTML =
+      '<tr><td colspan="5" class="text-center">No scam reports yet.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = scams
+    .slice(0, 15)
+    .map(
+      (scam) => `
+        <tr>
+            <td><small>${scam.date || ""}</small></td>
+            <td><span class="badge ${getBadgeClass(scam.type)}">${scam.type || "?"}</span></td>
+            <td><small>${escapeHtml((scam.preview || scam.content || "").substring(0, 60))}${(scam.preview || scam.content || "").length > 60 ? "..." : ""}</small></td>
+            <td><span class="badge ${getRiskBadgeClass(scam.score)}">${scam.score || 0}/100</span></td>
+            <td><span class="badge ${getLevelBadgeClass(scam.level)}">${scam.level || "LOW"}</span></td>
+        </tr>
+    `,
+    )
+    .join("");
+}
+
+function getBadgeClass(type) {
+  const classes = {
+    SMS: "bg-info",
+    EMAIL: "bg-warning",
+    WHATSAPP: "bg-success",
+    SCREENSHOT: "bg-purple",
+    URL: "bg-secondary",
+    CALL: "bg-danger",
+    TELEGRAM: "bg-info",
+  };
+  return classes[type] || "bg-secondary";
+}
+
+function getRiskBadgeClass(score) {
+  if (score >= 70) return "bg-danger";
+  if (score >= 40) return "bg-warning";
+  return "bg-success";
+}
+
+function getLevelBadgeClass(level) {
+  if (level && level.includes("HIGH")) return "bg-danger";
+  if (level && level.includes("MEDIUM")) return "bg-warning";
+  return "bg-success";
+}
+
+async function refreshStats() {
+  showToast("Refreshing statistics...", "info");
+  await loadEnhancedStats();
+  showToast("Statistics updated!", "success");
+}
+
+// ============================================================
+// REAL-TIME CALL MONITORING
+// ============================================================
+
+let isMonitoring = false;
+let consecutiveScamPhrases = 0;
+let currentScamScore = 0;
+let speechRecognition = null;
+let speechRecognitionActive = false;
+let fullCallTranscript = "";
+let detectedPatterns = [];
+let callStartTime = null;
+
+// Create live transcript display
+function createLiveTranscriptDisplay() {
+  const container = document.getElementById("liveTranscriptContainer");
+  if (!container) return;
+  if (document.getElementById("liveTranscriptPanel")) return;
+
+  const panel = document.createElement("div");
+  panel.id = "liveTranscriptPanel";
+  panel.className = "mt-3 p-2";
+  panel.style.cssText =
+    "background: rgba(0,0,0,0.2); border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);";
+  panel.innerHTML = `
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <strong><i class="fas fa-comment-dots"></i> Live Call Transcript</strong>
+            <small class="text-muted" id="transcriptTimer">00:00</small>
+        </div>
+        <div id="interimTranscript" class="text-muted small mb-2" style="font-style: italic; background: rgba(0,0,0,0.15); padding: 8px; border-radius: 6px; min-height: 40px;">
+            🎤 Speak into your microphone...
+        </div>
+        <div id="liveTranscript" style="max-height: 200px; overflow-y: auto; font-size: 0.85rem; background: rgba(0,0,0,0.15); border-radius: 6px; padding: 8px;">
+            <div class="text-muted">Waiting for speech...</div>
+        </div>
+        <div class="mt-2">
+            <div class="row">
+                <div class="col-8"><div class="progress" style="height: 8px;"><div id="scamMeterBar" class="progress-bar bg-success" style="width: 0%;"></div></div></div>
+                <div class="col-4 text-end"><small id="scamMeterText" class="text-muted">✓ Safe</small></div>
+            </div>
+        </div>
+        <div id="realtimeAlerts" class="mt-2" style="max-height: 100px; overflow-y: auto; font-size: 0.75rem;"></div>
+    `;
+  container.appendChild(panel);
+}
+
+function updateCallTimer() {
+  const timerEl = document.getElementById("transcriptTimer");
+  if (timerEl && callStartTime) {
+    const elapsed = Math.floor((Date.now() - callStartTime) / 1000);
+    timerEl.textContent = `${String(Math.floor(elapsed / 60)).padStart(2, "0")}:${String(elapsed % 60).padStart(2, "0")}`;
+  }
+}
+
+function updateLiveTranscriptDisplay(text, isFinal = true) {
+  const transcriptDiv = document.getElementById("liveTranscript");
+  if (!transcriptDiv) return;
+
+  const timestamp = new Date().toLocaleTimeString();
+
+  if (isFinal) {
+    const entry = document.createElement("div");
+    entry.style.cssText =
+      "padding: 4px 8px; margin: 2px 0; border-radius: 6px; font-size: 0.8rem; border-left: 3px solid #667eea;";
+    entry.innerHTML = `<small class="text-muted">[${timestamp}]</small> <strong>Caller:</strong> "${escapeHtml(text)}"`;
+    transcriptDiv.appendChild(entry);
+    transcriptDiv.scrollTop = transcriptDiv.scrollHeight;
+    while (transcriptDiv.children.length > 30)
+      transcriptDiv.removeChild(transcriptDiv.firstChild);
+  } else {
+    const interimDiv = document.getElementById("interimTranscript");
+    if (interimDiv)
+      interimDiv.innerHTML = `<em class="text-muted">🎙️ ${escapeHtml(text)}</em>`;
+  }
+}
+
+function updateScamMeter(score) {
+  currentScamScore = Math.min(100, Math.max(0, score));
+  const meterBar = document.getElementById("scamMeterBar");
+  const meterText = document.getElementById("scamMeterText");
+
+  if (meterBar) {
+    meterBar.style.width = currentScamScore + "%";
+    if (currentScamScore >= 70) {
+      meterBar.style.backgroundColor = "#dc3545";
+      if (meterText) {
+        meterText.innerHTML = "🔴 CRITICAL RISK";
+        meterText.style.color = "#dc3545";
+      }
+    } else if (currentScamScore >= 50) {
+      meterBar.style.backgroundColor = "#fd7e14";
+      if (meterText) {
+        meterText.innerHTML = "🟠 HIGH RISK";
+        meterText.style.color = "#fd7e14";
+      }
+    } else if (currentScamScore >= 25) {
+      meterBar.style.backgroundColor = "#ffc107";
+      if (meterText) {
+        meterText.innerHTML = "🟡 MEDIUM RISK";
+        meterText.style.color = "#ffc107";
+      }
+    } else {
+      meterBar.style.backgroundColor = "#28a745";
+      if (meterText) {
+        meterText.innerHTML = "🟢 LOW RISK";
+        meterText.style.color = "#28a745";
+      }
+    }
+  }
+  
+  // Call critical terminate warning on every score update
+  showCriticalTerminateWarning(currentScamScore, detectedPatterns);
+}
+
+// ============================================================
+// CRITICAL TERMINATE WARNINGS - LIVE IN-CALL ALERTS
+// ============================================================
+
+// Show critical terminate warning during live call
+function showCriticalTerminateWarning(riskScore, detectedKeywords) {
+  const warningBanner = document.getElementById('terminateWarningBanner');
+  const floatingBtn = document.getElementById('floatingTerminateBtn');
+  const monitorStatus = document.getElementById('monitorStatus');
+  
+  if (riskScore >= 70) {
+    // Show warning banner
+    if (warningBanner) {
+      warningBanner.style.display = 'block';
+      
+      // Update warning message with specific threats
+      const warningMsgDiv = document.getElementById('terminateWarningMsg');
+      if (warningMsgDiv) {
+        let threatText = '';
+        if (detectedKeywords && detectedKeywords.length > 0) {
+          const uniqueThreats = [...new Set(detectedKeywords)];
+          const threatList = uniqueThreats.slice(0, 3).join(', ');
+          threatText = ` - Detected: ${threatList}`;
+        }
+        warningMsgDiv.innerHTML = `<div class="d-flex justify-content-between align-items-center">
+                        <div>
+                          <i class="fas fa-skull-crosswalk" style="font-size: 1.5rem; margin-right: 10px;"></i>
+                          <strong>🚨 SCAM DETECTED! HANG UP IMMEDIATELY! 🚨</strong>
+                          <div class="small mt-1">The caller is trying to scam you${threatText}</div>
+                        </div>
+                        <button id="terminateCallBtn" class="btn btn-light">
+                          <i class="fas fa-phone-slash"></i> HANG UP
+                        </button>
+                      </div>`;
+        
+        // Re-attach terminate button event
+        const terminateBtn = document.getElementById('terminateCallBtn');
+        if (terminateBtn && !terminateBtn.hasListener) {
+          terminateBtn.hasListener = true;
+          terminateBtn.addEventListener('click', () => {
+            stopCallMonitoring();
+            showToast('📞 Call terminated. You did the right thing! Stay safe!', 'success');
+            // Hide warning banner after termination
+            warningBanner.style.display = 'none';
+            if (floatingBtn) floatingBtn.style.display = 'none';
+          });
+        }
+      }
+    }
+    
+    // Show floating button
+    if (floatingBtn) {
+      floatingBtn.style.display = 'flex';
+      if (!floatingBtn.hasListener) {
+        floatingBtn.hasListener = true;
+        floatingBtn.addEventListener('click', () => {
+          stopCallMonitoring();
+          showToast('📞 Call terminated. Stay safe!', 'success');
+          floatingBtn.style.display = 'none';
+          if (warningBanner) warningBanner.style.display = 'none';
+        });
+      }
+    }
+    
+    // Update status badge to critical
+    if (monitorStatus) {
+      monitorStatus.className = 'status-badge status-badge-critical';
+      monitorStatus.innerHTML = '<i class="fas fa-skull-crossbones"></i> CRITICAL - HANG UP!';
+    }
+    
+    // Play multiple alert beeps for urgency
+    playAlertBeep();
+    setTimeout(() => playAlertBeep(), 300);
+    setTimeout(() => playAlertBeep(), 600);
+    
+    // Send desktop notification
+    if (Notification.permission === 'granted') {
+      const threatMsg = detectedKeywords && detectedKeywords.length > 0 ? ` - ${detectedKeywords.slice(0, 3).join(', ')}` : '';
+      new Notification('🚨 SCAM DETECTED! HANG UP NOW!', {
+        body: `Risk: ${riskScore}%${threatMsg}`,
+        icon: '/static/detector/images/scam-alert.png',
+        requireInteraction: true,
+        vibrate: [200, 100, 200]
+      });
+    } else if (Notification.permission !== 'denied') {
+      Notification.requestPermission();
+    }
+    
+    // Add critical alert to realtime alerts
+    const threatText = detectedKeywords && detectedKeywords.length > 0 ? ` - ${detectedKeywords.slice(0, 3).join(', ')}` : '';
+    addRealtimeAlert('danger', `🔴🔴🔴 CRITICAL! HANG UP NOW! Risk: ${riskScore}%${threatText}`);
+    
+  } else if (riskScore >= 50) {
+    // High risk - show warning but not as critical
+    if (warningBanner) {
+      warningBanner.style.display = 'block';
+      const warningMsgDiv = document.getElementById('terminateWarningMsg');
+      if (warningMsgDiv) {
+        warningMsgDiv.innerHTML = `<div class="d-flex justify-content-between align-items-center">
+                        <div>
+                          <i class="fas fa-exclamation-triangle" style="font-size: 1.5rem; margin-right: 10px;"></i>
+                          <strong>⚠️ HIGH RISK SCAM DETECTED!</strong>
+                          <div class="small mt-1">Strong scam indicators - Consider hanging up</div>
+                        </div>
+                        <button id="terminateCallBtn" class="btn btn-light">
+                          <i class="fas fa-phone-slash"></i> HANG UP
+                        </button>
+                      </div>`;
+        
+        const terminateBtn = document.getElementById('terminateCallBtn');
+        if (terminateBtn && !terminateBtn.hasListener) {
+          terminateBtn.hasListener = true;
+          terminateBtn.addEventListener('click', () => {
+            stopCallMonitoring();
+            showToast('📞 Call terminated. Smart choice!', 'success');
+            warningBanner.style.display = 'none';
+          });
+        }
+      }
+    }
+    
+    if (monitorStatus) {
+      monitorStatus.className = 'status-badge bg-warning text-dark';
+      monitorStatus.innerHTML = '<i class="fas fa-exclamation-triangle"></i> HIGH RISK';
+    }
+    
+    const threatText = detectedKeywords && detectedKeywords.length > 0 ? ` - ${detectedKeywords.slice(0, 2).join(', ')}` : '';
+    addRealtimeAlert('warning', `⚠️ HIGH RISK!${threatText}`);
+    
+  } else if (riskScore >= 30) {
+    // Medium risk - show caution
+    if (monitorStatus) {
+      monitorStatus.className = 'status-badge bg-warning text-dark';
+      monitorStatus.innerHTML = '<i class="fas fa-shield-alt"></i> CAUTION';
+    }
+  } else {
+    // Safe - reset status
+    if (warningBanner) warningBanner.style.display = 'none';
+    if (floatingBtn) floatingBtn.style.display = 'none';
+    if (monitorStatus && !isMonitoring) {
+      monitorStatus.className = 'status-badge bg-secondary';
+      monitorStatus.innerHTML = '<i class="fas fa-circle"></i> Not monitoring';
+    } else if (monitorStatus && isMonitoring) {
+      monitorStatus.className = 'status-badge bg-success status-badge-live';
+      monitorStatus.innerHTML = '<i class="fas fa-microphone-alt"></i> LIVE - SAFE';
+    }
+  }
+}
+
+// Request notification permission on page load
+function requestNotificationPermission() {
+  if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission();
+  }
+}
+
+// Call this when DOM loads
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', requestNotificationPermission);
+} else {
+  requestNotificationPermission();
+}
+
+function playAlertBeep() {
+  try {
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.frequency.value = 880;
+    gain.gain.value = 0.3;
+    osc.start();
+    gain.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.5);
+    osc.stop(audioCtx.currentTime + 0.5);
+  } catch (e) {
+    if (navigator.vibrate) navigator.vibrate([300, 100, 300]);
+  }
+}
+
+function addRealtimeAlert(type, message) {
+  const alertsDiv = document.getElementById("realtimeAlerts");
+  if (!alertsDiv) return;
+
+  const bgColor =
+    type === "danger" ? "#dc3545" : type === "warning" ? "#ffc107" : "#17a2b8";
+  const textColor = type === "warning" ? "#333" : "white";
+
+  const alertDiv = document.createElement("div");
+  alertDiv.style.cssText = `background: ${bgColor}; color: ${textColor}; padding: 6px 10px; margin: 3px 0; border-radius: 6px; font-size: 0.75rem;`;
+  alertDiv.innerHTML = `<strong>[${new Date().toLocaleTimeString()}]</strong> ${message}`;
+  alertsDiv.prepend(alertDiv);
+
+  while (alertsDiv.children.length > 15)
+    alertsDiv.removeChild(alertsDiv.lastChild);
+
+  if (type === "danger") {
+    const dangerAlert = document.getElementById("dangerAlert");
+    if (dangerAlert) {
+      dangerAlert.style.display = "block";
+      dangerAlert.style.animation = "flash 0.5s ease-in-out 3";
+      setTimeout(() => {
+        if (dangerAlert) dangerAlert.style.display = "none";
+      }, 3000);
+    }
+  }
+}
+
+function initSpeechRecognition() {
+  if (
+    !("webkitSpeechRecognition" in window) &&
+    !("SpeechRecognition" in window)
+  ) {
+    addRealtimeAlert(
+      "warning",
+      "Speech recognition not supported. Use Chrome or Edge.",
+    );
+    return false;
+  }
+
+  const SpeechRecognitionAPI =
+    window.webkitSpeechRecognition || window.SpeechRecognition;
+  speechRecognition = new SpeechRecognitionAPI();
+  speechRecognition.continuous = true;
+  speechRecognition.interimResults = true;
+  speechRecognition.lang = "en-US";
+  speechRecognition.maxAlternatives = 1;
+
+  speechRecognition.onstart = () => {
+    console.log("Speech recognition started");
+    addRealtimeAlert("success", "🎤 Voice recognition active - Speak now");
+    const interimDiv = document.getElementById("interimTranscript");
+    if (interimDiv)
+      interimDiv.innerHTML =
+        '<span class="text-success">🎤 Listening... Speak now</span>';
+    fullCallTranscript = "";
+    currentScamScore = 0;
+    detectedPatterns = [];
+    callStartTime = Date.now();
+  };
+
+  speechRecognition.onresult = (event) => {
+    let finalTranscript = "";
+    let interimTranscript = "";
+
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      const result = event.results[i];
+      if (result.isFinal) finalTranscript += result[0].transcript + " ";
+      else interimTranscript += result[0].transcript;
+    }
+
+    if (interimTranscript) {
+      const interimDiv = document.getElementById("interimTranscript");
+      if (interimDiv)
+        interimDiv.innerHTML = `<i class="fas fa-microphone-alt"></i> <em>${escapeHtml(interimTranscript)}</em>`;
+      clearTimeout(window.interimTimeout);
+      window.interimTimeout = setTimeout(() => {
+        if (interimDiv) interimDiv.innerHTML = "";
+      }, 1500);
+    }
+
+    if (finalTranscript && finalTranscript.trim().length > 5) {
+      fullCallTranscript += finalTranscript + "\n";
+      updateLiveTranscriptDisplay(finalTranscript, true);
+
+      // Local keyword analysis
+      const lowerText = finalTranscript.toLowerCase();
+      let detectedScamWords = [];
+      let segmentRiskIncrease = 0;
+
+      const scamKeywords = [
+        { word: "pin", points: 35, msg: "🔴 PIN requested!" },
+        { word: "mpin", points: 35, msg: "🔴 MPIN requested!" },
+        { word: "password", points: 35, msg: "🔴 Password requested!" },
+        { word: "otp", points: 35, msg: "🔴 OTP requested!" },
+        { word: "send money", points: 30, msg: "💰 Money request!" },
+        { word: "tuma pesa", points: 30, msg: "💰 Money request (Swahili)!" },
+        { word: "urgent", points: 20, msg: "⏰ Urgency pressure!" },
+        { word: "immediately", points: 20, msg: "⏰ Urgency pressure!" },
+        { word: "suspended", points: 25, msg: "🚫 Account suspension threat!" },
+        { word: "blocked", points: 25, msg: "🚫 Account blocked!" },
+        { word: "verify", points: 20, msg: "🔐 Verification scam!" },
+        { word: "transfer", points: 25, msg: "💰 Transfer request!" },
+        { word: "code", points: 25, msg: "🔐 Code requested!" },
+        { word: "win", points: 15, msg: "🎁 Prize scam!" },
+        { word: "mpesa", points: 15, msg: "📱 M-Pesa related!" },
+        { word: "safaricom", points: 15, msg: "📱 Safaricom impersonation!" },
+        { word: "account", points: 10, msg: "⚠️ Account mentioned" },
+      ];
+
+      for (const kw of scamKeywords) {
+        if (lowerText.includes(kw.word)) {
+          detectedScamWords.push(kw.msg);
+          segmentRiskIncrease += kw.points;
+        }
+      }
+
+      if (detectedScamWords.length > 0) {
+        currentScamScore = Math.min(
+          100,
+          currentScamScore + segmentRiskIncrease,
+        );
+        detectedPatterns.push(...detectedScamWords);
+        updateScamMeter(currentScamScore);
+        addRealtimeAlert(
+          "danger",
+          `⚠️ SCAM: ${detectedScamWords[0]}${detectedScamWords.length > 1 ? ` (+${detectedScamWords.length - 1} more)` : ""}`,
+        );
+
+        const dangerAlert = document.getElementById("dangerAlert");
+        if (dangerAlert) {
+          dangerAlert.style.display = "block";
+          if (currentScamScore >= 70) {
+            dangerAlert.innerHTML =
+              '<strong><i class="fas fa-skull-crossbones"></i> CRITICAL SCAM! HANG UP NOW!</strong>';
+          } else if (currentScamScore >= 50) {
+            dangerAlert.innerHTML =
+              '<strong><i class="fas fa-exclamation-triangle"></i> HIGH RISK! Consider hanging up.</strong>';
+          } else {
+            dangerAlert.innerHTML =
+              '<strong><i class="fas fa-exclamation-triangle"></i> SCAM INDICATORS - Be careful.</strong>';
+          }
+        }
+
+        if (currentScamScore >= 70) {
+          showToast("CRITICAL SCAM DETECTED! HANG UP NOW!", "danger");
+        }
+      } else if (currentScamScore > 0) {
+        // Gradually decrease risk score when no scams detected in recent speech
+        currentScamScore = Math.max(0, currentScamScore - 5);
+        updateScamMeter(currentScamScore);
+      } else {
+        consecutiveScamPhrases = Math.max(0, consecutiveScamPhrases - 0.3);
+      }
+    }
+  };
+
+  speechRecognition.onerror = (event) => {
+    console.error("Speech error:", event.error);
+    if (event.error === "not-allowed") {
+      addRealtimeAlert(
+        "danger",
+        "Microphone denied. Please allow permissions.",
+      );
+      stopCallMonitoring();
+    }
+  };
+
+  speechRecognition.onend = () => {
+    if (isMonitoring && speechRecognitionActive) {
+      setTimeout(() => {
+        if (isMonitoring && speechRecognitionActive && speechRecognition) {
+          try {
+            speechRecognition.start();
+            const interimDiv = document.getElementById("interimTranscript");
+            if (interimDiv)
+              interimDiv.innerHTML =
+                '<span class="text-success">🎤 Listening...</span>';
+          } catch (e) {
+            speechRecognitionActive = false;
+          }
+        }
+      }, 500);
+    }
+  };
+
+  return true;
+}
+
+async function startCallMonitoring() {
+  console.log("Start monitoring");
+  try {
+    fullCallTranscript = "";
+    consecutiveScamPhrases = 0;
+    currentScamScore = 0;
+    detectedPatterns = [];
+    callStartTime = Date.now();
+
+    createLiveTranscriptDisplay();
+
+    if (window.timerInterval) clearInterval(window.timerInterval);
+    window.timerInterval = setInterval(updateCallTimer, 1000);
+
+    await navigator.mediaDevices.getUserMedia({
+      audio: {
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true,
+      },
+    });
+
+    const startBtn = document.getElementById("startCallMonitorBtn");
+    const stopBtn = document.getElementById("stopCallMonitorBtn");
+    const monitorStatus = document.getElementById("monitorStatus");
+
+    if (startBtn) startBtn.disabled = true;
+    if (stopBtn) stopBtn.disabled = false;
+    if (monitorStatus)
+      monitorStatus.innerHTML =
+        '<span class="badge bg-success animate-pulse">🎙️ LIVE</span>';
+
+    const speechSupported = initSpeechRecognition();
+
+    if (speechSupported && speechRecognition) {
+      speechRecognitionActive = true;
+      isMonitoring = true;
+      setTimeout(() => {
+        if (speechRecognition && speechRecognitionActive) {
+          try {
+            speechRecognition.start();
+            addRealtimeAlert("success", "🎤 Call monitoring active!");
+            showToast("Call monitoring active!", "success");
+          } catch (e) {
+            console.error("Start error:", e);
+            speechRecognitionActive = false;
+            isMonitoring = false;
+          }
+        }
+      }, 500);
+    }
+  } catch (error) {
+    console.error("Microphone error:", error);
+    showToast("Could not access microphone.", "danger");
+    const startBtn = document.getElementById("startCallMonitorBtn");
+    if (startBtn) startBtn.disabled = false;
+  }
+}
+
+// FIXED: stopCallMonitoring now uses FormData and calls updateStatsInstant
+async function stopCallMonitoring() {
+  console.log("Stop monitoring clicked");
+  
+  // Hide warning banners immediately
+  const warningBanner = document.getElementById('terminateWarningBanner');
+  const floatingBtn = document.getElementById('floatingTerminateBtn');
+  if (warningBanner) warningBanner.style.display = 'none';
+  if (floatingBtn) floatingBtn.style.display = 'none';
+
+  isMonitoring = false;
+  speechRecognitionActive = false;
+
+  if (window.timerInterval) {
+    clearInterval(window.timerInterval);
+    window.timerInterval = null;
+  }
+
+  if (speechRecognition) {
+    try {
+      speechRecognition.stop();
+    } catch (e) {}
+    speechRecognition = null;
+  }
+
+  // ============================================================
+  // FIXED: Save using FormData (same as manual analysis)
+  // ============================================================
+  if (fullCallTranscript && fullCallTranscript.trim().length > 20) {
+    try {
+      const formData = new FormData();
+      formData.append("transcript", fullCallTranscript);
+      formData.append(
+        "phone_number",
+        document.getElementById("callerNumber")?.value || "",
+      );
+
+      const response = await fetch("/api/detect-call/", {
+        method: "POST",
+        headers: { "X-CSRFToken": getCSRFToken() },
+        credentials: "same-origin",
+        body: formData,
+      });
+
+      const result = await response.json();
+      console.log("✅ Call saved to database:", result);
+
+      // FIXED: Update stats after save
+      await updateStatsInstant();
+
+      const summaryMsg = `📞 Call ended. Risk Score: ${result.score || currentScamScore}%. ${result.score >= 50 ? "⚠️ Scam call detected!" : "✅ No scam detected."}`;
+      addRealtimeAlert(result.score >= 50 ? "danger" : "success", summaryMsg);
+      showToast(summaryMsg, result.score >= 50 ? "danger" : "success");
+
+      if (detectedPatterns.length > 0) {
+        const uniquePatterns = [...new Set(detectedPatterns)];
+        addRealtimeAlert(
+          "info",
+          `📊 Detected: ${uniquePatterns.slice(0, 5).join(", ")}${uniquePatterns.length > 5 ? ` +${uniquePatterns.length - 5} more` : ""}`,
+        );
+      }
+    } catch (error) {
+      console.error("Error saving call:", error);
+      addRealtimeAlert("danger", "Failed to save call analysis.");
+    }
+  }
+
+  // Reset state
+  consecutiveScamPhrases = 0;
+  detectedPatterns = [];
+  callStartTime = null;
+  fullCallTranscript = "";
+  currentScamScore = 0;
+
+  // Reset UI
+  const startBtn = document.getElementById("startCallMonitorBtn");
+  const stopBtn = document.getElementById("stopCallMonitorBtn");
+  const monitorStatus = document.getElementById("monitorStatus");
+  const dangerAlert = document.getElementById("dangerAlert");
+
+  if (startBtn) startBtn.disabled = false;
+  if (stopBtn) stopBtn.disabled = true;
+  if (monitorStatus)
+    monitorStatus.innerHTML =
+      '<span class="badge bg-secondary">⚪ Not monitoring</span>';
+  if (dangerAlert) {
+    dangerAlert.style.display = "none";
+  }
+
+  updateScamMeter(0);
+
+  const interimDiv = document.getElementById("interimTranscript");
+  if (interimDiv) interimDiv.innerHTML = "";
+
+  // Final stats update
+  await updateStatsInstant();
+}
+
+function initRealtimeCallDetection() {
+  const startBtn = document.getElementById("startCallMonitorBtn");
+  const stopBtn = document.getElementById("stopCallMonitorBtn");
+  if (startBtn) startBtn.addEventListener("click", startCallMonitoring);
+  if (stopBtn) stopBtn.addEventListener("click", stopCallMonitoring);
+}
+
+// ============================================================
+// ADD CSS ANIMATIONS
+// ============================================================
+
+const styleSheet = document.createElement("style");
+styleSheet.textContent = `
+    @keyframes flash { 0% { opacity: 1; } 50% { opacity: 0.5; background-color: #ff4444; } 100% { opacity: 1; } }
+    .animate-pulse { animation: pulse 1.5s ease-in-out infinite; }
+    @keyframes pulse { 0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; } }
+    #scamMeterBar { transition: width 0.3s ease, background-color 0.3s ease; }
+    .status-badge-critical { background: #dc3545 !important; animation: pulse 0.5s ease-in-out infinite; }
+    .status-badge-live { background: #28a745 !important; animation: pulse 1.5s ease-in-out infinite; }
+`;
+document.head.appendChild(styleSheet);
+
+// ============================================================
+// INITIALIZATION (DOMContentLoaded)
+// ============================================================
+
 document.addEventListener("DOMContentLoaded", function () {
-  // SMS Form Handler
+  console.log("DOM loaded, initializing...");
+
+  initCharts();
+setTimeout(() => loadEnhancedStats(), 100);
+  // Stats tab refresh
+  const statsTabBtn = document.querySelector('[data-tab="stats"]');
+  if (statsTabBtn) {
+    statsTabBtn.addEventListener("click", () =>
+      setTimeout(loadEnhancedStats, 100),
+    );
+  }
+
+  // Sidebar navigation
+document.querySelectorAll('.side-link').forEach(link => {
+    link.addEventListener('click', function(e) {
+        e.preventDefault();
+        const tabName = this.getAttribute('data-tab');
+        if (tabName) {
+            switchTab(tabName);
+            // Update active state
+            document.querySelectorAll('.side-link').forEach(l => l.classList.remove('active'));
+            this.classList.add('active');
+        }
+    });
+});
+
+// Also keep tab buttons working - sync sidebar with tabs
+document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const tabName = btn.getAttribute('data-tab');
+        document.querySelectorAll('.side-link').forEach(l => {
+            l.classList.remove('active');
+            if (l.getAttribute('data-tab') === tabName) l.classList.add('active');
+        });
+    });
+});
+
+  // SMS Form
   const smsForm = document.getElementById("smsForm");
   if (smsForm) {
     smsForm.addEventListener("submit", async (e) => {
       e.preventDefault();
       const smsText = document.getElementById("smsText").value;
       if (!smsText.trim()) {
-        showToast("Please enter SMS text to analyze", "warning");
+        showToast("Please enter SMS text", "warning");
         return;
       }
-
       const spinner = document.getElementById("smsSpinner");
-      const analyzeBtn = e.target.querySelector(".btn-analyze");
-
+      const resultDiv = document.getElementById("smsResult");
       spinner.classList.add("show");
-      analyzeBtn.disabled = true;
-      document.getElementById("smsResult").classList.remove("show");
-
+      resultDiv.classList.remove("show");
       try {
         const formData = new FormData();
         formData.append("sms_text", smsText);
-
-        const response = await fetch("/api/detect-sms/", {
+        const res = await fetch("/api/detect-sms/", {
           method: "POST",
-          headers: {
-            "X-CSRFToken": getCSRFToken(),
-            "X-Requested-With": "XMLHttpRequest",
-          },
+          headers: { "X-CSRFToken": getCSRFToken() },
           credentials: "same-origin",
           body: formData,
         });
-
-        const data = await response.json();
-        displayResult(data, "smsResult", "smsSpinner");
-        loadStats();
-      } catch (error) {
-        console.error("Error:", error);
-        showToast(
-          "Network error. Please check if the server is running.",
-          "danger",
-        );
+        displayResult(await res.json(), "smsResult", "smsSpinner");
+        loadEnhancedStats();
+      } catch (e) {
+        showToast("Network error", "danger");
       } finally {
         spinner.classList.remove("show");
-        analyzeBtn.disabled = false;
       }
     });
   }
 
-  // Email Form Handler
+  // Email Form
   const emailForm = document.getElementById("emailForm");
   if (emailForm) {
     emailForm.addEventListener("submit", async (e) => {
       e.preventDefault();
       const emailText = document.getElementById("emailText").value;
       if (!emailText.trim()) {
-        showToast("Please enter email content to analyze", "warning");
+        showToast("Please enter email content", "warning");
         return;
       }
-
       const spinner = document.getElementById("emailSpinner");
-      const analyzeBtn = e.target.querySelector(".btn-analyze");
-
+      const resultDiv = document.getElementById("emailResult");
       spinner.classList.add("show");
-      analyzeBtn.disabled = true;
-      document.getElementById("emailResult").classList.remove("show");
-
+      resultDiv.classList.remove("show");
       try {
         const formData = new FormData();
         formData.append("email_text", emailText);
-
-        const response = await fetch("/api/detect-email/", {
+        const res = await fetch("/api/detect-email/", {
           method: "POST",
-          headers: {
-            "X-CSRFToken": getCSRFToken(),
-            "X-Requested-With": "XMLHttpRequest",
-          },
+          headers: { "X-CSRFToken": getCSRFToken() },
           credentials: "same-origin",
           body: formData,
         });
-
-        const data = await response.json();
-        displayResult(data, "emailResult", "emailSpinner");
-        loadStats();
-        showToast(
-          "✅ Email analyzed safely - no links were clicked!",
-          "success",
-        );
-      } catch (error) {
-        console.error("Error:", error);
-        showToast(
-          "Network error. Please check if the server is running.",
-          "danger",
-        );
+        displayResult(await res.json(), "emailResult", "emailSpinner");
+        loadEnhancedStats();
+        showToast("✅ Email analyzed safely", "success");
+      } catch (e) {
+        showToast("Network error", "danger");
       } finally {
         spinner.classList.remove("show");
-        analyzeBtn.disabled = false;
       }
     });
   }
 
-  // WhatsApp Form Handler
+  // WhatsApp Form
   const whatsappForm = document.getElementById("whatsappForm");
   if (whatsappForm) {
     whatsappForm.addEventListener("submit", async (e) => {
       e.preventDefault();
       const chatText = document.getElementById("whatsappText").value;
       if (!chatText.trim()) {
-        showToast("Please paste WhatsApp chat content", "warning");
+        showToast("Please paste WhatsApp chat", "warning");
         return;
       }
-
       const spinner = document.getElementById("whatsappSpinner");
-      const analyzeBtn = e.target.querySelector(".btn-analyze");
-
+      const resultDiv = document.getElementById("whatsappResult");
       spinner.classList.add("show");
-      analyzeBtn.disabled = true;
-      document.getElementById("whatsappResult").classList.remove("show");
-
-      const formData = new FormData();
-      formData.append("chat_text", chatText);
-
+      resultDiv.classList.remove("show");
       try {
-        const response = await fetch("/api/detect-whatsapp/", {
+        const formData = new FormData();
+        formData.append("chat_text", chatText);
+        const res = await fetch("/api/detect-whatsapp/", {
           method: "POST",
-          headers: {
-            "X-CSRFToken": getCSRFToken(),
-            "X-Requested-With": "XMLHttpRequest",
-          },
+          headers: { "X-CSRFToken": getCSRFToken() },
           credentials: "same-origin",
           body: formData,
         });
-
-        if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(`Server error: ${response.status}`);
-        }
-
-        const data = await response.json();
-        displayResult(data, "whatsappResult", "whatsappSpinner");
-        loadStats();
-        showToast("✅ Analysis complete!", "success");
-      } catch (error) {
-        console.error("Error:", error);
-        showToast(error.message, "danger");
-        document.getElementById("whatsappResult").innerHTML = `
-                    <div class="alert alert-danger">
-                        <strong>❌ Error:</strong> ${escapeHtml(error.message)}<br>
-                        <small>Please check that you've pasted valid WhatsApp chat content and the server is running.</small>
-                    </div>
-                `;
-        document.getElementById("whatsappResult").classList.add("show");
+        displayResult(await res.json(), "whatsappResult", "whatsappSpinner");
+        loadEnhancedStats();
+      } catch (e) {
+        showToast(e.message, "danger");
       } finally {
         spinner.classList.remove("show");
-        analyzeBtn.disabled = false;
       }
     });
   }
 
-  // URL Checker Handler
+  // URL Form
   const urlForm = document.getElementById("urlForm");
   if (urlForm) {
     urlForm.addEventListener("submit", async (e) => {
@@ -972,81 +1628,60 @@ document.addEventListener("DOMContentLoaded", function () {
         showToast("Please enter a URL", "warning");
         return;
       }
-
       const spinner = document.getElementById("urlSpinner");
       const resultDiv = document.getElementById("urlResult");
-
       spinner.classList.add("show");
       resultDiv.classList.remove("show");
-
       try {
-        const response = await fetch("/api/check-url/", {
+        const res = await fetch("/api/check-url/", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             "X-CSRFToken": getCSRFToken(),
           },
-          body: JSON.stringify({ url: url }),
+          body: JSON.stringify({ url }),
         });
-
-        const data = await response.json();
-        displayResult(data, "urlResult", "urlSpinner");
-        loadStats();
-      } catch (error) {
-        showToast("Network error: " + error.message, "danger");
-        spinner.classList.remove("show");
+        displayResult(await res.json(), "urlResult", "urlSpinner");
+        loadEnhancedStats();
+      } catch (e) {
+        showToast("Network error", "danger");
       } finally {
         spinner.classList.remove("show");
       }
     });
+
+    
+  // Telegram Form
+  const telegramForm = document.getElementById('telegramForm');
+  if (telegramForm) {
+      telegramForm.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const telegramText = document.getElementById('telegramText').value;
+          if (!telegramText.trim()) {
+              showToast('Please enter Telegram message to analyze', 'warning');
+              return;
+          }
+          const spinner = document.getElementById('telegramSpinner');
+          const resultDiv = document.getElementById('telegramResult');
+          spinner.classList.add('show'); resultDiv.classList.remove('show');
+          try {
+              const formData = new FormData();
+              formData.append('telegram_text', telegramText);
+              const res = await fetch('/api/detect-telegram/', {
+                  method: 'POST',
+                  headers: { 'X-CSRFToken': getCSRFToken() },
+                  credentials: 'same-origin',
+                  body: formData
+              });
+              displayResult(await res.json(), 'telegramResult', 'telegramSpinner');
+              loadEnhancedStats();
+          } catch(e) { showToast('Network error', 'danger'); }
+          finally { spinner.classList.remove('show'); }
+      });
+  }
   }
 
-  
-// Telegram Form Handler
-const telegramForm = document.getElementById('telegramForm');
-if (telegramForm) {
-    telegramForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const telegramText = document.getElementById('telegramText').value;
-        if (!telegramText.trim()) {
-            showToast('Please enter Telegram message to analyze', 'warning');
-            return;
-        }
-        
-        const spinner = document.getElementById('telegramSpinner');
-        const analyzeBtn = e.target.querySelector('.btn-analyze');
-        
-        spinner.classList.add('show');
-        analyzeBtn.disabled = true;
-        document.getElementById('telegramResult').classList.remove('show');
-        
-        try {
-            const formData = new FormData();
-            formData.append('telegram_text', telegramText);
-            
-            const response = await fetch('/api/detect-telegram/', {
-                method: 'POST',
-                headers: {
-                    'X-CSRFToken': getCSRFToken(),
-                    'X-Requested-With': 'XMLHttpRequest',
-                },
-                credentials: 'same-origin',
-                body: formData
-            });
-            
-            const data = await response.json();
-            displayResult(data, 'telegramResult', 'telegramSpinner');
-            loadStats();
-        } catch (error) {
-            showToast('Network error', 'danger');
-        } finally {
-            spinner.classList.remove('show');
-            analyzeBtn.disabled = false;
-        }
-    });
-}
-
-  // Screenshot OCR Handler
+  // Screenshot OCR
   const dropZone = document.getElementById("dropZone");
   const screenshotInput = document.getElementById("screenshotInput");
   const previewDiv = document.getElementById("screenshotPreview");
@@ -1056,43 +1691,30 @@ if (telegramForm) {
 
   if (dropZone) {
     dropZone.addEventListener("click", () => screenshotInput.click());
-
     dropZone.addEventListener("dragover", (e) => {
       e.preventDefault();
       dropZone.style.borderColor = "#764ba2";
-      dropZone.style.backgroundColor = "#f0f0ff";
     });
-
     dropZone.addEventListener("dragleave", (e) => {
       e.preventDefault();
       dropZone.style.borderColor = "#667eea";
-      dropZone.style.backgroundColor = "transparent";
     });
-
     dropZone.addEventListener("drop", (e) => {
       e.preventDefault();
       dropZone.style.borderColor = "#667eea";
-      dropZone.style.backgroundColor = "transparent";
       const file = e.dataTransfer.files[0];
-      if (file && file.type.startsWith("image/")) {
-        handleImageFile(file);
-      } else {
-        showToast("Please upload an image file", "warning");
-      }
+      if (file && file.type.startsWith("image/")) handleImageFile(file);
+      else showToast("Please upload an image", "warning");
     });
   }
-
-  if (screenshotInput) {
+  if (screenshotInput)
     screenshotInput.addEventListener("change", (e) => {
       if (e.target.files[0]) handleImageFile(e.target.files[0]);
     });
-  }
 
   function handleImageFile(file) {
-    if (file.size > 5 * 1024 * 1024) {
-      showToast("File too large. Maximum 5MB", "warning");
-      return;
-    }
+    if (file.size > 5 * 1024 * 1024)
+      return showToast("File too large. Max 5MB", "warning");
     currentImageFile = file;
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -1105,300 +1727,134 @@ if (telegramForm) {
   if (analyzeScreenshotBtn) {
     analyzeScreenshotBtn.addEventListener("click", async () => {
       if (!currentImageFile) return;
-
       const spinner = document.getElementById("screenshotSpinner");
       const resultDiv = document.getElementById("screenshotResult");
-
       spinner.classList.add("show");
       resultDiv.classList.remove("show");
-
       try {
-        // Check if Tesseract is loaded
-        if (typeof Tesseract === "undefined") {
-          throw new Error(
-            "Tesseract OCR library not loaded. Please refresh the page.",
-          );
-        }
-
         const worker = await Tesseract.createWorker("eng");
         const {
           data: { text },
         } = await worker.recognize(currentImageFile);
         await worker.terminate();
-
-        const response = await fetch("/api/detect-screenshot-text/", {
+        const res = await fetch("/api/detect-screenshot-text/", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text: text }),
+          body: JSON.stringify({ text }),
         });
-
-        const data = await response.json();
-        displayResult(data, "screenshotResult", "screenshotSpinner");
-        loadStats();
-      } catch (error) {
-        console.error("OCR Error:", error);
-        resultDiv.innerHTML = `<div class="alert alert-danger">OCR failed: ${error.message}</div>`;
+        displayResult(
+          await res.json(),
+          "screenshotResult",
+          "screenshotSpinner",
+        );
+        loadEnhancedStats();
+      } catch (e) {
+        resultDiv.innerHTML = `<div class="alert alert-danger">OCR failed: ${e.message}</div>`;
         resultDiv.classList.add("show");
-        spinner.classList.remove("show");
       } finally {
         spinner.classList.remove("show");
       }
     });
   }
 
-  // Example buttons handler
-  document.querySelectorAll(".example-btn").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const type = btn.getAttribute("data-type");
-      const example = btn.getAttribute("data-example");
-      if (type && example) {
-        loadExample(type, example);
+  // Manual Call Analysis
+  const analyzeCallBtn = document.getElementById("analyzeCallBtn");
+  if (analyzeCallBtn) {
+    analyzeCallBtn.addEventListener("click", async () => {
+      const transcript = document.getElementById("callTranscript").value;
+      if (!transcript.trim()) {
+        showToast("Please enter call transcript", "warning");
+        return;
       }
-    });
-  });
-
-  // Tab buttons handler
-  document.querySelectorAll(".tab-btn").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const tabName = btn.getAttribute("data-tab");
-      if (tabName) {
-        switchTab(tabName);
-      }
-    });
-  });
-
-  // Call Monitor Functionality
-  const startCallMonitorBtn = document.getElementById("startCallMonitorBtn");
-  const stopCallMonitorBtn = document.getElementById("stopCallMonitorBtn");
-  const monitorStatus = document.getElementById("monitorStatus");
-  const realtimeAlerts = document.getElementById("realtimeAlerts");
-  const dangerAlert = document.getElementById("dangerAlert");
-  const liveTranscriptContainer = document.getElementById(
-    "liveTranscriptContainer",
-  );
-
-  let recognition = null;
-  let isMonitoring = false;
-
-  if (startCallMonitorBtn && "webkitSpeechRecognition" in window) {
-    recognition = new webkitSpeechRecognition();
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.lang = "en-US";
-
-    recognition.onstart = () => {
-      isMonitoring = true;
-      monitorStatus.innerHTML =
-        '<span class="badge bg-success">🔴 LIVE - Monitoring in progress</span>';
-      startCallMonitorBtn.disabled = true;
-      stopCallMonitorBtn.disabled = false;
-      if (realtimeAlerts)
-        realtimeAlerts.innerHTML =
-          '<div class="text-success">🎤 Listening... Speak during the call.</div>';
-    };
-
-    recognition.onerror = (event) => {
-      console.error("Recognition error:", event.error);
-      if (realtimeAlerts)
-        realtimeAlerts.innerHTML = `<div class="text-danger">Error: ${event.error}</div>`;
-    };
-
-    recognition.onend = () => {
-      if (isMonitoring) {
-        isMonitoring = false;
-        monitorStatus.innerHTML =
-          '<span class="badge bg-secondary">⚪ Not monitoring</span>';
-        startCallMonitorBtn.disabled = false;
-        stopCallMonitorBtn.disabled = true;
-      }
-    };
-
-    recognition.onresult = (event) => {
-      let interimTranscript = "";
-      let finalTranscript = "";
-
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        const transcript = event.results[i][0].transcript;
-        if (event.results[i].isFinal) {
-          finalTranscript += transcript;
-        } else {
-          interimTranscript += transcript;
-        }
-      }
-
-      if (finalTranscript) {
-        // Show live transcript
-        if (liveTranscriptContainer) {
-          liveTranscriptContainer.innerHTML = `
-                        <div class="alert alert-info mt-2">
-                            <small><i class="fas fa-microphone-alt"></i> Live: ${escapeHtml(finalTranscript)}</small>
-                        </div>
-                    `;
-        }
-        analyzeTranscriptForScams(finalTranscript);
-      }
-    };
-
-    startCallMonitorBtn.addEventListener("click", () => {
+      const spinner = document.getElementById("callSpinner");
+      const resultDiv = document.getElementById("callResult");
+      spinner.style.display = "flex";
+      resultDiv.classList.remove("show");
       try {
-        recognition.start();
+        const formData = new FormData();
+        formData.append("transcript", transcript);
+        const res = await fetch("/api/detect-call/", {
+          method: "POST",
+          headers: { "X-CSRFToken": getCSRFToken() },
+          credentials: "same-origin",
+          body: formData,
+        });
+        const data = await res.json();
+        displayCallResult(data, "callResult");
+        loadEnhancedStats();
+        showToast(
+          data.score >= 50 ? "🚨 SCAM CALL DETECTED!" : "Analysis complete",
+          data.score >= 50 ? "danger" : "success",
+        );
       } catch (e) {
-        console.error("Start error:", e);
+        showToast("Network error", "danger");
+      } finally {
+        spinner.style.display = "none";
       }
     });
-
-    stopCallMonitorBtn.addEventListener("click", () => {
-      if (recognition) {
-        recognition.stop();
-        isMonitoring = false;
-        monitorStatus.innerHTML =
-          '<span class="badge bg-secondary">⚪ Monitoring stopped</span>';
-        startCallMonitorBtn.disabled = false;
-        stopCallMonitorBtn.disabled = true;
-        if (liveTranscriptContainer) liveTranscriptContainer.innerHTML = "";
-      }
-    });
-  } else if (startCallMonitorBtn) {
-    startCallMonitorBtn.disabled = true;
-    startCallMonitorBtn.title =
-      "Speech recognition not supported in this browser";
-    if (monitorStatus)
-      monitorStatus.innerHTML =
-        '<span class="badge bg-warning">⚠️ Not supported in this browser. Use Chrome for call monitoring.</span>';
   }
 
-  async function analyzeTranscriptForScams(transcript) {
-    const lowerText = transcript.toLowerCase();
-    let isScam = false;
-    let alertMessage = "";
-
-    const scamPatterns = [
-      {
-        pattern: /pin|mpin|password|otp|code/,
-        message: "❌ Asking for PIN/Password - HANG UP!",
-      },
-      {
-        pattern: /send money|tuma pesa/,
-        message: "💰 Requesting money - Scam!",
-      },
-      {
-        pattern: /suspended|blocked|locked/,
-        message: "🚫 Account suspension threat - Scam tactic!",
-      },
-      {
-        pattern: /urgent|immediately|asap/,
-        message: "⏰ Urgency pressure - Classic scam!",
-      },
-      {
-        pattern: /mpesa|safaricom|bank/,
-        message: "🏦 Impersonating company - Verify!",
-      },
-      {
-        pattern: /verify|confirm|update/,
-        message: "🔐 Verification scam - Don't share info!",
-      },
-      {
-        pattern: /winner|prize|congratulations/,
-        message: "🎁 Prize scam - You didn't win anything!",
-      },
-      {
-        pattern: /limited time|offer ends/,
-        message: "⏳ Time pressure - Scare tactic!",
-      },
-    ];
-
-    for (const pattern of scamPatterns) {
-      if (pattern.pattern.test(lowerText)) {
-        isScam = true;
-        alertMessage = pattern.message;
-        break;
-      }
-    }
-
-    if (isScam) {
-      if (dangerAlert) dangerAlert.style.display = "block";
-      if (realtimeAlerts) {
-        realtimeAlerts.innerHTML = `<div class="alert alert-danger mt-2"><strong>⚠️ SCAM ALERT!</strong> ${alertMessage}</div>`;
-      }
-      if (monitorStatus)
-        monitorStatus.innerHTML =
-          '<span class="badge bg-danger">🔴 SCAM DETECTED - HANG UP!</span>';
-    } else {
-      if (dangerAlert) dangerAlert.style.display = "none";
-      if (realtimeAlerts) {
-        realtimeAlerts.innerHTML = `<div class="alert alert-success mt-2"><strong>✅ No scam patterns detected</strong> - Stay vigilant.</div>`;
-      }
-    }
-  }
-
+  // Phone Number Check
   const checkNumberBtn = document.getElementById("checkNumberBtn");
-  const callerNumber = document.getElementById("callerNumber");
-  const numberCheckResult = document.getElementById("numberCheckResult");
-
   if (checkNumberBtn) {
     checkNumberBtn.addEventListener("click", async () => {
-      const number = callerNumber.value.trim();
-      if (!number) {
+      const phoneNumber = document.getElementById("callerNumber").value;
+      if (!phoneNumber.trim()) {
         showToast("Please enter a phone number", "warning");
         return;
       }
-
-      numberCheckResult.innerHTML =
-        '<div class="spinner-border text-primary spinner-border-sm"></div> Checking...';
-
+      const resultDiv = document.getElementById("numberCheckResult");
+      resultDiv.innerHTML =
+        '<div class="spinner-border spinner-border-sm"></div> Checking...';
       try {
-        const response = await fetch("/api/check-phone/", {
+        const res = await fetch("/api/check-phone/", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             "X-CSRFToken": getCSRFToken(),
           },
-          body: JSON.stringify({ phone_number: number }),
+          body: JSON.stringify({ phone_number: phoneNumber }),
         });
-        const data = await response.json();
-
-        if (data.is_known_scam) {
-          numberCheckResult.innerHTML = `
-                        <div class="alert alert-danger mt-2">
-                            <strong>⚠️ SCAM NUMBER!</strong><br>
-                            Risk Score: ${data.risk_score}%<br>
-                            Reports: ${data.reports_count}<br>
-                            <strong>DO NOT ANSWER OR CALL BACK!</strong>
-                        </div>
-                    `;
-        } else if (data.risk_score > 30) {
-          numberCheckResult.innerHTML = `
-                        <div class="alert alert-warning mt-2">
-                            <strong>⚠️ Suspicious Number</strong><br>
-                            Risk Score: ${data.risk_score}%<br>
-                            Reports: ${data.reports_count}<br>
-                            Exercise caution.
-                        </div>
-                    `;
-        } else {
-          numberCheckResult.innerHTML = `
-                        <div class="alert alert-success mt-2">
-                            <strong>✅ Number appears safe</strong><br>
-                            Risk Score: ${data.risk_score || 0}%<br>
-                            Reports: ${data.reports_count || 0}
-                        </div>
-                    `;
-        }
-      } catch (error) {
-        numberCheckResult.innerHTML = `<div class="alert alert-danger mt-2">Error checking number. Please try again.</div>`;
+        const data = await res.json();
+        const riskColor =
+          data.color === "danger"
+            ? "#dc3545"
+            : data.color === "warning"
+              ? "#ffc107"
+              : "#28a745";
+        resultDiv.innerHTML = `<div class="card mt-2" style="border-left:3px solid ${riskColor}"><div class="card-body p-3">
+                    <strong>📞 ${escapeHtml(data.phone || phoneNumber)}</strong><br>
+                    <span class="badge bg-${data.color}">${escapeHtml(data.risk_level || "UNKNOWN")}</span><br>
+                    ${escapeHtml(data.message || "")}
+                    ${data.recommendation ? `<br><small>${escapeHtml(data.recommendation)}</small>` : ""}
+                </div></div>`;
+      } catch (e) {
+        resultDiv.innerHTML = `<div class="alert alert-danger">Error</div>`;
       }
     });
   }
 
-  // Load stats on page load
-  loadStats();
+  // Example buttons
+  document.querySelectorAll(".example-btn").forEach((btn) => {
+    btn.addEventListener("click", () =>
+      loadExample(btn.dataset.type, btn.dataset.example),
+    );
+  });
 
-  // Auto-refresh stats every 30 seconds
+  // Tab buttons
+  document.querySelectorAll(".tab-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      if (btn.dataset.tab) switchTab(btn.dataset.tab);
+    });
+  });
+
+  // Initialize Real-Time Call Detection
+  initRealtimeCallDetection();
+
+  // Auto-refresh stats every 30s
   setInterval(() => {
-    const statsTab = document.getElementById("statsTab");
-    if (statsTab && statsTab.classList.contains("active")) {
-      loadStats();
-    }
+    if (document.getElementById("statsTab")?.classList.contains("active"))
+      loadEnhancedStats();
   }, 30000);
 });
 
@@ -1408,29 +1864,22 @@ async function loadActivityFeed() {
     const data = await response.json();
     const feed = document.getElementById("activityFeed");
     if (feed && data.activities && data.activities.length > 0) {
-      feed.innerHTML = data.activities
-        .map(
-          (a) => `
-                <div class="activity-item d-flex align-items-center mb-2 p-2" style="border-left: 3px solid ${a.color}; border-radius: 4px;">
-                    <span class="activity-icon">${a.icon}</span>
-                    <div style="flex: 1;">
-                        <small style="color: ${a.color}; font-weight: 600;">${a.type}</small>
-                        <div class="activity-preview">${a.preview}</div>
-                        <small class="activity-time">${a.time}</small>
-                    </div>
-                    <span class="badge ${a.score >= 70 ? "bg-danger" : a.score >= 40 ? "bg-warning" : "bg-success"}">${a.score}%</span>
-                </div>
-            `,
-        )
-        .join("");
+      feed.innerHTML = data.activities.map(a => `
+        <div class="activity-item d-flex align-items-center mb-2 p-2" style="border-left:3px solid ${a.color}">
+          <span class="activity-icon">${a.icon}</span>
+          <div style="flex:1"><small style="color:${a.color};font-weight:600">${a.type}</small>
+          <div class="activity-preview">${escapeHtml(a.preview||'')}</div>
+          <small class="activity-time">${a.time}</small></div>
+          <span class="badge ${a.score>=70?'bg-danger':a.score>=40?'bg-warning':'bg-success'}">${a.score}%</span>
+        </div>`).join('');
     } else {
-      feed.innerHTML =
-        '<div class="text-center text-muted py-4">No recent activity</div>';
+      feed.innerHTML = '<div class="text-center text-muted py-4">No recent activity</div>';
     }
-  } catch (e) {
-    console.error("Activity feed error:", e);
-  }
+  } catch(e) { console.error('Activity feed error:', e); }
 }
-// Make functions globally available
+
+// Export for global access
 window.exportReports = exportReports;
-window.refreshStats = loadStats;
+window.updateStatsInstant = updateStatsInstant;
+window.switchTab = switchTab;
+window.loadExample = loadExample;

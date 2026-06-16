@@ -1,27 +1,30 @@
 # detector/ml_trainer.py
 """
-ML Model Training Pipeline for Fraud Detection
-Trains models using existing scam reports from database
+Context-Aware ML Model Training Pipeline for Fraud Detection
+Trains models using database reports + hardcoded examples + context markers
+Understands that legitimate sites can use words that appear in scams
 """
 
 import os
 import sys
 import pickle
 import json
+import re
 import numpy as np
-import pandas as pd
 from datetime import datetime
 from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
-from sklearn.linear_model import LogisticRegression
-from sklearn.naive_bayes import MultinomialNB
+from sklearn.linear_model import LogisticRegression, SGDClassifier
+from sklearn.naive_bayes import MultinomialNB, ComplementNB
+from sklearn.svm import LinearSVC
+from sklearn.calibration import CalibratedClassifierCV
 from sklearn.neural_network import MLPClassifier
-from sklearn.model_selection import train_test_split, cross_val_score, GridSearchCV, StratifiedKFold
+from sklearn.model_selection import train_test_split, cross_val_score, StratifiedKFold
 from sklearn.metrics import classification_report, confusion_matrix, accuracy_score, f1_score, precision_score, recall_score
 from sklearn.pipeline import Pipeline
 import joblib
 
-# Django setup for accessing database
+# Django setup
 import django
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'fraudshield.settings')
 django.setup()
@@ -29,570 +32,471 @@ django.setup()
 from detector.models import ScamReport
 
 
-class FraudMLTrainer:
+# ============================================================
+# CONTEXT-AWARE WHITELIST — Legitimate domains & patterns
+# ============================================================
+SAFE_DOMAINS = {
+    'google.com', 'facebook.com', 'twitter.com', 'instagram.com',
+    'whatsapp.com', 'telegram.org', 'youtube.com', 'wikipedia.org',
+    'microsoft.com', 'apple.com', 'amazon.com', 'netflix.com',
+    'github.com', 'gitlab.com', 'stackoverflow.com', 'linkedin.com',
+    'safaricom.co.ke', 'airtel.co.ke', 'telkom.co.ke',
+    'kcbgroup.com', 'equitybank.co.ke', 'coopbank.co.ke', 'absabank.co.ke',
+    'kra.go.ke', 'ecitizen.go.ke', 'nssf.go.ke', 'nhif.go.ke',
+    'jumia.co.ke', 'kilimall.co.ke',
+}
+
+SAFE_CONTEXTS = {
+    'bank_notification': [
+        r'(?:kcb|equity|coop|absa|stanbic|ncba|family)\s*:',
+        r'salary\s+(?:of\s+)?(?:ksh|kes)\s*\d+\s+credited',
+        r'loan\s+payment\s+(?:of\s+)?(?:ksh|kes)\s*\d+\s+received',
+        r'standing\s+order\s+(?:of\s+)?(?:ksh|kes)\s*\d+\s+processed',
+        r'cheque\s+(?:book|deposited|cleared)',
+        r'fixed\s+deposit\s+(?:matured|renewed)',
+    ],
+    'mpesa_transaction': [
+        r'm-pesa\s*:\s*ksh\s*\d[\d,]*\s+(?:to|from)\s+\w+\s+(?:successful|completed)',
+        r'm-pesa\s*:\s*you\s+(?:received|sent)\s+ksh\s*\d+',
+        r'm-pesa\s*:\s*(?:your\s+)?balance\s+(?:is|:)',
+        r'm-pesa\s*:\s*transaction\s+(?:id|cost)\s+[a-z0-9]+',
+    ],
+    'service_notification': [
+        r'(?:your\s+)?(?:data\s+bundle|airtime|subscription)\s+(?:expir|renew)',
+        r'(?:your\s+)?(?:bill|statement|invoice)\s+(?:is\s+ready|available|due)',
+        r'(?:appointment|booking|reservation)\s+(?:confirmed|reminder)',
+        r'(?:flight|train|bus)\s+(?:booking|ticket|departure)',
+    ],
+    'personal_message': [
+        r'^(?:hi|hello|hey|habari|niaje|vipi)\b',
+        r'\b(?:please|pls|kindly)\b.*\b(?:send|share|tell|bring|pick|buy)\b',
+        r'\b(?:meeting|dinner|lunch|party|wedding|church|prayer)\b',
+        r'\b(?:happy\s+birthday|congratulations|pole|get\s+well)\b',
+    ],
+}
+
+# Words that are suspicious ONLY outside safe contexts
+CONTEXT_DEPENDENT_WORDS = {
+    'verify': {
+        'safe_in': ['bank_notification', 'mpesa_transaction', 'service_notification'],
+        'dangerous_in': ['unsolicited_sms', 'unknown_sender', 'with_urgency'],
+    },
+    'update': {
+        'safe_in': ['bank_notification', 'service_notification'],
+        'dangerous_in': ['unsolicited_sms', 'with_link', 'with_urgency'],
+    },
+    'confirm': {
+        'safe_in': ['bank_notification', 'mpesa_transaction', 'service_notification'],
+        'dangerous_in': ['unsolicited_sms', 'with_pin_request'],
+    },
+    'account': {
+        'safe_in': ['bank_notification', 'mpesa_transaction', 'service_notification'],
+        'dangerous_in': ['unsolicited_sms', 'with_urgency', 'with_threat'],
+    },
+    'login': {
+        'safe_in': ['service_notification'],
+        'dangerous_in': ['unsolicited_sms', 'with_link'],
+    },
+    'security': {
+        'safe_in': ['bank_notification', 'service_notification'],
+        'dangerous_in': ['unsolicited_sms', 'with_urgency', 'with_pin_request'],
+    },
+    'suspended': {
+        'safe_in': [],  # Almost always suspicious
+        'dangerous_in': ['any_context'],
+    },
+    'blocked': {
+        'safe_in': ['service_notification'],  # "Your card blocked? Call us"
+        'dangerous_in': ['unsolicited_sms', 'with_urgency'],
+    },
+    'urgent': {
+        'safe_in': [],  # Legitimate orgs rarely use "urgent"
+        'dangerous_in': ['any_context'],
+    },
+    'winner': {
+        'safe_in': ['known_promotion'],
+        'dangerous_in': ['unsolicited_sms', 'with_fee_request'],
+    },
+    'prize': {
+        'safe_in': ['known_promotion'],
+        'dangerous_in': ['unsolicited_sms', 'with_fee_request'],
+    },
+    'loan': {
+        'safe_in': ['bank_notification', 'mpesa_transaction'],
+        'dangerous_in': ['unsolicited_sms', 'with_fee_request'],
+    },
+    'pin': {
+        'safe_in': [],  # Legitimate orgs NEVER ask for PIN via SMS
+        'dangerous_in': ['any_context'],
+    },
+    'otp': {
+        'safe_in': ['bank_notification'],  # Some banks send OTP for transactions
+        'dangerous_in': ['unsolicited_sms', 'with_urgency'],
+    },
+    'password': {
+        'safe_in': [],  # Legitimate orgs NEVER ask for password via SMS
+        'dangerous_in': ['any_context'],
+    },
+}
+
+
+class ContextAwareFraudTrainer:
     """
-    Train ML models for scam detection using existing data
+    Context-aware ML trainer that understands legitimate vs scam contexts.
+    Words like "verify" are safe in bank notifications but dangerous in unsolicited SMS.
     """
     
     def __init__(self):
         self.models = {}
-        self.vectorizers = {}
         self.model_metrics = {}
         self.training_date = datetime.now()
         self.training_data_size = 0
+    
+    def _add_context_markers(self, text):
+        """
+        Add context markers to help model understand word usage.
+        Marks what context the message appears in.
+        """
+        text_lower = text.lower()
+        markers = []
+        safe_contexts_found = []
+        dangerous_signals = []
         
+        # Detect safe contexts
+        for context_name, patterns in SAFE_CONTEXTS.items():
+            for pattern in patterns:
+                if re.search(pattern, text_lower):
+                    safe_contexts_found.append(context_name)
+                    break
+        
+        # Detect dangerous signals
+        if re.search(r'(?:send|share|provide|enter|type)\s+(?:your\s+)?(?:pin|otp|mpin|password)', text_lower):
+            dangerous_signals.append('with_pin_request')
+        if re.search(r'http[s]?://|www\.|bit\.ly|tinyurl|short\.link', text_lower):
+            dangerous_signals.append('with_link')
+        if re.search(r'urgent|immediately|asap|haraka|sasa\s+hivi', text_lower):
+            dangerous_signals.append('with_urgency')
+        if re.search(r'pay\s+(?:ksh|kes)\s*\d+|send\s+(?:ksh|kes)\s*\d+|processing\s+fee', text_lower):
+            dangerous_signals.append('with_fee_request')
+        if re.search(r'suspended|blocked|locked|deactivated|closed|terminated', text_lower):
+            dangerous_signals.append('with_threat')
+        if re.search(r'\b(07|01|2547)\d{8}\b', text_lower):
+            dangerous_signals.append('unknown_sender')
+        if re.search(r'won|winner|congratulations|prize|lotto|jackpot|giveaway', text_lower):
+            dangerous_signals.append('unsolicited_prize')
+        
+        # Determine overall context
+        if safe_contexts_found and not dangerous_signals:
+            markers.append(f'SAFE_CONTEXT:{"|".join(safe_contexts_found)}')
+        elif dangerous_signals:
+            markers.append(f'DANGER_SIGNALS:{"|".join(dangerous_signals)}')
+        
+        # Check for context-dependent words
+        for word, contexts in CONTEXT_DEPENDENT_WORDS.items():
+            if word in text_lower:
+                if safe_contexts_found and any(s in contexts['safe_in'] for s in safe_contexts_found):
+                    markers.append(f'SAFE_WORD:{word}')
+                else:
+                    markers.append(f'DANGER_WORD:{word}')
+        
+        if markers:
+            return f"[{'|'.join(markers)}] {text}"
+        return f"[UNKNOWN_CONTEXT] {text}"
+    
+    def _is_known_safe(self, text):
+        """Check if message is from a known safe context"""
+        text_lower = text.lower()
+        
+        # Check safe contexts without dangerous signals
+        for context_name, patterns in SAFE_CONTEXTS.items():
+            for pattern in patterns:
+                if re.search(pattern, text_lower):
+                    # Verify no dangerous signals
+                    has_pin_request = re.search(r'(?:send|share|provide)\s+(?:your\s+)?(?:pin|otp|mpin|password)', text_lower)
+                    has_urgency = re.search(r'urgent|immediately|asap|haraka', text_lower)
+                    has_unknown_link = re.search(r'bit\.ly|tinyurl|short\.link|http://(?!.*safaricom|.*kcb|.*equity)', text_lower)
+                    
+                    if not has_pin_request and not has_urgency and not has_unknown_link:
+                        return True, context_name
+        
+        return False, None
+    
     def load_training_data(self, min_samples=100):
-        """
-        Load data from database
-        Returns: X (texts), y (labels)
-        """
+        """Load training data from database with context awareness"""
         reports = ScamReport.objects.all()
         
         if reports.count() < min_samples:
-            print(f"⚠️ Only {reports.count()} samples. Need at least {min_samples} for reliable ML.")
-            print("   Continue collecting scam reports first.")
+            print(f"⚠️ Only {reports.count()} samples. Need at least {min_samples}.")
             return None, None
         
         texts = []
         labels = []
+        skipped_safe = 0
         
         for report in reports:
             if report.content and len(report.content) > 10:
-                texts.append(report.content[:2000])  # Limit length for performance
-                # Label: 1 = scam (high risk), 0 = legitimate
-                label = 1 if report.risk_score >= 40 else 0
-                labels.append(label)
+                # Check if this is from a known safe context
+                is_safe, safe_context = self._is_known_safe(report.content)
+                
+                if is_safe and report.risk_score >= 40:
+                    # High score but known safe context — likely mislabeled
+                    # Use lower label to teach model context
+                    labels.append(0)  # Mark as legitimate despite high score
+                    skipped_safe += 1
+                else:
+                    label = 1 if report.risk_score >= 40 else 0
+                    labels.append(label)
+                
+                # Add context markers
+                marked_text = self._add_context_markers(report.content[:2000])
+                texts.append(marked_text)
         
         self.training_data_size = len(texts)
         
-        print(f"✅ Loaded {len(texts)} samples")
+        print(f"✅ Loaded {len(texts)} samples from database")
         print(f"   Scam samples: {sum(labels)}")
         print(f"   Legitimate samples: {len(labels) - sum(labels)}")
+        if skipped_safe:
+            print(f"   🔄 Reclassified {skipped_safe} high-score reports as legitimate (safe context)")
         
         return texts, labels
     
-    def load_training_data_with_validation(self, min_samples=100, validation_split=0.15):
-        """
-        Load data with validation split for better accuracy measurement
-        """
-        reports = ScamReport.objects.all()
+    def load_training_data_with_hardcoded(self, min_samples=100):
+        """Load training data from database + hardcoded examples"""
+        # Load database data
+        db_texts, db_labels = self.load_training_data(min_samples=0)
         
-        if reports.count() < min_samples:
-            print(f"⚠️ Only {reports.count()} samples. Need at least {min_samples} for reliable ML.")
-            return None, None, None, None, None, None
+        # Load hardcoded data
+        hc_texts, hc_labels = self._get_hardcoded_data()
         
-        texts = []
-        labels = []
+        # Load feedback corrections
+        fb_texts, fb_labels = self._load_feedback_data()
         
-        for report in reports:
-            if report.content and len(report.content) > 10:
-                texts.append(report.content[:2000])
-                label = 1 if report.risk_score >= 40 else 0
-                labels.append(label)
+        # Combine
+        all_texts = (db_texts or []) + hc_texts + fb_texts
+        all_labels = (db_labels or []) + hc_labels + fb_labels
         
-        # Split into train/validation/test
-        X_temp, X_test, y_temp, y_test = train_test_split(
-            texts, labels, test_size=0.15, random_state=42, stratify=labels
-        )
-        X_train, X_val, y_train, y_val = train_test_split(
-            X_temp, y_temp, test_size=validation_split, random_state=42, stratify=y_temp
-        )
+        if len(all_texts) < min_samples:
+            print(f"⚠️ Only {len(all_texts)} total samples. Need at least {min_samples}.")
+            return None, None
         
-        print(f"✅ Loaded {len(texts)} samples")
-        print(f"   Train: {len(X_train)} | Validation: {len(X_val)} | Test: {len(X_test)}")
-        print(f"   Scam samples: {sum(labels)} | Legitimate: {len(labels) - sum(labels)}")
+        # Add context markers to all
+        all_texts = [self._add_context_markers(t) for t in all_texts]
         
-        return X_train, X_val, X_test, y_train, y_val, y_test
+        self.training_data_size = len(all_texts)
+        print(f"\n📊 Total Training Data: {len(all_texts)} examples")
+        print(f"   Scam: {sum(all_labels)} ({sum(all_labels)/len(all_labels)*100:.1f}%)")
+        print(f"   Legitimate: {len(all_labels)-sum(all_labels)} ({(len(all_labels)-sum(all_labels))/len(all_labels)*100:.1f}%)")
+        
+        return all_texts, all_labels
+    
+    def _get_hardcoded_data(self):
+        """Get hardcoded training examples"""
+        # Import from the new prepare_data module
+        try:
+            from detector.ml.training.prepare_data import get_hardcoded_training_data
+            return get_hardcoded_training_data()
+        except ImportError:
+            pass
+        
+        # Fallback: basic examples
+        scam = [
+            'URGENT: Your M-Pesa suspended. Send PIN to verify.',
+            'Congratulations! You won Ksh 250000. Click http://scam.com',
+            'Send MPIN to 0700000000 for M-Shwari bonus',
+            'Tuma pesa kwa 0711222333 upokee zawadi',
+            'Your bank account blocked. Call 0712345678 immediately',
+            'Winner! Claim iPhone by sending OTP to 0711222333',
+            'You have been selected for a Ksh 500000 prize. Pay Ksh 1000 to claim.',
+            'Breaking: Police case filed against you. Call 0711222333 urgently',
+        ]
+        legit = [
+            'M-Pesa Ksh 500 to John successful. Balance: 2450',
+            'KCB: Salary 45000 credited to your account.',
+            'Hello, pick up milk on your way home please',
+            'Meeting at 3pm. Bring laptop and charger.',
+            'Church service Sunday 9am. All welcome.',
+            'Your KCB loan payment of Ksh 5000 received. Thank you',
+            'Safaricom: Your data bundle expires tomorrow. Dial *544#',
+            'Your electricity token: 1234-5678-9012',
+        ]
+        return [self._add_context_markers(m) for m in scam + legit], [1]*len(scam) + [0]*len(legit)
+    
+    def _load_feedback_data(self):
+        """Load user feedback corrections"""
+        feedback_path = os.path.join(os.path.dirname(__file__), 'data', 'feedback_data.json')
+        texts, labels = [], []
+        
+        if os.path.exists(feedback_path):
+            try:
+                with open(feedback_path) as f:
+                    feedbacks = json.load(f)
+                for fb in feedbacks:
+                    if fb.get('original_text') and fb.get('user_verdict'):
+                        texts.append(fb['original_text'])
+                        labels.append(1 if fb['user_verdict'] == 'scam' else 0)
+                if texts:
+                    print(f"   📝 Loaded {len(texts)} feedback corrections")
+            except:
+                pass
+        return texts, labels
     
     def train_sms_model(self, texts, labels):
-        """
-        Train SMS scam detection model with cross-validation
-        """
+        """Train context-aware SMS scam detection model"""
         print("\n" + "="*60)
-        print("📱 Training SMS Scam Detection Model")
+        print("📱 Training Context-Aware SMS Detection Model")
         print("="*60)
         
-        # Create pipeline with TF-IDF and Random Forest
-        pipeline = Pipeline([
-            ('tfidf', TfidfVectorizer(
-                max_features=5000,
-                ngram_range=(1, 3),
-                min_df=2,
-                max_df=0.95,
-                stop_words='english'
-            )),
-            ('classifier', RandomForestClassifier(
-                n_estimators=100,
-                random_state=42,
-                n_jobs=-1
-            ))
-        ])
-        
-        # Split data
-        X_train, X_test, y_train, y_test = train_test_split(
-            texts, labels, test_size=0.2, random_state=42, stratify=labels
-        )
-        
-        # Train
-        pipeline.fit(X_train, y_train)
-        
-        # Evaluate
-        y_pred = pipeline.predict(X_test)
-        accuracy = accuracy_score(y_test, y_pred)
-        f1 = f1_score(y_test, y_pred)
-        precision = precision_score(y_test, y_pred)
-        recall = recall_score(y_test, y_pred)
-        
-        print("✅ Model trained!")
-        print(f"   Accuracy: {accuracy:.2%}")
-        print(f"   F1 Score: {f1:.2%}")
-        print(f"   Precision: {precision:.2%}")
-        print(f"   Recall: {recall:.2%}")
-        
-        # Cross-validation
-        cv_scores = cross_val_score(pipeline, texts, labels, cv=5, scoring='f1')
-        print(f"   5-Fold CV F1: {cv_scores.mean():.2%} (+/- {cv_scores.std() * 2:.2%})")
-        
-        # Store model
-        self.models['sms'] = pipeline
-        self.model_metrics['sms'] = {
-            'accuracy': accuracy,
-            'f1_score': f1,
-            'precision': precision,
-            'recall': recall,
-            'cv_f1_mean': cv_scores.mean(),
-            'cv_f1_std': cv_scores.std(),
-            'training_samples': len(X_train),
-            'test_samples': len(X_test)
+        # Try multiple models
+        models = {
+            'LogisticRegression': Pipeline([
+                ('tfidf', TfidfVectorizer(max_features=8000, ngram_range=(1, 4), min_df=1, max_df=0.95, sublinear_tf=True)),
+                ('clf', LogisticRegression(C=0.8, max_iter=3000, class_weight='balanced', random_state=42))
+            ]),
+            'CalibratedSVC': Pipeline([
+                ('tfidf', TfidfVectorizer(max_features=6000, ngram_range=(1, 3), min_df=1, sublinear_tf=True)),
+                ('clf', CalibratedClassifierCV(LinearSVC(C=1.0, class_weight='balanced', random_state=42, max_iter=2000), cv=3))
+            ]),
+            'ComplementNB': Pipeline([
+                ('tfidf', TfidfVectorizer(max_features=6000, ngram_range=(1, 3), min_df=1, sublinear_tf=True)),
+                ('clf', ComplementNB(alpha=0.1, norm=False))
+            ]),
         }
         
-        # Print classification report
-        print("\n📊 Classification Report:")
-        print(classification_report(y_test, y_pred, target_names=['Legitimate', 'Scam']))
-        
-        # Confusion matrix
-        cm = confusion_matrix(y_test, y_pred)
-        print("\n📊 Confusion Matrix:")
-        print(f"   True Negatives: {cm[0,0]} | False Positives: {cm[0,1]}")
-        print(f"   False Negatives: {cm[1,0]} | True Positives: {cm[1,1]}")
-        
-        return pipeline
-    
-    def train_url_model(self, urls, labels):
-        """
-        Train URL phishing detection model using character-level features
-        """
-        print("\n" + "="*60)
-        print("🔗 Training URL Phishing Detection Model")
-        print("="*60)
-        
-        if len(urls) < 50:
-            print("⚠️ Not enough URL samples for training. Need at least 50.")
-            return None
-        
-        # Character-level features for URLs
-        pipeline = Pipeline([
-            ('char_vector', CountVectorizer(
-                analyzer='char',
-                ngram_range=(3, 5),
-                max_features=1000
-            )),
-            ('classifier', GradientBoostingClassifier(
-                n_estimators=100,
-                random_state=42
-            ))
-        ])
-        
-        # Split data
         X_train, X_test, y_train, y_test = train_test_split(
-            urls, labels, test_size=0.2, random_state=42, stratify=labels
+            texts, labels, test_size=0.15, random_state=42, stratify=labels
         )
         
-        # Train
-        pipeline.fit(X_train, y_train)
-        
-        # Evaluate
-        y_pred = pipeline.predict(X_test)
-        accuracy = accuracy_score(y_test, y_pred)
-        f1 = f1_score(y_test, y_pred)
-        
-        print("✅ Model trained!")
-        print(f"   Accuracy: {accuracy:.2%}")
-        print(f"   F1 Score: {f1:.2%}")
-        
-        self.models['url'] = pipeline
-        self.model_metrics['url'] = {
-            'accuracy': accuracy,
-            'f1_score': f1,
-            'training_samples': len(X_train),
-            'test_samples': len(X_test)
-        }
-        
-        return pipeline
-    
-    def train_ensemble_model(self, texts, labels):
-        """
-        Train ensemble model combining multiple algorithms
-        """
-        print("\n" + "="*60)
-        print("🤖 Training Ensemble Model")
-        print("="*60)
-        
-        # Multiple classifiers
-        classifiers = {
-            'Random Forest': RandomForestClassifier(n_estimators=100, random_state=42, n_jobs=-1),
-            'Gradient Boosting': GradientBoostingClassifier(n_estimators=100, random_state=42),
-            'Logistic Regression': LogisticRegression(max_iter=1000, random_state=42, n_jobs=-1),
-            'MLP Neural Net': MLPClassifier(hidden_layer_sizes=(100, 50), max_iter=500, random_state=42, early_stopping=True)
-        }
-        
-        # TF-IDF vectorizer
-        vectorizer = TfidfVectorizer(max_features=5000, ngram_range=(1, 2))
-        X = vectorizer.fit_transform(texts)
-        
-        # Split
-        X_train, X_test, y_train, y_test = train_test_split(
-            X, labels, test_size=0.2, random_state=42, stratify=labels
-        )
-        
-        results = {}
         best_model = None
         best_score = 0
-        best_model_name = ""
+        best_name = ''
         
-        for name, clf in classifiers.items():
-            print(f"   Training {name}...")
-            clf.fit(X_train, y_train)
-            y_pred = clf.predict(X_test)
-            score = f1_score(y_test, y_pred)
-            acc = accuracy_score(y_test, y_pred)
-            results[name] = {'f1': score, 'accuracy': acc}
-            
-            if score > best_score:
-                best_score = score
-                best_model = clf
-                best_model_name = name
+        for name, model in models.items():
+            print(f"\n🔧 Training {name}...")
+            try:
+                cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+                cv_scores = cross_val_score(model, X_train, y_train, cv=cv, scoring='f1')
+                avg_score = cv_scores.mean()
+                
+                model.fit(X_train, y_train)
+                y_pred = model.predict(X_test)
+                test_f1 = f1_score(y_test, y_pred)
+                
+                print(f"   CV F1: {avg_score:.4f} | Test F1: {test_f1:.4f}")
+                
+                if avg_score > best_score:
+                    best_score = avg_score
+                    best_name = name
+                    # Train on full data
+                    model.fit(texts, labels)
+                    best_model = model
+                    print("   ✅ New best model!")
+            except Exception as e:
+                print(f"   ❌ Failed: {e}")
         
-        print(f"\n✅ Best model: {best_model_name}")
-        print(f"   F1 Score: {best_score:.2%}")
-        
-        for name, metrics in results.items():
-            print(f"   {name}: F1={metrics['f1']:.2%}, Acc={metrics['accuracy']:.2%}")
-        
-        # Store ensemble
-        self.models['ensemble'] = {
-            'vectorizer': vectorizer,
-            'classifier': best_model,
-            'name': best_model_name
+        self.models['sms'] = best_model
+        self.model_metrics['sms'] = {
+            'model_name': best_name,
+            'cv_f1': float(best_score),
+            'training_samples': len(texts),
         }
         
-        self.model_metrics['ensemble'] = {
-            'f1_score': best_score,
-            'model_name': best_model_name,
-            'results': results
-        }
-        
+        print(f"\n🏆 Best SMS Model: {best_name} (F1: {best_score:.4f})")
         return best_model
     
-    def evaluate_with_thresholds(self, model, X_test, y_test):
-        """
-        Evaluate model with different confidence thresholds
-        """
-        print("\n📊 CONFIDENCE THRESHOLD ANALYSIS")
-        print("-" * 50)
-        
-        # Get prediction probabilities
-        y_proba = model.predict_proba(X_test)[:, 1]
-        
-        thresholds = [0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
-        
-        best_threshold = 0.5
-        best_f1 = 0
-        
-        for threshold in thresholds:
-            y_pred = (y_proba >= threshold).astype(int)
-            
-            # Calculate metrics
-            tn = np.sum((y_pred == 0) & (y_test == 0))
-            fp = np.sum((y_pred == 1) & (y_test == 0))
-            fn = np.sum((y_pred == 0) & (y_test == 1))
-            tp = np.sum((y_pred == 1) & (y_test == 1))
-            
-            accuracy = (tp + tn) / len(y_test) if len(y_test) > 0 else 0
-            precision = tp / (tp + fp) if (tp + fp) > 0 else 0
-            recall = tp / (tp + fn) if (tp + fn) > 0 else 0
-            f1 = 2 * (precision * recall) / (precision + recall) if (precision + recall) > 0 else 0
-            false_positive_rate = fp / (fp + tn) if (fp + tn) > 0 else 0
-            
-            if f1 > best_f1:
-                best_f1 = f1
-                best_threshold = threshold
-            
-            print(f"\nThreshold: {threshold:.1f}")
-            print(f"  Accuracy: {accuracy:.2%} | F1: {f1:.2%}")
-            print(f"  False Positives: {fp} ({false_positive_rate:.2%})")
-            print(f"  False Negatives: {fn}")
-            print(f"  Precision: {precision:.2%} | Recall: {recall:.2%}")
-        
-        print(f"\n🎯 Best threshold: {best_threshold:.1f} (F1: {best_f1:.2%})")
-        return best_threshold
-    
     def save_models(self, models_dir='ml_models'):
-        """
-        Save all trained models to disk
-        """
+        """Save models to disk"""
         os.makedirs(models_dir, exist_ok=True)
         
-        # Save each model
-        for model_name, model in self.models.items():
-            if model_name == 'ensemble':
-                # Save ensemble separately
-                filepath = os.path.join(models_dir, f'{model_name}_vectorizer.pkl')
-                with open(filepath, 'wb') as f:
-                    pickle.dump(model['vectorizer'], f)
-                
-                filepath = os.path.join(models_dir, f'{model_name}_classifier.pkl')
-                with open(filepath, 'wb') as f:
-                    pickle.dump(model['classifier'], f)
-            else:
-                filepath = os.path.join(models_dir, f'{model_name}_model.pkl')
-                with open(filepath, 'wb') as f:
-                    pickle.dump(model, f)
+        for name, model in self.models.items():
+            path = os.path.join(models_dir, f'{name}_model.joblib')
+            joblib.dump(model, path)
+            print(f"   💾 Saved {name} to {path}")
         
-        # Save metrics with full metadata
+        # Also save for detector/ml/models
+        ml_models_dir = os.path.join(os.path.dirname(__file__), 'ml', 'models')
+        os.makedirs(ml_models_dir, exist_ok=True)
+        if 'sms' in self.models:
+            joblib.dump(self.models['sms'], os.path.join(ml_models_dir, 'scam_model.joblib'))
+        
         metadata = {
-            'model_metrics': self.model_metrics,
+            'model_metrics': {k: {kk: float(vv) if isinstance(vv, (float, np.floating)) else vv for kk, vv in v.items()} for k, v in self.model_metrics.items()},
             'training_date': self.training_date.isoformat(),
             'training_samples': self.training_data_size,
-            'models_trained': list(self.models.keys()),
-            'version': self.training_date.strftime("%Y%m%d_%H%M%S")
         }
-        
-        metrics_path = os.path.join(models_dir, 'model_metrics.json')
-        with open(metrics_path, 'w') as f:
+        with open(os.path.join(ml_models_dir, 'metadata.json'), 'w') as f:
             json.dump(metadata, f, indent=2, default=str)
         
-        print(f"\n✅ Models saved to '{models_dir}/'")
-        print(f"   Models: {', '.join(self.models.keys())}")
-        
+        print(f"\n✅ Models saved to '{models_dir}/' and 'detector/ml/models/'")
+    
     def load_models(self, models_dir='ml_models'):
-        """
-        Load trained models from disk
-        """
-        loaded_count = 0
+        """Load trained models"""
+        for name in ['sms', 'url', 'ensemble']:
+            path = os.path.join(models_dir, f'{name}_model.joblib')
+            if os.path.exists(path):
+                self.models[name] = joblib.load(path)
+                print(f"✅ Loaded {name} model")
         
-        # Load SMS model
-        sms_path = os.path.join(models_dir, 'sms_model.pkl')
-        if os.path.exists(sms_path):
-            with open(sms_path, 'rb') as f:
-                self.models['sms'] = pickle.load(f)
-            print("✅ Loaded SMS model")
-            loaded_count += 1
-        
-        # Load URL model
-        url_path = os.path.join(models_dir, 'url_model.pkl')
-        if os.path.exists(url_path):
-            with open(url_path, 'rb') as f:
-                self.models['url'] = pickle.load(f)
-            print("✅ Loaded URL model")
-            loaded_count += 1
-        
-        # Load ensemble
-        ensemble_vec_path = os.path.join(models_dir, 'ensemble_vectorizer.pkl')
-        ensemble_clf_path = os.path.join(models_dir, 'ensemble_classifier.pkl')
-        if os.path.exists(ensemble_vec_path) and os.path.exists(ensemble_clf_path):
-            with open(ensemble_vec_path, 'rb') as f:
-                vectorizer = pickle.load(f)
-            with open(ensemble_clf_path, 'rb') as f:
-                classifier = pickle.load(f)
-            self.models['ensemble'] = {
-                'vectorizer': vectorizer,
-                'classifier': classifier,
-                'name': 'Loaded Ensemble'
-            }
-            print("✅ Loaded Ensemble model")
-            loaded_count += 1
-        
-        # Load metrics
-        metrics_path = os.path.join(models_dir, 'model_metrics.json')
-        if os.path.exists(metrics_path):
-            with open(metrics_path, 'r') as f:
-                metadata = json.load(f)
-                self.model_metrics = metadata.get('model_metrics', {})
-                if 'training_date' in metadata:
-                    self.training_date = datetime.fromisoformat(metadata['training_date'])
-            print("✅ Loaded model metrics")
-        
-        if loaded_count == 0:
-            print("⚠️ No models found. Train models first.")
-            return False
-        
-        print(f"✅ Total {loaded_count} model(s) loaded")
-        return True
+        return len(self.models) > 0
     
     def predict_sms(self, text):
-        """
-        Predict if SMS is scam using trained model
-        """
+        """Predict with context awareness"""
         if 'sms' not in self.models:
-            print("⚠️ SMS model not loaded. Train or load models first.")
             return None
         
+        # First check if this is from a known safe context
+        is_safe, safe_context = self._is_known_safe(text)
+        if is_safe:
+            return {
+                'is_scam': False,
+                'confidence': 0.99,
+                'scam_probability': 5.0,
+                'prediction': 'LEGITIMATE',
+                'context': safe_context,
+                'context_override': True,
+            }
+        
+        # Use ML model
+        marked_text = self._add_context_markers(text)
         model = self.models['sms']
-        proba = model.predict_proba([text[:2000]])[0]  # Limit text length
         
-        is_scam = proba[1] >= 0.5
-        confidence = proba[1] if is_scam else proba[0]
+        try:
+            proba = model.predict_proba([marked_text])[0]
+            scam_prob = proba[1] if len(proba) > 1 else proba[0]
+        except:
+            pred = model.predict([marked_text])[0]
+            scam_prob = float(pred)
         
-        return {
-            'is_scam': is_scam,
-            'confidence': float(confidence),
-            'scam_probability': float(proba[1] * 100),
-            'legitimate_probability': float(proba[0] * 100),
-            'prediction': 'SCAM' if is_scam else 'LEGITIMATE'
-        }
-    
-    def predict_url(self, url):
-        """
-        Predict if URL is phishing using trained model
-        """
-        if 'url' not in self.models:
-            print("⚠️ URL model not loaded. Train or load models first.")
-            return None
-        
-        model = self.models['url']
-        proba = model.predict_proba([url])[0]
-        
-        is_phishing = proba[1] >= 0.5
-        
-        return {
-            'is_phishing': is_phishing,
-            'confidence': float(proba[1] if is_phishing else proba[0]),
-            'phishing_probability': float(proba[1] * 100),
-            'legitimate_probability': float(proba[0] * 100),
-            'prediction': 'PHISHING' if is_phishing else 'SAFE'
-        }
-    
-    def predict_ensemble(self, text):
-        """
-        Predict using ensemble model (if available)
-        """
-        if 'ensemble' not in self.models:
-            print("⚠️ Ensemble model not loaded. Train or load models first.")
-            return None
-        
-        ensemble = self.models['ensemble']
-        vectorizer = ensemble['vectorizer']
-        classifier = ensemble['classifier']
-        
-        X = vectorizer.transform([text[:2000]])
-        proba = classifier.predict_proba(X)[0]
-        
-        is_scam = proba[1] >= 0.5
+        is_scam = scam_prob >= 0.5
         
         return {
             'is_scam': is_scam,
-            'confidence': float(proba[1] if is_scam else proba[0]),
-            'scam_probability': float(proba[1] * 100),
-            'legitimate_probability': float(proba[0] * 100),
-            'model_used': ensemble.get('name', 'Ensemble'),
-            'prediction': 'SCAM' if is_scam else 'LEGITIMATE'
+            'confidence': float(scam_prob if is_scam else 1 - scam_prob),
+            'scam_probability': float(scam_prob * 100),
+            'prediction': 'SCAM' if is_scam else 'LEGITIMATE',
+            'context_override': False,
         }
 
 
 def run_training():
-    """
-    Main training function - call this from Django management command
-    """
+    """Main training function"""
     print("\n" + "="*70)
-    print("🚀 AI FRAUD SHIELD - ML MODEL TRAINING")
+    print("🚀 CONTEXT-AWARE ML MODEL TRAINING")
     print("="*70)
-    print(f"📅 Training Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    print()
     
-    trainer = FraudMLTrainer()
+    trainer = ContextAwareFraudTrainer()
+    texts, labels = trainer.load_training_data_with_hardcoded()
     
-    # Load data with validation
-    X_train, X_val, X_test, y_train, y_val, y_test = trainer.load_training_data_with_validation()
-    
-    if X_train is None:
-        print("\n❌ Not enough data for training. Collect more scam reports first.")
-        print("   Minimum required: 100 samples")
+    if texts is None:
+        print("\n❌ Not enough data. Need at least 100 samples.")
         return None
     
-    # Train SMS model
-    sms_model = trainer.train_sms_model(X_train + X_val + X_test, y_train + y_val + y_test)
-    
-    # Evaluate with thresholds
-    if sms_model:
-        # Use test set for final evaluation
-        X_test_actual, _, y_test_actual, _ = train_test_split(
-            X_test, y_test, test_size=0.5, random_state=42
-        ) if len(X_test) > 0 else (X_test, y_test)
-        
-        trainer.evaluate_with_thresholds(sms_model, X_test_actual, y_test_actual)
-    
-    # Train ensemble
-    trainer.train_ensemble_model(X_train + X_val + X_test, y_train + y_val + y_test)
-    
-    # Save models
+    trainer.train_sms_model(texts, labels)
     trainer.save_models()
     
-    print("\n" + "="*70)
-    print("✅ TRAINING COMPLETE!")
-    print("="*70)
-    
-    # Print summary
-    print("\n📊 Model Summary:")
-    for model_name, metrics in trainer.model_metrics.items():
-        print(f"\n   {model_name.upper()}:")
-        for metric, value in metrics.items():
-            if isinstance(value, float):
-                print(f"      {metric}: {value:.2%}")
-            else:
-                print(f"      {metric}: {value}")
-    
+    print("\n✅ Training complete!")
     return trainer
 
 
-def quick_test():
-    """
-    Quick test function to verify models work
-    """
-    print("\n" + "="*70)
-    print("🧪 QUICK MODEL TEST")
-    print("="*70)
-    
-    trainer = FraudMLTrainer()
-    
-    if not trainer.load_models():
-        print("❌ No models found. Run training first.")
-        return
-    
-    # Test SMS
-    test_sms = "URGENT! Your M-Pesa account has been suspended. Click https://bit.ly/verify to reactivate now!"
-    result = trainer.predict_sms(test_sms)
-    
-    if result:
-        print("\n📱 SMS Test:")
-        print(f"   Text: {test_sms[:80]}...")
-        print(f"   Prediction: {result['prediction']}")
-        print(f"   Confidence: {result['confidence']:.2%}")
-        print(f"   Scam Probability: {result['scam_probability']:.1f}%")
-    
-    # Test ensemble
-    ensemble_result = trainer.predict_ensemble(test_sms)
-    if ensemble_result:
-        print("\n🤖 Ensemble Test:")
-        print(f"   Prediction: {ensemble_result['prediction']}")
-        print(f"   Confidence: {ensemble_result['confidence']:.2%}")
-        print(f"   Model Used: {ensemble_result.get('model_used', 'Unknown')}")
-
-
 if __name__ == "__main__":
-    import sys
-    
-    if len(sys.argv) > 1 and sys.argv[1] == '--test':
-        quick_test()
-    else:
-        run_training()
+    run_training()

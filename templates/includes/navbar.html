@@ -1,0 +1,627 @@
+{% load static %}
+<nav class="navbar-custom">
+    <div class="navbar-container">
+        
+        <!-- Logo -->
+        <a href="/" class="navbar-logo">
+            <div class="logo-icon">
+                <i class="fas fa-shield-alt"></i>
+            </div>
+            <div class="logo-text">
+                <span class="logo-fraud">AI Fraud Shield</span>
+            </div>
+        </a>
+
+        <!-- Desktop Navigation with Dropdowns -->
+        <div class="navbar-desktop">
+            <!-- Home - Everyone -->
+            <a href="/" class="nav-link {% if request.path == '/' %}active{% endif %}">
+                <i class="fas fa-home"></i> Home
+            </a>
+            
+            <!-- About Dropdown - Everyone -->
+            <div class="dropdown">
+                <button class="dropdown-btn {% if '/about/' in request.path or '/how-it-works/' in request.path or '/contact/' in request.path %}active{% endif %}">
+                    <i class="fas fa-info-circle"></i> About <i class="fas fa-chevron-down"></i>
+                </button>
+                <div class="dropdown-content">
+                    <a href="/about/"><i class="fas fa-info-circle"></i> About Us</a>
+                    <a href="/how-it-works/"><i class="fas fa-cogs"></i> How It Works</a>
+                    <a href="/contact/"><i class="fas fa-envelope"></i> Contact</a>
+                </div>
+            </div>
+            
+            <!-- Resources Dropdown - Everyone -->
+            <div class="dropdown">
+                <button class="dropdown-btn {% if '/safety-tips/' in request.path or '/scam-alerts/' in request.path %}active{% endif %}">
+                    <i class="fas fa-lightbulb"></i> Resources <i class="fas fa-chevron-down"></i>
+                </button>
+                <div class="dropdown-content">
+                    <a href="/safety-tips/"><i class="fas fa-lightbulb"></i> Safety Tips</a>
+                    <a href="/scam-alerts/"><i class="fas fa-bell"></i> Scam Alerts</a>
+                    <a href="/faq/"><i class="fas fa-question-circle"></i> FAQ</a>
+                </div>
+            </div>
+            
+            <!-- Tools Dropdown - Everyone -->
+            <div class="dropdown">
+                <button class="dropdown-btn {% if '/report-scam/' in request.path or '/heatmap/' in request.path or '/leaderboard/' in request.path %}active{% endif %}">
+                    <i class="fas fa-tools"></i> Tools <i class="fas fa-chevron-down"></i>
+                </button>
+                <div class="dropdown-content">
+                    <a href="/report-scam/"><i class="fas fa-flag"></i> Report a Scam</a>
+                    <a href="/heatmap/"><i class="fas fa-map-marked-alt"></i> Scam Heatmap</a>
+                    <a href="/leaderboard/"><i class="fas fa-trophy"></i> Leaderboard</a>
+                </div>
+            </div>
+            
+            <!-- Corporate Button - Only for Company Admins and Super Admins -->
+            {% if user.is_authenticated %}
+                {% with profile=user.userprofile %}
+                    {% if profile.role == 'COMPANY_ADMIN' or profile.role == 'SUPER_ADMIN' or user.is_superuser %}
+                        <a href="/corporate/" class="btn-corporate">
+                            <i class="fas fa-building-shield"></i> Corporate
+                        </a>
+                    {% endif %}
+                {% endwith %}
+            {% endif %}
+            
+            <!-- Account Dropdown -->
+            <div class="dropdown">
+                {% if user.is_authenticated %}
+                    <button class="dropdown-btn">
+                        <i class="fas fa-user-circle"></i> {{ user.username|truncatechars:10 }} <i class="fas fa-chevron-down"></i>
+                    </button>
+                    <div class="dropdown-content">
+                        <a href="/profile/"><i class="fas fa-id-card"></i> My Profile</a>
+                        <a href="/my-reports/"><i class="fas fa-list"></i> My Reports</a>
+                        
+                        {% if user.is_staff or user.is_superuser %}
+                            <div class="dropdown-divider"></div>
+                            <a href="{% url 'admin:index' %}" style="color: var(--usiu-gold);">
+                                <i class="fas fa-crown"></i> Admin Panel
+                            </a>
+                            <a href="{% url 'reports_dashboard' %}">
+                                <i class="fas fa-chart-line"></i> Reports Dashboard
+                            </a>
+                        {% endif %}
+                        
+                        <div class="dropdown-divider"></div>
+                        <a href="/logout/" class="logout-item"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                    </div>
+                {% else %}
+                    <button class="dropdown-btn">
+                        <i class="fas fa-user"></i> Account <i class="fas fa-chevron-down"></i>
+                    </button>
+                    <div class="dropdown-content">
+                        <a href="/login/"><i class="fas fa-sign-in-alt"></i> Login</a>
+                        <a href="/register/"><i class="fas fa-user-plus"></i> Sign Up</a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Mobile Menu Button -->
+        <button class="navbar-mobile-btn" id="mobileMenuBtn">
+            <i class="fas fa-bars"></i>
+        </button>
+    </div>
+
+    <!-- Mobile Menu Panel -->
+    <div class="navbar-mobile-panel" id="mobileMenuPanel">
+        <div class="mobile-menu-inner">
+            <div class="mobile-menu-section">
+                <div class="mobile-section-title">Main</div>
+                <a href="/" class="mobile-nav-link {% if request.path == '/' %}active{% endif %}">
+                    <i class="fas fa-home"></i> Home
+                </a>
+            </div>
+            
+            <div class="mobile-menu-section">
+                <div class="mobile-section-title">About</div>
+                <a href="/about/" class="mobile-nav-link {% if '/about/' in request.path %}active{% endif %}">
+                    <i class="fas fa-info-circle"></i> About Us
+                </a>
+                <a href="/how-it-works/" class="mobile-nav-link {% if '/how-it-works/' in request.path %}active{% endif %}">
+                    <i class="fas fa-cogs"></i> How It Works
+                </a>
+                <a href="/contact/" class="mobile-nav-link {% if '/contact/' in request.path %}active{% endif %}">
+                    <i class="fas fa-envelope"></i> Contact
+                </a>
+            </div>
+            
+            <div class="mobile-menu-section">
+                <div class="mobile-section-title">Resources</div>
+                <a href="/safety-tips/" class="mobile-nav-link {% if '/safety-tips/' in request.path %}active{% endif %}">
+                    <i class="fas fa-lightbulb"></i> Safety Tips
+                </a>
+                <a href="/scam-alerts/" class="mobile-nav-link {% if '/scam-alerts/' in request.path %}active{% endif %}">
+                    <i class="fas fa-bell"></i> Scam Alerts
+                </a>
+                <a href="/faq/" class="mobile-nav-link {% if '/faq/' in request.path %}active{% endif %}">
+                    <i class="fas fa-question-circle"></i> FAQ
+                </a>
+            </div>
+            
+            <div class="mobile-menu-section">
+                <div class="mobile-section-title">Tools</div>
+                <a href="/report-scam/" class="mobile-nav-link {% if '/report-scam/' in request.path %}active{% endif %}">
+                    <i class="fas fa-flag"></i> Report a Scam
+                </a>
+                <a href="/heatmap/" class="mobile-nav-link {% if '/heatmap/' in request.path %}active{% endif %}">
+                    <i class="fas fa-map-marked-alt"></i> Scam Heatmap
+                </a>
+                <a href="/leaderboard/" class="mobile-nav-link {% if '/leaderboard/' in request.path %}active{% endif %}">
+                    <i class="fas fa-trophy"></i> Leaderboard
+                </a>
+                
+                {% if user.is_authenticated %}
+                    {% with profile=user.userprofile %}
+                        {% if profile.role == 'COMPANY_ADMIN' or profile.role == 'SUPER_ADMIN' or user.is_superuser %}
+                            <a href="/corporate/" class="mobile-nav-link corporate {% if '/corporate/' in request.path %}active{% endif %}">
+                                <i class="fas fa-building-shield"></i> Corporate Shield
+                            </a>
+                        {% endif %}
+                    {% endwith %}
+                {% endif %}
+            </div>
+            
+            <div class="mobile-divider"></div>
+            <div class="mobile-menu-section">
+                <div class="mobile-section-title">Account</div>
+                {% if user.is_authenticated %}
+                    <a href="/profile/" class="mobile-nav-link">
+                        <i class="fas fa-user-circle"></i> {{ user.username }}
+                    </a>
+                    <a href="/my-reports/" class="mobile-nav-link">
+                        <i class="fas fa-list"></i> My Reports
+                    </a>
+                    
+                    {% if user.is_staff or user.is_superuser %}
+                        <a href="{% url 'admin:index' %}" class="mobile-nav-link" style="color: var(--usiu-gold);">
+                            <i class="fas fa-crown"></i> Admin Panel
+                        </a>
+                        <a href="{% url 'reports_dashboard' %}" class="mobile-nav-link">
+                            <i class="fas fa-chart-line"></i> Reports Dashboard
+                        </a>
+                    {% endif %}
+                    
+                    <a href="/logout/" class="mobile-nav-link logout">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </a>
+                {% else %}
+                    <a href="/login/" class="mobile-nav-link">
+                        <i class="fas fa-sign-in-alt"></i> Login
+                    </a>
+                    <a href="/register/" class="mobile-nav-link signup">
+                        <i class="fas fa-user-plus"></i> Sign Up Free
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</nav>
+
+<style>
+/* CSS Variables */
+:root {
+    --usiu-navy: #003366;
+    --usiu-navy-dark: #002244;
+    --usiu-gold: #FFC72C;
+    --usiu-gold-dark: #e6b422;
+    --usiu-red: #DC2626;
+    --usiu-red-dark: #b91c1c;
+    --usiu-text: #e2e8f0;
+}
+
+/* Navbar Container */
+.navbar-custom {
+    background: var(--usiu-navy);
+    box-shadow: 0 4px 20px rgba(0, 51, 102, 0.2);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    border-bottom: 1px solid rgba(255, 199, 44, 0.2);
+}
+
+.navbar-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 64px;
+}
+
+/* Logo */
+.navbar-logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+}
+
+.logo-icon {
+    width: 36px;
+    height: 36px;
+    background: rgba(255, 199, 44, 0.15);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(255, 199, 44, 0.4);
+    transition: all 0.3s ease;
+}
+
+.navbar-logo:hover .logo-icon {
+    background: rgba(255, 199, 44, 0.25);
+    transform: scale(1.02);
+}
+
+.logo-icon i {
+    color: var(--usiu-gold);
+    font-size: 1.1rem;
+}
+
+.logo-text {
+    display: none;
+}
+
+@media (min-width: 640px) {
+    .logo-text {
+        display: block;
+    }
+}
+
+.logo-fraud {
+    color: var(--usiu-gold);
+    font-weight: 700;
+    font-size: 0.9rem;
+}
+
+/* Desktop Navigation */
+.navbar-desktop {
+    display: none;
+    align-items: center;
+    gap: 8px;
+}
+
+@media (min-width: 1024px) {
+    .navbar-desktop {
+        display: flex;
+    }
+}
+
+/* Dropdown Styles - FIXED */
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.dropdown-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: none;
+    border: none;
+    color: var(--usiu-text);
+    font-size: 0.85rem;
+    font-weight: 500;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.dropdown-btn i.fa-chevron-down {
+    font-size: 0.7rem;
+    transition: transform 0.2s;
+}
+
+.dropdown:hover .dropdown-btn i.fa-chevron-down {
+    transform: rotate(180deg);
+}
+
+.dropdown-btn:hover,
+.dropdown-btn.active {
+    background: rgba(255, 199, 44, 0.12);
+    color: var(--usiu-gold);
+}
+
+/* FIXED: Dropdown content stays open with proper positioning */
+.dropdown-content {
+    position: absolute;
+    top: calc(100% - 5px);
+    left: 0;
+    min-width: 220px;
+    background: var(--usiu-navy-dark);
+    border-radius: 12px;
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 199, 44, 0.2);
+    z-index: 1000;
+    overflow: hidden;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.25s ease;
+    pointer-events: none;
+}
+
+.dropdown:hover .dropdown-content,
+.dropdown-content:hover {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+    pointer-events: auto;
+}
+
+/* Add a transparent bridge to prevent gap issues */
+.dropdown::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    height: 8px;
+    background: transparent;
+}
+
+.dropdown-content a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 18px;
+    color: var(--usiu-text);
+    text-decoration: none;
+    font-size: 0.85rem;
+    transition: all 0.2s;
+}
+
+.dropdown-content a:hover {
+    background: rgba(255, 199, 44, 0.15);
+    color: var(--usiu-gold);
+    padding-left: 24px;
+}
+
+.dropdown-divider {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.1);
+    margin: 6px 0;
+}
+
+.logout-item {
+    color: #fca5a5 !important;
+}
+
+.logout-item:hover {
+    background: rgba(220, 38, 38, 0.2) !important;
+    color: #fecaca !important;
+}
+
+/* Regular Nav Links */
+.nav-link {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    color: var(--usiu-text);
+    font-size: 0.85rem;
+    font-weight: 500;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.nav-link:hover {
+    background: rgba(255, 199, 44, 0.12);
+    color: var(--usiu-gold);
+    transform: translateY(-1px);
+}
+
+.nav-link.active {
+    background: rgba(255, 199, 44, 0.18);
+    color: var(--usiu-gold);
+    border-bottom: 2px solid var(--usiu-gold);
+}
+
+/* Corporate Button */
+.btn-corporate {
+    background: var(--usiu-gold);
+    color: var(--usiu-navy);
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+}
+
+.btn-corporate:hover {
+    background: var(--usiu-gold-dark);
+    transform: translateY(-1px);
+}
+
+/* Mobile Menu Button */
+.navbar-mobile-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 8px;
+    transition: all 0.2s;
+}
+
+@media (min-width: 1024px) {
+    .navbar-mobile-btn {
+        display: none;
+    }
+}
+
+.navbar-mobile-btn:hover {
+    background: rgba(255, 199, 44, 0.1);
+}
+
+.navbar-mobile-btn i {
+    color: white;
+    font-size: 1.25rem;
+}
+
+/* Mobile Menu Panel */
+.navbar-mobile-panel {
+    display: none;
+    background: var(--usiu-navy-dark);
+    border-top: 1px solid rgba(255, 199, 44, 0.15);
+    max-height: calc(100vh - 64px);
+    overflow-y: auto;
+}
+
+.navbar-mobile-panel.show {
+    display: block;
+    animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.mobile-menu-inner {
+    padding: 1rem 1.25rem;
+}
+
+.mobile-menu-section {
+    margin-bottom: 0.5rem;
+}
+
+.mobile-section-title {
+    color: var(--usiu-gold);
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    padding: 8px 12px 4px;
+}
+
+.mobile-nav-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    color: var(--usiu-text);
+    font-size: 0.85rem;
+    font-weight: 500;
+    border-radius: 10px;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.mobile-nav-link:hover {
+    background: rgba(255, 199, 44, 0.1);
+    color: var(--usiu-gold);
+    transform: translateX(4px);
+}
+
+.mobile-nav-link.active {
+    background: rgba(255, 199, 44, 0.15);
+    color: var(--usiu-gold);
+    border-left: 3px solid var(--usiu-gold);
+}
+
+.mobile-nav-link.corporate {
+    background: rgba(255, 199, 44, 0.1);
+    border: 1px solid rgba(255, 199, 44, 0.3);
+}
+
+.mobile-nav-link.logout {
+    color: #fca5a5;
+}
+
+.mobile-nav-link.logout:hover {
+    background: rgba(220, 38, 38, 0.2);
+    color: #fecaca;
+}
+
+.mobile-nav-link.signup {
+    background: rgba(255, 199, 44, 0.1);
+    border: 1px solid rgba(255, 199, 44, 0.3);
+}
+
+.mobile-divider {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.1);
+    margin: 12px 0;
+}
+
+/* Scrollbar */
+.navbar-mobile-panel::-webkit-scrollbar {
+    width: 4px;
+}
+
+.navbar-mobile-panel::-webkit-scrollbar-track {
+    background: #001a3a;
+}
+
+.navbar-mobile-panel::-webkit-scrollbar-thumb {
+    background: var(--usiu-gold);
+    border-radius: 4px;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+    .navbar-container {
+        padding: 0 1rem;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const mobileBtn = document.getElementById('mobileMenuBtn');
+    const mobilePanel = document.getElementById('mobileMenuPanel');
+    
+    if (mobileBtn && mobilePanel) {
+        mobileBtn.addEventListener('click', function() {
+            mobilePanel.classList.toggle('show');
+            const icon = mobileBtn.querySelector('i');
+            if (mobilePanel.classList.contains('show')) {
+                icon.classList.remove('fa-bars');
+                icon.classList.add('fa-times');
+            } else {
+                icon.classList.remove('fa-times');
+                icon.classList.add('fa-bars');
+            }
+        });
+        
+        mobilePanel.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', () => {
+                mobilePanel.classList.remove('show');
+                const icon = mobileBtn.querySelector('i');
+                icon.classList.remove('fa-times');
+                icon.classList.add('fa-bars');
+            });
+        });
+    }
+    
+    window.addEventListener('resize', function() {
+        if (window.innerWidth >= 1024 && mobilePanel && mobilePanel.classList.contains('show')) {
+            mobilePanel.classList.remove('show');
+            const icon = mobileBtn.querySelector('i');
+            icon.classList.remove('fa-times');
+            icon.classList.add('fa-bars');
+        }
+    });
+});
+</script>

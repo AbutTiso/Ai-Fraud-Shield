@@ -1,8 +1,15 @@
 # detector/email_detector.py
+"""
+AI Fraud Shield - Enhanced Email Scam Detection
+Global phishing detection with NO CLICKS, NO NETWORK REQUESTS
+Modern, accurate, production-ready
+"""
+
 import re
 from urllib.parse import urlparse
 import html
 from datetime import datetime
+
 
 class EmailScamDetector:
     """Global email scam detection - NO CLICKS, NO NETWORK REQUESTS"""
@@ -27,36 +34,52 @@ class EmailScamDetector:
             # E-commerce & Services
             'amazon.com', 'amazon.co.uk', 'amazon.de', 'amazon.fr', 'amazon.co.jp',
             'ebay.com', 'aliexpress.com', 'walmart.com', 'target.com', 'bestbuy.com',
-            'flipkart.com', 'shopee.com', 'lazada.com', 'mercari.com',
+            'flipkart.com', 'shopee.com', 'lazada.com', 'mercari.com', 'jumia.co.ke',
+            'kilimall.co.ke',
             # Social Media
             'facebook.com', 'twitter.com', 'instagram.com', 'linkedin.com',
             'whatsapp.com', 'telegram.org', 'tiktok.com', 'snapchat.com',
+            'youtube.com', 'reddit.com', 'pinterest.com',
             # Tech Companies
             'google.com', 'microsoft.com', 'apple.com', 'netflix.com', 'spotify.com',
             'dropbox.com', 'github.com', 'slack.com', 'zoom.us', 'discord.com',
+            'adobe.com', 'salesforce.com', 'oracle.com',
             # Government (Global)
             'gov', 'gov.uk', 'gouv.fr', 'bund.de', 'ca.gov', 'usa.gov',
             'service.gov.uk', 'irs.gov', 'hscic.gov.uk', 'nhs.uk',
+            'ecitizen.go.ke', 'kra.go.ke', 'nssf.go.ke', 'nhif.go.ke',
             # Courier Services
             'dhl.com', 'fedex.com', 'ups.com', 'usps.com', 'dpd.com', 'royalmail.com',
+            'posta.co.ke',
             # Crypto & Fintech
             'coinbase.com', 'binance.com', 'kraken.com', 'crypto.com', 'blockchain.com',
             'revolut.com', 'wise.com', 'venmo.com', 'cash.app', 'payoneer.com',
+            # Kenyan News & Media
+            'nation.africa', 'standardmedia.co.ke', 'citizen.digital', 'kenyans.co.ke',
+            'tuko.co.ke', 'mpasho.co.ke', 'the-star.co.ke', 'cap.news',
         }
         
         # URL shorteners (high risk - global)
-        self.url_shorteners = {'bit.ly', 'tinyurl.com', 'goo.gl', 'short.link', 
-                                'cutt.ly', 'ow.ly', 'is.gd', 'buff.ly', 'adf.ly',
-                                'tr.im', 'tiny.cc', 'cli.gs', 'shorturl.at', 'rb.gy',
-                                't.co', 'lnkd.in', 'fb.me', 'instagr.am', 'goo.gl',
-                                'ow.ly', 's.id', 'shorte.st', 'v.gd', 'x.co', 'qr.net'}
+        self.url_shorteners = {
+            'bit.ly', 'tinyurl.com', 'goo.gl', 'short.link', 
+            'cutt.ly', 'ow.ly', 'is.gd', 'buff.ly', 'adf.ly',
+            'tr.im', 'tiny.cc', 'cli.gs', 'shorturl.at', 'rb.gy',
+            't.co', 'lnkd.in', 'fb.me', 'instagr.am',
+            'ow.ly', 's.id', 'shorte.st', 'v.gd', 'x.co', 'qr.net',
+            'rebrand.ly', 'tiny.one', 'soo.gd', '2.gy', 'bc.vc',
+            'budurl.com', 'clicky.me', 'snip.ly', 'prettylink.com',
+        }
         
         # Suspicious domain extensions (global)
-        self.suspicious_tlds = {'.tk', '.ml', '.ga', '.cf', '.xyz', '.top', '.click', 
-                                 '.download', '.live', '.win', '.bid', '.loan', '.review', 
-                                 '.stream', '.date', '.space', '.website', '.site', '.online',
-                                 '.tech', '.store', '.work', '.link', '.gq', '.cf', '.tk', '.ml',
-                                 '.fit', '.club', '.xyz', '.icu', '.cyou', '.bond', '.monster'}
+        self.suspicious_tlds = {
+            '.tk', '.ml', '.ga', '.cf', '.xyz', '.top', '.click', 
+            '.download', '.live', '.win', '.bid', '.loan', '.review', 
+            '.stream', '.date', '.space', '.website', '.site', '.online',
+            '.tech', '.store', '.work', '.link', '.gq', '.cf', '.tk', '.ml',
+            '.fit', '.club', '.icu', '.cyou', '.bond', '.monster',
+            '.rest', '.bar', '.uno', '.host', '.press', '.pub',
+            '.trade', '.webcam', '.cricket', '.party', '.science',
+        }
         
         # ============ GLOBAL SCAM KEYWORDS BY CATEGORY ============
         
@@ -80,6 +103,8 @@ class EmailScamDetector:
             (r'credit score improvement', 'Credit Score Scam', 18),
             (r'bad credit.*?approved', 'Bad Credit Loan Scam', 16),
             (r'consolidate your debt', 'Debt Consolidation Scam', 14),
+            (r'fuliza.*?limit', 'Fuliza Loan Scam', 22),
+            (r'm-shwari.*?loan', 'M-Shwari Loan Scam', 22),
         ]
         
         # Prize & Lottery Scams (Global)
@@ -100,6 +125,7 @@ class EmailScamDetector:
             (r'unpaid taxes', 'Fake Unpaid Tax Scam', 20),
             (r'tax.*?arrears', 'Tax Arrears Scam', 18),
             (r'file your tax return', 'Fake Tax Return Scam', 15),
+            (r'kra.*?refund', 'KRA Tax Refund Scam', 22),
         ]
         
         # Tech Support Scams (Global)
@@ -114,7 +140,7 @@ class EmailScamDetector:
         
         # Delivery & Courier Scams (Global)
         self.delivery_scams = [
-            (r'(dhl|fedex|ups|usps|royalmail).*?(delivery|package)', 'Fake Delivery Scam', 18),
+            (r'(dhl|fedex|ups|usps|royalmail|posta).*?(delivery|package)', 'Fake Delivery Scam', 18),
             (r'package.*?delivery failed', 'Delivery Failed Scam', 18),
             (r'unable to deliver your package', 'Failed Delivery Scam', 18),
             (r'tracking number.*?click', 'Fake Tracking Scam', 16),
@@ -129,6 +155,7 @@ class EmailScamDetector:
             (r'(recruiting|hiring).*?urgent', 'Urgent Hiring Scam', 14),
             (r'(job offer|job opportunity).*?payment', 'Job Offer Fee Scam', 18),
             (r'(freelance|remote).*?earn', 'Fake Freelance Scam', 14),
+            (r'kazi.*?mtaani', 'Fake Kazi Mtaani Scam', 22),
         ]
         
         # Romance Scams (Global)
@@ -197,6 +224,8 @@ class EmailScamDetector:
                 (r'airtel.*?promotion', 'Airtel Promotion Scam', 15),
                 (r'mtn.*?reward', 'MTN Reward Scam', 15),
                 (r'(vodacom|orange).*?win', 'Mobile Network Prize Scam', 15),
+                (r'ecitizen.*?(suspended|blocked)', 'eCitizen Scam', 22),
+                (r'huduma.*?number', 'Huduma Namba Scam', 20),
             ],
             'asia': [
                 (r'alipay.*?(suspended|blocked)', 'Alipay Suspension Scam', 20),
@@ -302,6 +331,8 @@ class EmailScamDetector:
                 (r'hsbc.*?\.(com)[^.]*$', 'Fake HSBC domain', 35),
                 (r'safaricom.*?\.(com|co\.ke)[^.]*$', 'Fake Safaricom domain', 35),
                 (r'mpesa.*?\.(com|co\.ke)[^.]*$', 'Fake M-Pesa domain', 35),
+                (r'equity.*?\.(com|co\.ke)[^.]*$', 'Fake Equity Bank domain', 30),
+                (r'kcb.*?\.(com|co\.ke)[^.]*$', 'Fake KCB domain', 30),
                 (r'dhl.*?\.(com)[^.]*$', 'Fake DHL domain', 30),
                 (r'fedex.*?\.(com)[^.]*$', 'Fake FedEx domain', 30),
                 (r'ups.*?\.(com)[^.]*$', 'Fake UPS domain', 30),
@@ -436,7 +467,8 @@ class EmailScamDetector:
         
         company_names = ['Safaricom', 'M-Pesa', 'Airtel', 'Telkom', 'Equity', 'KCB', 
                          'PayPal', 'Amazon', 'Apple', 'Microsoft', 'Google', 'Netflix',
-                         'DHL', 'FedEx', 'UPS', 'Bank of America', 'Chase', 'Wells Fargo']
+                         'DHL', 'FedEx', 'UPS', 'Bank of America', 'Chase', 'Wells Fargo',
+                         'Co-op Bank', 'Absa', 'NCBA', 'Standard Chartered', 'KRA']
         
         # ============ Check 1: Extract display name and actual email ============
         from_header = headers.get('from', '')
@@ -497,10 +529,12 @@ class EmailScamDetector:
             
             # Check for typosquatting
             legitimate_patterns = {
-                'safaricom': [r'safaricom', r'safaric0m', r'safaricom-', r'safaricom\.'],
+                'safaricom': [r'safaricom', r'safaric0m', r'safaricom-'],
                 'paypal': [r'paypal', r'paypall', r'pay-pal'],
                 'amazon': [r'amazon', r'amaz0n', r'amzon'],
                 'microsoft': [r'microsoft', r'micros0ft', r'micro-soft'],
+                'equity': [r'equity', r'equitybank', r'equity-'],
+                'kcb': [r'kcb', r'kcbbank', r'kcb-'],
             }
             
             for legit_name, patterns in legitimate_patterns.items():
@@ -512,8 +546,7 @@ class EmailScamDetector:
                             break
         
         # ============ Check 4: Suspicious TLDs in sender domain ============
-        suspicious_tlds = ['.tk', '.ml', '.ga', '.cf', '.xyz', '.top', '.click', '.download', '.live', '.win']
-        for tld in suspicious_tlds:
+        for tld in self.suspicious_tlds:
             if actual_domain and actual_domain.endswith(tld):
                 score += 20
                 warnings.append(f"⚠️ Suspicious domain extension '{tld}' - commonly used by scammers")
@@ -533,7 +566,7 @@ class EmailScamDetector:
             'headers_analyzed': list(headers.keys()),
             'display_name': display_name,
             'sender_domain': actual_domain,
-            'reply_to_mismatch': bool(reply_to and actual_domain and reply_to_domain != actual_domain) if reply_to and actual_domain else False,
+            'reply_to_mismatch': bool(reply_to and actual_domain and reply_to_domain != actual_domain),
             'from_header': from_header[:100] if from_header else None
         }
         
@@ -566,7 +599,8 @@ class EmailScamDetector:
             
             legitimate_companies = ['Safaricom', 'M-Pesa', 'Airtel', 'Telkom', 'Equity', 
                                     'KCB', 'PayPal', 'Amazon', 'Microsoft', 'Apple', 
-                                    'Netflix', 'DHL', 'FedEx', 'UPS', 'Bank', 'Chase']
+                                    'Netflix', 'DHL', 'FedEx', 'UPS', 'Bank', 'Chase',
+                                    'Co-op', 'Absa', 'NCBA', 'KRA', 'NSSF']
             
             for company in legitimate_companies:
                 if company.lower() in display_name.lower():
@@ -604,33 +638,31 @@ class EmailScamDetector:
                 score = max(0, score - 10)
                 warnings.append("✓ Email authentication passed (DKIM/SPF valid)")
         
-                return {
-                    'score': min(100, score),
-                    'warnings': warnings,
-                    'headers_found': list(headers.keys()),
-                    'from_domain': from_header.split('@')[-1] if '@' in from_header else None,
-                    'has_auth_results': bool(auth_results),
-                    'auth_passed': 'pass' in auth_results.lower() if auth_results else None,
-                    'is_spoofed': score >= 40
-                }
+        return {
+            'score': min(100, score),
+            'warnings': warnings,
+            'headers_found': list(headers.keys()),
+            'from_domain': from_header.split('@')[-1] if '@' in from_header else None,
+            'has_auth_results': bool(auth_results),
+            'auth_passed': 'pass' in auth_results.lower() if auth_results else None,
+            'is_spoofed': score >= 40
+        }
 
-            def extract_sender_domain(self, email_text):
-                """Extract just the sender's email domain from email headers"""
-                
-                # Look for From: header
-                from_match = re.search(r'From:.*?<([^>]+)>', email_text, re.IGNORECASE)
-                if not from_match:
-                    from_match = re.search(r'From:\s*([^\s]+@[^\s]+)', email_text, re.IGNORECASE)
-                
-                if from_match:
-                    email = from_match.group(1)
-                    if '@' in email:
-                        return email.split('@')[-1].lower()
-                
-                return None
-
-    # ============ ATTACHMENT SCANNING ============
+    def extract_sender_domain(self, email_text):
+        """Extract just the sender's email domain from email headers"""
         
+        # Look for From: header
+        from_match = re.search(r'From:.*?<([^>]+)>', email_text, re.IGNORECASE)
+        if not from_match:
+            from_match = re.search(r'From:\s*([^\s]+@[^\s]+)', email_text, re.IGNORECASE)
+        
+        if from_match:
+            email = from_match.group(1)
+            if '@' in email:
+                return email.split('@')[-1].lower()
+        
+        return None
+
     # ============ ATTACHMENT SCANNING ============
     
     def extract_attachment_info(self, email_text):
@@ -783,7 +815,7 @@ class EmailScamDetector:
                 'count': 0,
                 'warnings': [],
                 'score': 0,
-                'highest_risk': 'LOW',  # ← YOU NEED THIS LINE
+                'highest_risk': 'LOW',
                 'attachments': []
             }
         
@@ -813,6 +845,7 @@ class EmailScamDetector:
             'highest_risk': highest_risk,
             'attachments': [{'name': a['filename'], 'risk': a['suspicious']['risk'] if a['suspicious'] else 'UNKNOWN'} for a in attachments[:5]]
         }
+
 
 # Create singleton instance
 _detector = EmailScamDetector()

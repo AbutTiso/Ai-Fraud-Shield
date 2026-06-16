@@ -1,11 +1,13 @@
 # detector/unified_risk_engine.py
 """
-Unified Risk Engine - Works with your existing detectors
+Unified Risk Engine - Single entry point for all fraud detection
+Routes requests to appropriate detectors with consistent output format
 """
 
 import re
 from datetime import datetime, timedelta
 from typing import Dict, Any, Optional
+from urllib.parse import urlparse
 
 # Import your existing modules
 from .sms_detector import detect_sms_scam
@@ -37,7 +39,8 @@ except ImportError:
 
 class UnifiedRiskEngine:
     """
-    Single entry point for all fraud detection
+    Single entry point for all fraud detection.
+    Routes requests to appropriate detectors with consistent output format.
     """
     
     def __init__(self, use_ml: bool = False):
@@ -54,6 +57,8 @@ class UnifiedRiskEngine:
         self.use_ml = use_ml and ML_AVAILABLE
         self.ml_enhanced_sms = None
         self.ml_enhanced_email = None
+        self.ml_available = False
+        self.ml_trainer = None
         
         if self.use_ml and HybridScamDetector:
             try:
@@ -67,12 +72,11 @@ class UnifiedRiskEngine:
     def get_dashboard_stats(self) -> Dict:
         """Get statistics for dashboard from database"""
         try:
-            # Try to import models
             from .models import ScamReport, PhoneRisk, UrlRisk
             from django.utils import timezone
             
             stats = {
-                'total_scams_reported': ScamReport.objects.count(),
+                'total_scams_reported': ScamReport.objects.count() if ScamReport else 0,
                 'high_risk_phones': PhoneRisk.objects.filter(risk_score__gte=70).count() if PhoneRisk else 0,
                 'malicious_urls': UrlRisk.objects.filter(is_phishing=True).count() if UrlRisk else 0,
                 'recent_reports': ScamReport.objects.filter(
@@ -83,7 +87,6 @@ class UnifiedRiskEngine:
             return stats
         except Exception as e:
             print(f"Dashboard stats error: {e}")
-            # Return default stats if database not available
             return {
                 'total_scams_reported': 0,
                 'high_risk_phones': 0,
@@ -94,7 +97,6 @@ class UnifiedRiskEngine:
     
     def analyze_sms(self, sms_text: str) -> Dict[str, Any]:
         """Analyze SMS message"""
-        # Get rule-based result
         result = detect_sms_scam(sms_text)
         score = result.get('score', 0)
         
@@ -122,8 +124,13 @@ class UnifiedRiskEngine:
     def analyze_email(self, email_content: str, sender: str = None) -> Dict[str, Any]:
         """Analyze email"""
         try:
-            result = self.email_detector.detect(email_content)
-        except AttributeError:
+            # Try detect method first, fallback to direct function call
+            if hasattr(self.email_detector, 'detect'):
+                result = self.email_detector.detect(email_content)
+            else:
+                from .email_detector import detect_email_scam
+                result = detect_email_scam(email_content)
+        except Exception:
             result = {'score': 0, 'warnings': []}
         
         score = result.get('score', 0)
@@ -150,7 +157,6 @@ class UnifiedRiskEngine:
     def analyze_url(self, url: str) -> Dict[str, Any]:
         """Analyze URL for phishing"""
         try:
-            # Call your existing analyze_url_safely function
             result = analyze_url_safely(url)
             score = result.get('score', 0)
             
@@ -170,6 +176,7 @@ class UnifiedRiskEngine:
                 'is_ml_enhanced': False
             }
         except Exception as e:
+            print(f"URL analysis error: {e}")
             return self._basic_url_check(url)
     
     def analyze_phone(self, phone_number: str) -> Dict[str, Any]:
@@ -208,7 +215,7 @@ class UnifiedRiskEngine:
         """Analyze WhatsApp message"""
         if detect_whatsapp_scam:
             try:
-                result = detect_whatsapp_scam(message, sender)
+                result = detect_whatsapp_scam(message)
                 score = result.get('score', 0)
                 return {
                     'detection_type': 'WHATSAPP',
@@ -224,6 +231,12 @@ class UnifiedRiskEngine:
                 print(f"WhatsApp detector error: {e}")
         
         return self.analyze_sms(message)
+    
+    def analyze_telegram(self, message: str) -> Dict[str, Any]:
+        """Analyze Telegram message (routes to SMS detector)"""
+        result = self.analyze_sms(message)
+        result['detection_type'] = 'TELEGRAM'
+        return result
     
     def auto_detect(self, content: str) -> Dict[str, Any]:
         """Auto-detect content type and route to appropriate analyzer"""
@@ -243,7 +256,38 @@ class UnifiedRiskEngine:
         return self.analyze_sms(content)
     
     def get_legitimate_domains(self) -> set:
+        """Get set of known legitimate domains"""
         return self.legitimate_domains
+    
+    def load_ml_models(self):
+        """Load trained ML models if available"""
+        try:
+            from .ml_trainer import FraudMLTrainer
+            self.ml_trainer = FraudMLTrainer()
+            self.ml_trainer.load_models()
+            self.ml_available = True
+            print("✅ ML models loaded successfully")
+        except Exception as e:
+            print(f"⚠️ ML models not available: {e}")
+            self.ml_available = False
+    
+    def predict_with_ml(self, text, detection_type='sms'):
+        """Get ML prediction for text"""
+        if not self.ml_available or not self.ml_trainer:
+            return None
+        
+        try:
+            if detection_type == 'sms':
+                return self.ml_trainer.predict_sms(text)
+            elif detection_type == 'url':
+                return self.ml_trainer.predict_url(text)
+            else:
+                return self.ml_trainer.predict_ensemble(text)
+        except Exception as e:
+            print(f"ML prediction error: {e}")
+            return None
+    
+    # ============ INTERNAL HELPERS ============
     
     def _get_risk_level(self, score: int) -> str:
         if score >= 70:
@@ -286,74 +330,63 @@ class UnifiedRiskEngine:
             return f"📞 SAFE ({score:.0f}%): No scam reports for this number."
     
     def _basic_url_check(self, url: str) -> Dict:
-        """Fallback URL check"""
-        from urllib.parse import urlparse
-        parsed = urlparse(url)
-        domain = parsed.netloc.lower()
-        
-        if domain.startswith('www.'):
-            domain = domain[4:]
-        
-        is_legitimate = domain in self.legitimate_domains
-        suspicious_patterns = ['secure', 'verify', 'login', 'update', 'confirm', 'account']
-        has_suspicious = any(pattern in domain for pattern in suspicious_patterns)
-        
-        if is_legitimate:
-            score = 0
-            warnings = ["Domain is in trusted whitelist"]
-            message = "✅ This is a verified legitimate domain"
-        elif has_suspicious:
-            score = 70
-            warnings = ["Domain contains suspicious keywords"]
-            message = "⚠️ Domain appears suspicious"
-        else:
-            score = 30
-            warnings = ["Domain not recognized as legitimate"]
-            message = "Domain not in whitelist. Verify carefully."
-        
-        return {
-            'detection_type': 'URL',
-            'timestamp': datetime.now().isoformat(),
-            'url': url,
-            'score': score,
-            'risk_level': self._get_risk_level(score),
-            'is_phishing': score > 50,
-            'warnings': warnings,
-            'domain': domain,
-            'has_https': parsed.scheme == 'https',
-            'message': message,
-            'emoji': '🔗',
-            'explanation': self._generate_url_explanation(score),
-            'is_ml_enhanced': False
-        }
-
-        # Add this method to UnifiedRiskEngine class
-
-        def load_ml_models(self):
-            """Load trained ML models if available"""
-            try:
-                from .ml_trainer import FraudMLTrainer
-                self.ml_trainer = FraudMLTrainer()
-                self.ml_trainer.load_models()
-                self.ml_available = True
-                print("✅ ML models loaded successfully")
-            except Exception as e:
-                print(f"⚠️ ML models not available: {e}")
-                self.ml_available = False
-
-        def predict_with_ml(self, text, detection_type='sms'):
-            """Get ML prediction for text"""
-            if not self.ml_available:
-                return None
+        """Fallback URL check when primary analyzer fails"""
+        try:
+            parsed = urlparse(url)
+            domain = parsed.netloc.lower()
             
-            try:
-                if detection_type == 'sms':
-                    return self.ml_trainer.predict_sms(text)
-                elif detection_type == 'url':
-                    return self.ml_trainer.predict_url(text)
-            except Exception as e:
-                print(f"ML prediction error: {e}")
-                return None
+            if domain.startswith('www.'):
+                domain = domain[4:]
+            
+            is_legitimate = domain in self.legitimate_domains
+            suspicious_patterns = ['secure', 'verify', 'login', 'update', 'confirm', 'account']
+            has_suspicious = any(pattern in domain for pattern in suspicious_patterns)
+            
+            if is_legitimate:
+                score = 0
+                warnings = ["Domain is in trusted whitelist"]
+                message = "✅ This is a verified legitimate domain"
+            elif has_suspicious:
+                score = 70
+                warnings = ["Domain contains suspicious keywords"]
+                message = "⚠️ Domain appears suspicious"
+            else:
+                score = 30
+                warnings = ["Domain not recognized as legitimate"]
+                message = "Domain not in whitelist. Verify carefully."
+            
+            return {
+                'detection_type': 'URL',
+                'timestamp': datetime.now().isoformat(),
+                'url': url,
+                'score': score,
+                'risk_level': self._get_risk_level(score),
+                'is_phishing': score > 50,
+                'warnings': warnings,
+                'domain': domain,
+                'has_https': parsed.scheme == 'https',
+                'message': message,
+                'emoji': '🔗',
+                'explanation': self._generate_url_explanation(score),
+                'is_ml_enhanced': False
+            }
+        except Exception:
+            return {
+                'detection_type': 'URL',
+                'timestamp': datetime.now().isoformat(),
+                'url': url,
+                'score': 50,
+                'risk_level': 'MEDIUM_RISK',
+                'is_phishing': False,
+                'warnings': ['Could not analyze URL'],
+                'domain': 'unknown',
+                'has_https': False,
+                'message': 'Could not analyze URL',
+                'emoji': '❓',
+                'explanation': 'URL analysis failed. Manual verification recommended.',
+                'is_ml_enhanced': False
+            }
+
 
 # Create a singleton instance
 risk_engine = UnifiedRiskEngine(use_ml=False)  # Set to True when ML is ready

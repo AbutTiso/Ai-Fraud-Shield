@@ -1073,5 +1073,4 @@ code {
 .scam-detected {
     background: #fee2e2;
     border-left: 4px solid var(--danger-500);
-    color: #991b1b;
 }

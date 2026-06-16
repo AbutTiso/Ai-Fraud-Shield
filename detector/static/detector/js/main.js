@@ -1,4 +1,4 @@
-// detector/static/detector/js/main.js - CLEANED & FIXED VERSION
+// detector/static/detector/js/main.js - CLEANED & FIXED VERSION WITH LIVE TERMINATION WARNINGS
 
 // ============================================================
 // UTILITY FUNCTIONS
@@ -923,6 +923,172 @@ function updateScamMeter(score) {
       }
     }
   }
+  
+  // Call critical terminate warning on every score update
+  showCriticalTerminateWarning(currentScamScore, detectedPatterns);
+}
+
+// ============================================================
+// CRITICAL TERMINATE WARNINGS - LIVE IN-CALL ALERTS
+// ============================================================
+
+// Show critical terminate warning during live call
+function showCriticalTerminateWarning(riskScore, detectedKeywords) {
+  const warningBanner = document.getElementById('terminateWarningBanner');
+  const floatingBtn = document.getElementById('floatingTerminateBtn');
+  const monitorStatus = document.getElementById('monitorStatus');
+  
+  if (riskScore >= 70) {
+    // Show warning banner
+    if (warningBanner) {
+      warningBanner.style.display = 'block';
+      
+      // Update warning message with specific threats
+      const warningMsgDiv = document.getElementById('terminateWarningMsg');
+      if (warningMsgDiv) {
+        let threatText = '';
+        if (detectedKeywords && detectedKeywords.length > 0) {
+          const uniqueThreats = [...new Set(detectedKeywords)];
+          const threatList = uniqueThreats.slice(0, 3).join(', ');
+          threatText = ` - Detected: ${threatList}`;
+        }
+        warningMsgDiv.innerHTML = `<div class="d-flex justify-content-between align-items-center">
+                        <div>
+                          <i class="fas fa-skull-crosswalk" style="font-size: 1.5rem; margin-right: 10px;"></i>
+                          <strong>🚨 SCAM DETECTED! HANG UP IMMEDIATELY! 🚨</strong>
+                          <div class="small mt-1">The caller is trying to scam you${threatText}</div>
+                        </div>
+                        <button id="terminateCallBtn" class="btn btn-light">
+                          <i class="fas fa-phone-slash"></i> HANG UP
+                        </button>
+                      </div>`;
+        
+        // Re-attach terminate button event
+        const terminateBtn = document.getElementById('terminateCallBtn');
+        if (terminateBtn && !terminateBtn.hasListener) {
+          terminateBtn.hasListener = true;
+          terminateBtn.addEventListener('click', () => {
+            stopCallMonitoring();
+            showToast('📞 Call terminated. You did the right thing! Stay safe!', 'success');
+            // Hide warning banner after termination
+            warningBanner.style.display = 'none';
+            if (floatingBtn) floatingBtn.style.display = 'none';
+          });
+        }
+      }
+    }
+    
+    // Show floating button
+    if (floatingBtn) {
+      floatingBtn.style.display = 'flex';
+      if (!floatingBtn.hasListener) {
+        floatingBtn.hasListener = true;
+        floatingBtn.addEventListener('click', () => {
+          stopCallMonitoring();
+          showToast('📞 Call terminated. Stay safe!', 'success');
+          floatingBtn.style.display = 'none';
+          if (warningBanner) warningBanner.style.display = 'none';
+        });
+      }
+    }
+    
+    // Update status badge to critical
+    if (monitorStatus) {
+      monitorStatus.className = 'status-badge status-badge-critical';
+      monitorStatus.innerHTML = '<i class="fas fa-skull-crossbones"></i> CRITICAL - HANG UP!';
+    }
+    
+    // Play multiple alert beeps for urgency
+    playAlertBeep();
+    setTimeout(() => playAlertBeep(), 300);
+    setTimeout(() => playAlertBeep(), 600);
+    
+    // Send desktop notification
+    if (Notification.permission === 'granted') {
+      const threatMsg = detectedKeywords && detectedKeywords.length > 0 ? ` - ${detectedKeywords.slice(0, 3).join(', ')}` : '';
+      new Notification('🚨 SCAM DETECTED! HANG UP NOW!', {
+        body: `Risk: ${riskScore}%${threatMsg}`,
+        icon: '/static/detector/images/scam-alert.png',
+        requireInteraction: true,
+        vibrate: [200, 100, 200]
+      });
+    } else if (Notification.permission !== 'denied') {
+      Notification.requestPermission();
+    }
+    
+    // Add critical alert to realtime alerts
+    const threatText = detectedKeywords && detectedKeywords.length > 0 ? ` - ${detectedKeywords.slice(0, 3).join(', ')}` : '';
+    addRealtimeAlert('danger', `🔴🔴🔴 CRITICAL! HANG UP NOW! Risk: ${riskScore}%${threatText}`);
+    
+  } else if (riskScore >= 50) {
+    // High risk - show warning but not as critical
+    if (warningBanner) {
+      warningBanner.style.display = 'block';
+      const warningMsgDiv = document.getElementById('terminateWarningMsg');
+      if (warningMsgDiv) {
+        warningMsgDiv.innerHTML = `<div class="d-flex justify-content-between align-items-center">
+                        <div>
+                          <i class="fas fa-exclamation-triangle" style="font-size: 1.5rem; margin-right: 10px;"></i>
+                          <strong>⚠️ HIGH RISK SCAM DETECTED!</strong>
+                          <div class="small mt-1">Strong scam indicators - Consider hanging up</div>
+                        </div>
+                        <button id="terminateCallBtn" class="btn btn-light">
+                          <i class="fas fa-phone-slash"></i> HANG UP
+                        </button>
+                      </div>`;
+        
+        const terminateBtn = document.getElementById('terminateCallBtn');
+        if (terminateBtn && !terminateBtn.hasListener) {
+          terminateBtn.hasListener = true;
+          terminateBtn.addEventListener('click', () => {
+            stopCallMonitoring();
+            showToast('📞 Call terminated. Smart choice!', 'success');
+            warningBanner.style.display = 'none';
+          });
+        }
+      }
+    }
+    
+    if (monitorStatus) {
+      monitorStatus.className = 'status-badge bg-warning text-dark';
+      monitorStatus.innerHTML = '<i class="fas fa-exclamation-triangle"></i> HIGH RISK';
+    }
+    
+    const threatText = detectedKeywords && detectedKeywords.length > 0 ? ` - ${detectedKeywords.slice(0, 2).join(', ')}` : '';
+    addRealtimeAlert('warning', `⚠️ HIGH RISK!${threatText}`);
+    
+  } else if (riskScore >= 30) {
+    // Medium risk - show caution
+    if (monitorStatus) {
+      monitorStatus.className = 'status-badge bg-warning text-dark';
+      monitorStatus.innerHTML = '<i class="fas fa-shield-alt"></i> CAUTION';
+    }
+  } else {
+    // Safe - reset status
+    if (warningBanner) warningBanner.style.display = 'none';
+    if (floatingBtn) floatingBtn.style.display = 'none';
+    if (monitorStatus && !isMonitoring) {
+      monitorStatus.className = 'status-badge bg-secondary';
+      monitorStatus.innerHTML = '<i class="fas fa-circle"></i> Not monitoring';
+    } else if (monitorStatus && isMonitoring) {
+      monitorStatus.className = 'status-badge bg-success status-badge-live';
+      monitorStatus.innerHTML = '<i class="fas fa-microphone-alt"></i> LIVE - SAFE';
+    }
+  }
+}
+
+// Request notification permission on page load
+function requestNotificationPermission() {
+  if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission();
+  }
+}
+
+// Call this when DOM loads
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', requestNotificationPermission);
+} else {
+  requestNotificationPermission();
 }
 
 function playAlertBeep() {
@@ -1089,9 +1255,12 @@ function initSpeechRecognition() {
         if (currentScamScore >= 70) {
           showToast("CRITICAL SCAM DETECTED! HANG UP NOW!", "danger");
         }
+      } else if (currentScamScore > 0) {
+        // Gradually decrease risk score when no scams detected in recent speech
+        currentScamScore = Math.max(0, currentScamScore - 5);
+        updateScamMeter(currentScamScore);
       } else {
         consecutiveScamPhrases = Math.max(0, consecutiveScamPhrases - 0.3);
-        updateScamMeter(currentScamScore * 0.95);
       }
     }
   };
@@ -1190,6 +1359,12 @@ async function startCallMonitoring() {
 // FIXED: stopCallMonitoring now uses FormData and calls updateStatsInstant
 async function stopCallMonitoring() {
   console.log("Stop monitoring clicked");
+  
+  // Hide warning banners immediately
+  const warningBanner = document.getElementById('terminateWarningBanner');
+  const floatingBtn = document.getElementById('floatingTerminateBtn');
+  if (warningBanner) warningBanner.style.display = 'none';
+  if (floatingBtn) floatingBtn.style.display = 'none';
 
   isMonitoring = false;
   speechRecognitionActive = false;
@@ -1296,6 +1471,8 @@ styleSheet.textContent = `
     .animate-pulse { animation: pulse 1.5s ease-in-out infinite; }
     @keyframes pulse { 0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; } }
     #scamMeterBar { transition: width 0.3s ease, background-color 0.3s ease; }
+    .status-badge-critical { background: #dc3545 !important; animation: pulse 0.5s ease-in-out infinite; }
+    .status-badge-live { background: #28a745 !important; animation: pulse 1.5s ease-in-out infinite; }
 `;
 document.head.appendChild(styleSheet);
 

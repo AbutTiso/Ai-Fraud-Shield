@@ -1,32 +1,114 @@
 {% extends "admin/base.html" %}
 {% load static %}
 
+{% block title %}Logged Out | USIU Africa AI Fraud Shield{% endblock %}
+
 {% block extrastyle %}
 <style>
-  body { background: linear-gradient(135deg, #002855, #001a3f); }
+  .logout-container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #003366, #002244);
+    padding: 20px;
+  }
+  
   .logout-card {
-    max-width: 400px; margin: 100px auto;
-    background: white; border-radius: 16px;
-    padding: 40px; text-align: center;
-    border-top: 5px solid #f5a623;
-    box-shadow: 0 25px 50px rgba(0,0,0,0.3);
+    max-width: 420px;
+    width: 100%;
+    background: white;
+    border-radius: 20px;
+    padding: 40px 32px;
+    text-align: center;
+    border-top: 5px solid #FFC72C;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.3);
   }
-  .logout-card h2 { color: #002855; }
-  .logout-card a {
-    display: inline-block; margin-top: 20px;
-    padding: 12px 30px; border-radius: 50px;
-    font-weight: 700; text-decoration: none;
+  
+  .logout-icon {
+    width: 70px;
+    height: 70px;
+    background: #10B981;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
   }
-  .btn-login { background: #002855; color: white; }
-  .btn-home { background: #f5a623; color: #002855; }
+  
+  .logout-icon i {
+    font-size: 2rem;
+    color: white;
+  }
+  
+  .logout-card h2 {
+    color: #003366;
+    font-size: 1.5rem;
+    margin-bottom: 12px;
+    font-weight: 700;
+  }
+  
+  .logout-card p {
+    color: #6B7280;
+    margin-bottom: 28px;
+  }
+  
+  .logout-buttons {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  
+  .btn {
+    padding: 12px 24px;
+    border-radius: 50px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  .btn-login {
+    background: #003366;
+    color: white;
+  }
+  
+  .btn-login:hover {
+    background: #002244;
+    transform: translateY(-2px);
+  }
+  
+  .btn-home {
+    background: #FFC72C;
+    color: #003366;
+  }
+  
+  .btn-home:hover {
+    background: #e6b422;
+    transform: translateY(-2px);
+  }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="logout-card">
-  <h2><i class="fas fa-check-circle" style="color:#10b981;"></i> Logged Out</h2>
-  <p>You have been successfully logged out.</p>
-  <a href="/admin/login/" class="btn-login">Login Again</a>
-  <a href="/" class="btn-home">Go to Homepage</a>
+<div class="logout-container">
+  <div class="logout-card">
+    <div class="logout-icon">
+      <i class="fas fa-check-circle"></i>
+    </div>
+    <h2>Successfully Logged Out</h2>
+    <p>You have been securely logged out of the admin panel.</p>
+    <div class="logout-buttons">
+      <a href="{% url 'admin:index' %}" class="btn btn-login">
+        <i class="fas fa-sign-in-alt"></i> Login Again
+      </a>
+      <a href="/" class="btn btn-home">
+        <i class="fas fa-home"></i> Back to Home
+      </a>
+    </div>
+  </div>
 </div>
 {% endblock %}

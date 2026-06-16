@@ -81,3 +81,16 @@ class UserProfileAdmin(admin.ModelAdmin):
     list_display = ('user', 'company', 'role', 'department', 'is_active', 'created_at')
     list_filter = ('role', 'company', 'is_active')
     search_fields = ('user__username', 'company__name')
+    
+# At the bottom of detector/admin.py, add this to fix the custom admin site
+from django.contrib.admin import site
+
+# Make sure models are registered with the default site too
+if ScamReport not in site._registry:
+    site.register(ScamReport, ScamReportAdmin)
+if BlockedNumber not in site._registry:
+    site.register(BlockedNumber, BlockedNumberAdmin)
+if Company not in site._registry:
+    site.register(Company, CompanyAdmin)
+if UserProfile not in site._registry:
+    site.register(UserProfile, UserProfileAdmin)

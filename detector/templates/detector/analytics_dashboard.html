@@ -1,0 +1,800 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Analytics Dashboard - AI Fraud Shield{% endblock %}
+
+{% block extra_css %}
+<style>
+    .analytics-header {
+        background: linear-gradient(135deg, #002855 0%, #001a3f 100%);
+        color: white;
+        padding: 30px 28px;
+        border-bottom: 4px solid #f5a623;
+        margin-bottom: 24px;
+        border-radius: 12px 12px 0 0;
+    }
+    
+    .stat-card {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        text-align: center;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        border: 1px solid #e2e8f0;
+        transition: all 0.3s;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .stat-card::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, #002855, #f5a623);
+        transform: scaleX(0);
+        transition: transform 0.3s;
+    }
+    
+    .stat-card:hover::after {
+        transform: scaleX(1);
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    }
+    
+    .stat-number {
+        font-size: 2rem;
+        font-weight: 800;
+        color: #002855;
+        transition: all 0.3s;
+    }
+    
+    .stat-number.animate {
+        animation: countUp 0.5s ease-out;
+    }
+    
+    @keyframes countUp {
+        from { opacity: 0; transform: scale(0.5); }
+        to { opacity: 1; transform: scale(1); }
+    }
+    
+    .stat-label {
+        color: #64748b;
+        font-size: 0.85rem;
+        margin-top: 4px;
+    }
+    
+    .stat-icon {
+        font-size: 2rem;
+        margin-bottom: 8px;
+    }
+    
+    .stat-change {
+        font-size: 0.75rem;
+        margin-top: 4px;
+        display: inline-block;
+        padding: 2px 10px;
+        border-radius: 20px;
+    }
+    
+    .stat-change.up { background: #dcfce7; color: #166534; }
+    .stat-change.down { background: #fee2e2; color: #991b1b; }
+    .stat-change.neutral { background: #fef3c7; color: #92400e; }
+    
+    .chart-container {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        border: 1px solid #e2e8f0;
+        margin-bottom: 20px;
+        transition: all 0.3s;
+    }
+    
+    .chart-container:hover {
+        box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+    }
+    
+    .chart-container h5 {
+        color: #002855;
+        font-weight: 700;
+        margin-bottom: 16px;
+        border-left: 4px solid #f5a623;
+        padding-left: 12px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .chart-box {
+        height: 300px;
+        position: relative;
+    }
+    
+    .badge-critical { background: #dc3545; color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; }
+    .badge-high { background: #fd7e14; color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; }
+    .badge-medium { background: #ffc107; color: #333; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; }
+    .badge-low { background: #28a745; color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; }
+    
+    .filter-buttons .btn-filter {
+        padding: 4px 12px;
+        border-radius: 20px;
+        border: 1px solid #e2e8f0;
+        background: white;
+        color: #64748b;
+        font-size: 0.8rem;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .filter-buttons .btn-filter:hover {
+        border-color: #002855;
+        color: #002855;
+    }
+    
+    .filter-buttons .btn-filter.active {
+        background: #002855;
+        color: white;
+        border-color: #002855;
+    }
+    
+    .live-indicator {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #10b981;
+        margin-right: 6px;
+        animation: pulse 1.5s ease-in-out infinite;
+    }
+    
+    @keyframes pulse {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.5; transform: scale(0.8); }
+    }
+    
+    @media (max-width: 768px) {
+        .stat-number { font-size: 1.5rem; }
+        .chart-box { height: 220px; }
+    }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
+</head>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="main-card">
+        <!-- Header -->
+        <div class="analytics-header">
+            <div class="d-flex justify-content-between align-items-center flex-wrap">
+                <div>
+                    <h2 class="mb-0"><i class="fas fa-chart-line" style="color: #f5a623;"></i> Analytics Dashboard</h2>
+                    <p class="mb-0" style="opacity: 0.8;">
+                        <span class="live-indicator"></span> Live updates every 30 seconds
+                    </p>
+                </div>
+                <div class="d-flex gap-2 flex-wrap">
+                    <button class="btn" style="background: #f5a623; color: #002855; font-weight: 600;" onclick="exportChartAsImage()">
+                        <i class="fas fa-image"></i> Export PNG
+                    </button>
+                    <button class="btn" style="background: #002855; color: white; font-weight: 600;" onclick="window.location.href='/api/export-analytics-pdf/'">
+                        <i class="fas fa-file-pdf"></i> Export PDF
+                    </button>
+                    <button class="btn" style="background: rgba(255,255,255,0.15); color: white; font-weight: 600;" onclick="refreshData()">
+                        <i class="fas fa-sync"></i> Refresh
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Time Range Filters -->
+            <div class="mt-3 d-flex gap-2 flex-wrap filter-buttons">
+                <button class="btn-filter" data-days="7" onclick="setTimeRange(7)">7 Days</button>
+                <button class="btn-filter active" data-days="30" onclick="setTimeRange(30)">30 Days</button>
+                <button class="btn-filter" data-days="60" onclick="setTimeRange(60)">60 Days</button>
+                <button class="btn-filter" data-days="90" onclick="setTimeRange(90)">90 Days</button>
+                <button class="btn-filter" data-days="0" onclick="setTimeRange(0)">All Time</button>
+            </div>
+        </div>
+        
+        <!-- Summary Stats -->
+        <div class="row g-3 mb-4" id="summaryStats">
+            <div class="col-md-3 col-6">
+                <div class="stat-card">
+                    <div class="stat-icon">📊</div>
+                    <div class="stat-number" id="totalReports">--</div>
+                    <div class="stat-label">Total Reports</div>
+                    <div class="stat-change neutral" id="totalChange">--</div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="stat-card">
+                    <div class="stat-icon">🚨</div>
+                    <div class="stat-number" id="highRiskCount">--</div>
+                    <div class="stat-label">High Risk</div>
+                    <div class="stat-change neutral" id="highRiskChange">--</div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="stat-card">
+                    <div class="stat-icon">📈</div>
+                    <div class="stat-number" id="avgScore">--</div>
+                    <div class="stat-label">Average Score</div>
+                    <div class="stat-change neutral" id="avgScoreChange">--</div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="stat-card">
+                    <div class="stat-icon">📱</div>
+                    <div class="stat-number" id="uniquePhones">--</div>
+                    <div class="stat-label">Unique Reporters</div>
+                    <div class="stat-change neutral" id="uniqueChange">--</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Charts Row 1 -->
+        <div class="row g-3">
+            <div class="col-lg-8">
+                <div class="chart-container">
+                    <h5>
+                        <span><i class="fas fa-wave-square"></i> Daily Scam Trend</span>
+                        <span style="font-size: 0.8rem; font-weight: 400; color: #64748b;">
+                            <span id="trendTotal">--</span> total scams
+                        </span>
+                    </h5>
+                    <div class="chart-box">
+                        <canvas id="trendChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="chart-container">
+                    <h5><i class="fas fa-pie-chart"></i> Scam Types</h5>
+                    <div class="chart-box">
+                        <canvas id="typeChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Charts Row 2 -->
+        <div class="row g-3">
+            <div class="col-lg-6">
+                <div class="chart-container">
+                    <h5><i class="fas fa-chart-bar"></i> Risk Level Distribution</h5>
+                    <div class="chart-box">
+                        <canvas id="riskChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="chart-container">
+                    <h5><i class="fas fa-map-pin"></i> Top Counties</h5>
+                    <div class="chart-box">
+                        <canvas id="countyChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Weekly Average & Hourly Heatmap -->
+        <div class="row g-3">
+            <div class="col-md-6">
+                <div class="chart-container">
+                    <h5><i class="fas fa-chart-simple"></i> Weekly Average Risk Score</h5>
+                    <div class="chart-box">
+                        <canvas id="weeklyAvgChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="chart-container">
+                    <h5><i class="fas fa-clock"></i> Scams by Hour</h5>
+                    <div class="chart-box">
+                        <canvas id="hourlyChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recent Scams Table -->
+        <div class="chart-container">
+            <h5>
+                <span><i class="fas fa-clock"></i> Recent Scam Activity</span>
+                <span style="font-size: 0.8rem; font-weight: 400; color: #64748b;">
+                    <span id="recentCount">--</span> latest reports
+                </span>
+            </h5>
+            <div class="table-responsive">
+                <table class="table table-hover" style="font-size: 0.9rem;">
+                    <thead style="background: #f8fafc; color: #002855;">
+                        <tr>
+                            <th>Date</th>
+                            <th>Type</th>
+                            <th>Content</th>
+                            <th>Score</th>
+                            <th>County</th>
+                            <th>Level</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recentScamsTable">
+                        <tr><td colspan="6" class="text-center">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Analysis Time -->
+        <div class="text-center text-muted small py-3" style="border-top: 1px solid #e2e8f0;">
+            <i class="fas fa-clock"></i> Last updated: <span id="analysisTime">--</span>
+            <span class="mx-2">|</span>
+            <i class="fas fa-database"></i> Data from <span id="dataSource">Scam Reports</span>
+            <span class="mx-2">|</span>
+            <span id="autoRefreshStatus">Auto-refresh: <strong>ON</strong></span>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentDays = 30;
+let refreshInterval = null;
+let chartInstances = {};
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadAnalyticsData();
+    startAutoRefresh();
+});
+
+function startAutoRefresh() {
+    if (refreshInterval) clearInterval(refreshInterval);
+    refreshInterval = setInterval(() => {
+        loadAnalyticsData();
+    }, 30000); // Refresh every 30 seconds
+}
+
+function setTimeRange(days) {
+    currentDays = days;
+    
+    // Update active button
+    document.querySelectorAll('.btn-filter').forEach(btn => {
+        btn.classList.remove('active');
+        if (parseInt(btn.dataset.days) === days) {
+            btn.classList.add('active');
+        }
+    });
+    
+    loadAnalyticsData();
+}
+
+function refreshData() {
+    loadAnalyticsData();
+}
+
+async function loadAnalyticsData() {
+    try {
+        const response = await fetch(`/api/analytics-data/?days=${currentDays}`);
+        const result = await response.json();
+        
+        if (result.success) {
+            const data = result.data;
+            
+            // Update summary stats with animation
+            animateNumber('totalReports', data.summary.total_reports);
+            animateNumber('highRiskCount', data.summary.high_risk_count);
+            animateNumber('avgScore', data.summary.avg_score + '%');
+            animateNumber('uniquePhones', data.summary.unique_phones);
+            
+            // Update trend total
+            const total = data.daily_trend.reduce((a, b) => a + b, 0);
+            document.getElementById('trendTotal').textContent = total;
+            document.getElementById('recentCount').textContent = data.recent_scams.length;
+            document.getElementById('analysisTime').textContent = data.analysis_time;
+            
+            // Calculate changes (compare with previous period)
+            const midPoint = Math.floor(data.daily_trend.length / 2);
+            const recent = data.daily_trend.slice(midPoint).reduce((a, b) => a + b, 0);
+            const previous = data.daily_trend.slice(0, midPoint).reduce((a, b) => a + b, 0);
+            const change = previous > 0 ? ((recent - previous) / previous * 100) : 0;
+            
+            updateChangeIndicator('totalChange', change);
+            
+            // Create/Update charts
+            createTrendChart(data.daily_labels, data.daily_trend);
+            createTypeChart(data.type_distribution);
+            createRiskChart(data.risk_distribution);
+            createCountyChart(data.county_names, data.county_counts);
+            createWeeklyAvgChart(data.weekly_labels, data.weekly_avg);
+            createHourlyChart(); // New chart
+            
+            // Populate recent scams table
+            populateRecentScams(data.recent_scams);
+        }
+    } catch (error) {
+        console.error('Error loading analytics:', error);
+        document.getElementById('recentScamsTable').innerHTML = 
+            '<tr><td colspan="6" class="text-center text-danger">⚠️ Error loading data. Retrying...</td></tr>';
+    }
+}
+
+function animateNumber(elementId, value) {
+    const el = document.getElementById(elementId);
+    if (!el) return;
+    
+    const current = parseInt(el.textContent.replace(/[^0-9.]/g, '')) || 0;
+    const target = typeof value === 'string' ? parseFloat(value) : value;
+    
+    if (isNaN(target)) {
+        el.textContent = value;
+        return;
+    }
+    
+    el.classList.remove('animate');
+    el.textContent = target;
+    setTimeout(() => el.classList.add('animate'), 10);
+}
+
+function updateChangeIndicator(elementId, change) {
+    const el = document.getElementById(elementId);
+    if (!el) return;
+    
+    el.className = 'stat-change';
+    if (change > 5) {
+        el.classList.add('up');
+        el.textContent = `↑ ${change.toFixed(1)}% increase`;
+    } else if (change < -5) {
+        el.classList.add('down');
+        el.textContent = `↓ ${Math.abs(change).toFixed(1)}% decrease`;
+    } else {
+        el.classList.add('neutral');
+        el.textContent = '→ Stable';
+    }
+}
+
+function createTrendChart(labels, data) {
+    const ctx = document.getElementById('trendChart').getContext('2d');
+    if (chartInstances.trend) chartInstances.trend.destroy();
+    
+    chartInstances.trend = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Scams Detected',
+                data: data,
+                borderColor: '#002855',
+                backgroundColor: 'rgba(0, 40, 85, 0.1)',
+                fill: true,
+                tension: 0.4,
+                pointBackgroundColor: data.map(v => v > 5 ? '#f5a623' : '#002855'),
+                pointBorderColor: 'white',
+                pointBorderWidth: 2,
+                pointRadius: 4,
+                pointHoverRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: '#002855',
+                    titleColor: '#f5a623',
+                    bodyColor: 'white'
+                },
+                annotation: {
+                    annotations: {
+                        line1: {
+                            type: 'line',
+                            yMin: data.reduce((a, b) => a + b, 0) / data.length,
+                            yMax: data.reduce((a, b) => a + b, 0) / data.length,
+                            borderColor: '#f5a623',
+                            borderWidth: 2,
+                            borderDash: [5, 5],
+                            label: {
+                                content: 'Avg',
+                                enabled: true,
+                                position: 'end'
+                            }
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: { color: '#e9ecef' },
+                    ticks: { stepSize: 1 }
+                },
+                x: {
+                    grid: { display: false }
+                }
+            }
+        }
+    });
+}
+
+function createTypeChart(data) {
+    const ctx = document.getElementById('typeChart').getContext('2d');
+    if (chartInstances.type) chartInstances.type.destroy();
+    
+    const colors = ['#002855', '#f5a623', '#dc3545', '#28a745', '#17a2b8', '#6f42c1', '#fd7e14'];
+    const labels = Object.keys(data);
+    const values = Object.values(data);
+    
+    chartInstances.type = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: values,
+                backgroundColor: colors.slice(0, labels.length),
+                borderWidth: 2,
+                borderColor: 'white',
+                hoverOffset: 10
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        font: { size: 11 },
+                        padding: 12,
+                        usePointStyle: true
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(ctx) {
+                            const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                            const pct = total > 0 ? ((ctx.raw / total) * 100).toFixed(1) : 0;
+                            return `${ctx.label}: ${ctx.raw} (${pct}%)`;
+                        }
+                    }
+                }
+            },
+            cutout: '60%'
+        }
+    });
+}
+
+function createRiskChart(data) {
+    const ctx = document.getElementById('riskChart').getContext('2d');
+    if (chartInstances.risk) chartInstances.risk.destroy();
+    
+    const labels = Object.keys(data);
+    const values = Object.values(data);
+    const colors = ['#dc3545', '#fd7e14', '#ffc107', '#28a745'];
+    
+    chartInstances.risk = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Reports',
+                data: values,
+                backgroundColor: colors.slice(0, labels.length),
+                borderRadius: 8,
+                barPercentage: 0.6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function(ctx) {
+                            const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                            const pct = total > 0 ? ((ctx.raw / total) * 100).toFixed(1) : 0;
+                            return `${ctx.raw} reports (${pct}%)`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: { color: '#e9ecef' },
+                    ticks: { stepSize: 1 }
+                },
+                x: {
+                    grid: { display: false }
+                }
+            }
+        }
+    });
+}
+
+function createCountyChart(labels, data) {
+    const ctx = document.getElementById('countyChart').getContext('2d');
+    if (chartInstances.county) chartInstances.county.destroy();
+    
+    const colors = ['#002855', '#f5a623', '#dc3545', '#28a745', '#17a2b8', '#6f42c1', '#fd7e14', '#20c997', '#e83e8c', '#6610f2'];
+    
+    chartInstances.county = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels.length > 0 ? labels : ['No Data'],
+            datasets: [{
+                label: 'Reports',
+                data: data.length > 0 ? data : [0],
+                backgroundColor: colors.slice(0, labels.length || 1),
+                borderRadius: 8,
+                barPercentage: 0.6
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    grid: { color: '#e9ecef' },
+                    ticks: { stepSize: 1 }
+                },
+                y: {
+                    grid: { display: false }
+                }
+            }
+        }
+    });
+}
+
+function createWeeklyAvgChart(labels, data) {
+    const ctx = document.getElementById('weeklyAvgChart').getContext('2d');
+    if (chartInstances.weekly) chartInstances.weekly.destroy();
+    
+    chartInstances.weekly = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Average Risk Score (%)',
+                data: data,
+                backgroundColor: data.map(v => v > 50 ? '#dc3545' : v > 30 ? '#fd7e14' : '#28a745'),
+                borderRadius: 8,
+                barPercentage: 0.5
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function(ctx) {
+                            return 'Average Score: ' + ctx.raw + '%';
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    grid: { color: '#e9ecef' },
+                    ticks: {
+                        callback: function(value) { return value + '%'; }
+                    }
+                },
+                x: {
+                    grid: { display: false }
+                }
+            }
+        }
+    });
+}
+
+function createHourlyChart() {
+    const ctx = document.getElementById('hourlyChart').getContext('2d');
+    if (chartInstances.hourly) chartInstances.hourly.destroy();
+    
+    // Generate sample hourly data (in production, fetch from API)
+    const hours = ['12am', '1am', '2am', '3am', '4am', '5am', '6am', '7am', '8am', '9am', '10am', '11am', 
+                   '12pm', '1pm', '2pm', '3pm', '4pm', '5pm', '6pm', '7pm', '8pm', '9pm', '10pm', '11pm'];
+    const data = hours.map(() => Math.floor(Math.random() * 10));
+    
+    chartInstances.hourly = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: hours,
+            datasets: [{
+                label: 'Scams by Hour',
+                data: data,
+                backgroundColor: data.map(v => v > 5 ? '#f5a623' : '#002855'),
+                borderRadius: 4,
+                barPercentage: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: { color: '#e9ecef' },
+                    ticks: { stepSize: 1 }
+                },
+                x: {
+                    grid: { display: false },
+                    ticks: { 
+                        maxTicksLimit: 12,
+                        font: { size: 8 }
+                    }
+                }
+            }
+        }
+    });
+}
+
+function populateRecentScams(scams) {
+    const tbody = document.getElementById('recentScamsTable');
+    
+    if (!scams || scams.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center">No recent scams</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = scams.map(scam => `
+        <tr>
+            <td><small>${scam.date}</small></td>
+            <td><span class="badge" style="background: #e8f0fe; color: #002855;">${scam.type}</span></td>
+            <td><small>${scam.content || 'No content'}</small></td>
+            <td><span style="font-weight: 600; color: ${scam.score >= 70 ? '#dc3545' : scam.score >= 50 ? '#fd7e14' : '#28a745'};">${scam.score}%</span></td>
+            <td><small>${scam.county}</small></td>
+            <td><span class="badge-${scam.level.toLowerCase()}">${scam.level}</span></td>
+        </tr>
+    `).join('');
+}
+
+function exportChartAsImage() {
+    // Export the trend chart as PNG
+    const canvas = document.getElementById('trendChart');
+    const link = document.createElement('a');
+    link.download = `analytics_trend_${new Date().toISOString().slice(0,10)}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+}
+
+// Auto-refresh toggle (optional)
+function toggleAutoRefresh() {
+    const statusEl = document.getElementById('autoRefreshStatus');
+    if (refreshInterval) {
+        clearInterval(refreshInterval);
+        refreshInterval = null;
+        statusEl.innerHTML = 'Auto-refresh: <strong>OFF</strong>';
+    } else {
+        startAutoRefresh();
+        statusEl.innerHTML = 'Auto-refresh: <strong>ON</strong>';
+    }
+}
+
+// Keyboard shortcuts
+document.addEventListener('keydown', function(e) {
+    if (e.ctrlKey && e.key === 'r') {
+        e.preventDefault();
+        refreshData();
+    }
+});
+</script>
+{% endblock %}

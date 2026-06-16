@@ -1,0 +1,138 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}My Reports - AI Fraud Shield{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="dashboard-header">
+        <h1><i class="fas fa-file-alt"></i> My Reports</h1>
+        <p>View all scam reports you've submitted</p>
+    </div>
+    
+    <div class="stats-grid">
+        <div class="stat-card navy">
+            <div class="stat-value">{{ total }}</div>
+            <div class="stat-label">Total Reports</div>
+        </div>
+        <div class="stat-card danger">
+            <div class="stat-value">{{ high_risk }}</div>
+            <div class="stat-label">High Risk</div>
+        </div>
+        <div class="stat-card warning">
+            <div class="stat-value">{{ medium_risk }}</div>
+            <div class="stat-label">Medium Risk</div>
+        </div>
+        <div class="stat-card success">
+            <div class="stat-value">{{ low_risk }}</div>
+            <div class="stat-label">Low Risk</div>
+        </div>
+    </div>
+    
+    <div class="table-card">
+        <div class="card-header">
+            <h3><i class="fas fa-list"></i> Your Submitted Reports</h3>
+        </div>
+        <div class="table-wrapper">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Type</th>
+                        <th>Content</th>
+                        <th>Risk Score</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for report in reports %}
+                    <tr>
+                        <td>{{ report.date_reported|date:"Y-m-d H:i" }}</td>
+                        <td>{{ report.report_type }}</td>
+                        <td>{{ report.content|truncatechars:50 }}</td>
+                        <td>
+                            <span class="badge-level {% if report.risk_score >= 70 %}HIGH{% elif report.risk_score >= 40 %}MEDIUM{% else %}LOW{% endif %}">
+                                {{ report.risk_score }}/100
+                            </span>
+                        </td>
+                        <td>
+                            <a href="/admin/detector/scamreport/{{ report.id }}/change/" class="btn-view">View</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center py-4">No reports found</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<style>
+    .dashboard-header {
+        background: linear-gradient(135deg, #002855 0%, #001a3f 100%);
+        border-radius: 20px;
+        padding: 30px;
+        margin-bottom: 24px;
+        color: white;
+        border-bottom: 4px solid #f5a623;
+    }
+    .dashboard-header h1 {
+        font-size: 1.8rem;
+        margin-bottom: 8px;
+    }
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+    .stat-card {
+        background: white;
+        border-radius: 16px;
+        padding: 20px;
+        border: 1px solid #e5e7eb;
+        text-align: center;
+    }
+    .stat-card .stat-value {
+        font-size: 2rem;
+        font-weight: 800;
+    }
+    .stat-card.navy .stat-value { color: #002855; }
+    .stat-card.danger .stat-value { color: #dc3545; }
+    .stat-card.warning .stat-value { color: #f5a623; }
+    .stat-card.success .stat-value { color: #10b981; }
+    .table-card {
+        background: white;
+        border-radius: 16px;
+        overflow: hidden;
+        border: 1px solid #e5e7eb;
+    }
+    .card-header {
+        padding: 18px 24px;
+        border-bottom: 1px solid #e5e7eb;
+    }
+    .badge-level {
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 0.7rem;
+        font-weight: 700;
+    }
+    .badge-level.HIGH { background: #fee2e2; color: #dc3545; }
+    .badge-level.MEDIUM { background: #fef3c7; color: #d97706; }
+    .badge-level.LOW { background: #d1fae5; color: #059669; }
+    .btn-view {
+        background: #002855;
+        color: white;
+        padding: 4px 12px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-size: 0.75rem;
+    }
+    @media (max-width: 768px) {
+        .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+</style>
+{% endblock %}

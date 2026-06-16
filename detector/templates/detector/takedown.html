@@ -1,0 +1,675 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Scam Takedown - AI Fraud Shield{% endblock %}
+
+{% block extra_css %}
+<style>
+    .takedown-header {
+        background: linear-gradient(135deg, #002855 0%, #001a3f 100%);
+        color: white;
+        padding: 30px 28px;
+        border-bottom: 4px solid #f5a623;
+        margin-bottom: 24px;
+        border-radius: 12px 12px 0 0;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .takedown-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(245, 166, 35, 0.08) 1%, transparent 1%);
+        background-size: 50px 50px;
+        animation: shimmer 20s linear infinite;
+    }
+    
+    @keyframes shimmer {
+        from { transform: translate(0, 0); }
+        to { transform: translate(50px, 50px); }
+    }
+    
+    .takedown-header h2 {
+        position: relative;
+        z-index: 1;
+    }
+    
+    .takedown-header p {
+        position: relative;
+        z-index: 1;
+        opacity: 0.9;
+    }
+    
+    .stat-card {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        border: 1px solid #e2e8f0;
+        transition: all 0.3s;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .stat-card::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, #002855, #f5a623);
+        transform: scaleX(0);
+        transition: transform 0.3s;
+    }
+    
+    .stat-card:hover::after {
+        transform: scaleX(1);
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+    }
+    
+    .stat-number {
+        font-size: 2.2rem;
+        font-weight: 800;
+        color: #002855;
+        transition: all 0.3s;
+    }
+    
+    .stat-number.animate {
+        animation: countUp 0.5s ease-out;
+    }
+    
+    @keyframes countUp {
+        from { opacity: 0; transform: scale(0.5); }
+        to { opacity: 1; transform: scale(1); }
+    }
+    
+    .stat-label {
+        color: #64748b;
+        font-size: 0.8rem;
+        margin-top: 4px;
+        font-weight: 500;
+    }
+    
+    .stat-icon {
+        font-size: 1.8rem;
+        margin-bottom: 8px;
+        display: block;
+    }
+    
+    .badge-status {
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+    
+    .badge-status .status-dot {
+        display: inline-block;
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: currentColor;
+    }
+    
+    .badge-pending { background: #fef3c7; color: #92400e; }
+    .badge-submitted { background: #dbeafe; color: #1e40af; }
+    .badge-in_progress { background: #e0e7ff; color: #3730a3; }
+    .badge-completed { background: #dcfce7; color: #166534; }
+    .badge-failed { background: #fee2e2; color: #991b1b; }
+    .badge-rejected { background: #f3f4f6; color: #4b5563; }
+    
+    .report-card {
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        transition: all 0.3s;
+        background: white;
+    }
+    
+    .report-card:hover {
+        box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+    }
+    
+    .form-label {
+        font-weight: 600;
+        color: #002855;
+    }
+    
+    .form-control {
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+        padding: 12px 16px;
+        transition: all 0.3s;
+    }
+    
+    .form-control:focus {
+        border-color: #f5a623;
+        box-shadow: 0 0 0 3px rgba(245, 166, 35, 0.15);
+        outline: none;
+    }
+    
+    .btn-analyze {
+        background: linear-gradient(135deg, #002855, #001a3f);
+        color: white;
+        border: none;
+        padding: 12px 28px;
+        border-radius: 50px;
+        font-weight: 700;
+        font-size: 0.9rem;
+        transition: all 0.3s;
+        box-shadow: 0 4px 15px rgba(0, 40, 85, 0.3);
+        cursor: pointer;
+    }
+    
+    .btn-analyze:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 40, 85, 0.4);
+        background: linear-gradient(135deg, #0a3d7a, #002855);
+    }
+    
+    .btn-analyze:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+        transform: none;
+    }
+    
+    .btn-gold {
+        background: linear-gradient(135deg, #f5a623, #d4891a);
+        color: #002855;
+        border: none;
+        padding: 8px 20px;
+        border-radius: 50px;
+        font-weight: 600;
+        font-size: 0.85rem;
+        transition: all 0.3s;
+        cursor: pointer;
+        box-shadow: 0 2px 10px rgba(245, 166, 35, 0.3);
+    }
+    
+    .btn-gold:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 20px rgba(245, 166, 35, 0.4);
+    }
+    
+    .btn-outline {
+        background: transparent;
+        color: #475569;
+        border: 1px solid #e2e8f0;
+        padding: 12px 24px;
+        border-radius: 50px;
+        font-weight: 600;
+        transition: all 0.3s;
+        cursor: pointer;
+    }
+    
+    .btn-outline:hover {
+        background: #f1f5f9;
+        border-color: #cbd5e1;
+    }
+    
+    .empty-state {
+        padding: 40px 20px;
+        text-align: center;
+    }
+    
+    .empty-state .empty-icon {
+        font-size: 4rem;
+        color: #cbd5e1;
+        margin-bottom: 16px;
+    }
+    
+    .empty-state .empty-title {
+        font-size: 1.2rem;
+        color: #1e293b;
+        font-weight: 600;
+    }
+    
+    .empty-state .empty-text {
+        color: #64748b;
+        margin-top: 8px;
+    }
+    
+    .toast-container {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .toast-custom {
+        background: white;
+        padding: 16px 20px;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        border-left: 4px solid #10b981;
+        min-width: 300px;
+        animation: slideInRight 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    
+    .toast-custom.error {
+        border-left-color: #dc3545;
+    }
+    
+    .toast-custom.info {
+        border-left-color: #0d6efd;
+    }
+    
+    .toast-custom .toast-close {
+        margin-left: auto;
+        background: none;
+        border: none;
+        font-size: 1.2rem;
+        cursor: pointer;
+        color: #94a3b8;
+    }
+    
+    @keyframes slideInRight {
+        from { opacity: 0; transform: translateX(100px); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+    
+    @media (max-width: 768px) {
+        .stat-number { font-size: 1.5rem; }
+        .takedown-header { padding: 20px; }
+        .btn-analyze { width: 100%; text-align: center; }
+        .toast-custom { min-width: auto; width: calc(100% - 40px); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="main-card">
+        <!-- Header -->
+        <div class="takedown-header">
+            <div class="d-flex justify-content-between align-items-center flex-wrap">
+                <div>
+                    <h2 class="mb-0"><i class="fas fa-trash-alt" style="color: #f5a623;"></i> Scam Takedown System</h2>
+                    <p class="mb-0">Report scam URLs and track takedown requests</p>
+                </div>
+                <div>
+                    <button class="btn-gold" onclick="refreshData()">
+                        <i class="fas fa-sync"></i> Refresh
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Stats -->
+        <div class="row g-3 mb-4" id="statsRow">
+            <div class="col-md-3 col-6">
+                <div class="stat-card">
+                    <span class="stat-icon">📊</span>
+                    <div class="stat-number" id="totalReports">0</div>
+                    <div class="stat-label">Total Reports</div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="stat-card">
+                    <span class="stat-icon">✅</span>
+                    <div class="stat-number" id="completedReports" style="color: #28a745;">0</div>
+                    <div class="stat-label">Completed</div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="stat-card">
+                    <span class="stat-icon">⏳</span>
+                    <div class="stat-number" id="pendingReports" style="color: #f5a623;">0</div>
+                    <div class="stat-label">Pending</div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="stat-card">
+                    <span class="stat-icon">📈</span>
+                    <div class="stat-number" id="successRate">0%</div>
+                    <div class="stat-label">Success Rate</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Report Form -->
+        <div class="report-card mb-4">
+            <div class="card-body p-4">
+                <h5 class="mb-3"><i class="fas fa-plus-circle" style="color: #f5a623;"></i> Report a Scam URL</h5>
+                <form id="takedownForm">
+                    <div class="mb-3">
+                        <label class="form-label">Scam URL</label>
+                        <div class="input-group">
+                            <span class="input-group-text" style="background: #f8fafc; border: 1px solid #e2e8f0;">
+                                <i class="fas fa-link" style="color: #64748b;"></i>
+                            </span>
+                            <input type="url" id="scamUrl" class="form-control" placeholder="https://example.com/scam" required autofocus>
+                        </div>
+                        <small class="text-muted mt-1 d-block">
+                            <i class="fas fa-info-circle"></i> Enter the full URL of the scam website you want to report for takedown
+                        </small>
+                    </div>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <button type="submit" class="btn-analyze" id="submitBtn">
+                            <i class="fas fa-flag"></i> Report for Takedown
+                        </button>
+                        <button type="button" class="btn-outline" onclick="document.getElementById('scamUrl').value = '';">
+                            <i class="fas fa-times"></i> Clear
+                        </button>
+                    </div>
+                    <div id="submitMessage" class="mt-3" style="display: none;"></div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Recent Reports -->
+        <div class="report-card">
+            <div class="card-body p-4">
+                <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
+                    <h5 class="mb-0"><i class="fas fa-history" style="color: #f5a623;"></i> Recent Takedown Reports</h5>
+                    <span class="badge" style="background: #e8f0fe; color: #002855; padding: 4px 12px;">
+                        <span id="reportCount">0</span> reports
+                    </span>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover" style="font-size: 0.9rem;">
+                        <thead style="background: #f8fafc; color: #002855; border-bottom: 2px solid #f5a623;">
+                            <tr>
+                                <th>Domain</th>
+                                <th>Status</th>
+                                <th>Provider</th>
+                                <th>Reported</th>
+                            </tr>
+                        </thead>
+                        <tbody id="takedownTable">
+                            <tr>
+                                <td colspan="4">
+                                    <div class="empty-state">
+                                        <div class="empty-icon">📭</div>
+                                        <div class="empty-title">No reports yet</div>
+                                        <div class="empty-text">Submit your first scam URL to get started</div>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="d-flex justify-content-between align-items-center text-muted small mt-3 flex-wrap">
+                    <span><i class="fas fa-clock"></i> Last updated: <span id="lastUpdateTime">--</span></span>
+                    <span><i class="fas fa-database"></i> <span id="totalReportCount">0</span> total reports</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadStats();
+    loadReports();
+    startAutoRefresh();
+    
+    document.getElementById('takedownForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        await submitTakedown();
+    });
+    
+    // Keyboard shortcut: Ctrl+Enter to submit
+    document.getElementById('scamUrl').addEventListener('keydown', function(e) {
+        if (e.ctrlKey && e.key === 'Enter') {
+            document.getElementById('takedownForm').dispatchEvent(new Event('submit'));
+        }
+    });
+});
+
+let autoRefreshInterval = null;
+
+function startAutoRefresh() {
+    if (autoRefreshInterval) clearInterval(autoRefreshInterval);
+    autoRefreshInterval = setInterval(() => {
+        loadStats();
+        loadReports();
+    }, 30000);
+}
+
+async function submitTakedown() {
+    const url = document.getElementById('scamUrl').value.trim();
+    if (!url) {
+        showToast('⚠️ Please enter a valid URL', 'error');
+        document.getElementById('scamUrl').focus();
+        return;
+    }
+    
+    const btn = document.getElementById('submitBtn');
+    const messageDiv = document.getElementById('submitMessage');
+    
+    // Disable button and show loading state
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
+    messageDiv.style.display = 'none';
+    
+    try {
+        const response = await fetch('/api/takedown/submit/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken()
+            },
+            body: JSON.stringify({ url: url })
+        });
+        
+        const result = await response.json();
+        
+        // INSTANT FEEDBACK - Show result immediately
+        if (result.success) {
+            let details = '';
+            if (result.brand_detected) {
+                details += `<br><i class="fas fa-building"></i> Brand detected: <strong>${result.brand_detected}</strong>`;
+            }
+            if (result.provider) {
+                details += `<br><i class="fas fa-server"></i> Provider: <strong>${result.provider}</strong>`;
+            }
+            
+            messageDiv.innerHTML = `
+                <div class="alert alert-success" role="alert" style="border-left: 4px solid #28a745;">
+                    <i class="fas fa-check-circle"></i> <strong>✅ Report submitted!</strong>
+                    ${result.message || 'Takedown request submitted successfully'}
+                    ${details}
+                </div>
+            `;
+            messageDiv.style.display = 'block';
+            
+            // Clear input and refresh data immediately
+            document.getElementById('scamUrl').value = '';
+            showToast('✅ Report submitted successfully!', 'success');
+            
+            // Instant refresh of stats and table
+            await loadStats();
+            await loadReports();
+            
+        } else {
+            // Show error
+            messageDiv.innerHTML = `
+                <div class="alert alert-danger" role="alert" style="border-left: 4px solid #dc3545;">
+                    <i class="fas fa-exclamation-circle"></i> <strong>Error:</strong>
+                    ${result.message || 'Failed to submit report'}
+                </div>
+            `;
+            messageDiv.style.display = 'block';
+            showToast('❌ ' + (result.message || 'Submission failed'), 'error');
+        }
+        
+    } catch (error) {
+        messageDiv.innerHTML = `
+            <div class="alert alert-danger" role="alert" style="border-left: 4px solid #dc3545;">
+                <i class="fas fa-exclamation-circle"></i> <strong>Network Error:</strong>
+                Please check your connection and try again.
+            </div>
+        `;
+        messageDiv.style.display = 'block';
+        showToast('❌ Network error. Please try again.', 'error');
+    }
+    
+    // Re-enable button
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-flag"></i> Report for Takedown';
+}
+
+async function loadStats() {
+    try {
+        const response = await fetch('/api/takedown/stats/');
+        const data = await response.json();
+        
+        if (data.success) {
+            const stats = data.stats;
+            
+            animateNumber('totalReports', stats.total || 0);
+            animateNumber('completedReports', stats.completed || 0);
+            animateNumber('pendingReports', (stats.pending || 0) + (stats.in_progress || 0));
+            
+            const rate = stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0;
+            animateNumber('successRate', rate + '%');
+            
+            document.getElementById('reportCount').textContent = stats.total || 0;
+            document.getElementById('totalReportCount').textContent = stats.total || 0;
+        }
+    } catch (error) {
+        console.error('Error loading stats:', error);
+    }
+}
+
+function animateNumber(elementId, value) {
+    const el = document.getElementById(elementId);
+    if (!el) return;
+    
+    const current = parseInt(el.textContent.replace(/[^0-9.]/g, '')) || 0;
+    const target = typeof value === 'string' ? parseFloat(value) : value;
+    
+    if (isNaN(target)) {
+        el.textContent = value;
+        return;
+    }
+    
+    el.classList.remove('animate');
+    el.textContent = target;
+    setTimeout(() => el.classList.add('animate'), 10);
+}
+
+async function loadReports() {
+    try {
+        const response = await fetch('/api/takedown/reports/');
+        const data = await response.json();
+        
+        const tbody = document.getElementById('takedownTable');
+        const updateTime = document.getElementById('lastUpdateTime');
+        
+        updateTime.textContent = new Date().toLocaleTimeString();
+        
+        if (!data.success || !data.reports || data.reports.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="4">
+                        <div class="empty-state">
+                            <div class="empty-icon">📭</div>
+                            <div class="empty-title">No reports yet</div>
+                            <div class="empty-text">Submit your first scam URL to get started</div>
+                        </div>
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+        
+        tbody.innerHTML = data.reports.map(report => `
+            <tr>
+                <td>
+                    <strong style="color: #002855;">${report.domain}</strong>
+                    <br><small style="color: #64748b; font-size: 0.7rem;">${report.url ? report.url.substring(0, 40) + (report.url.length > 40 ? '...' : '') : ''}</small>
+                </td>
+                <td>
+                    <span class="badge-status badge-${report.status.toLowerCase()}">
+                        <span class="status-dot"></span>
+                        ${report.status_display}
+                    </span>
+                </td>
+                <td><small>${report.provider || 'Unknown'}</small></td>
+                <td><small>${report.created_at}</small></td>
+            </tr>
+        `).join('');
+        
+    } catch (error) {
+        console.error('Error loading reports:', error);
+        document.getElementById('takedownTable').innerHTML = `
+            <tr>
+                <td colspan="4" class="text-center text-danger py-4">
+                    <i class="fas fa-exclamation-circle"></i> Error loading reports
+                </td>
+            </tr>
+        `;
+    }
+}
+
+function refreshData() {
+    loadStats();
+    loadReports();
+    showToast('🔄 Data refreshed!', 'info');
+}
+
+function getCSRFToken() {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.startsWith('csrftoken=')) {
+                cookieValue = decodeURIComponent(cookie.substring('csrftoken='.length));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+function showToast(message, type = 'success') {
+    const container = document.getElementById('toastContainer');
+    if (!container) return;
+    
+    const toast = document.createElement('div');
+    toast.className = `toast-custom ${type === 'error' ? 'error' : type === 'info' ? 'info' : ''}`;
+    
+    const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️';
+    
+    toast.innerHTML = `
+        <span style="font-size: 1.2rem;">${icon}</span>
+        <span style="flex: 1; font-size: 0.9rem;">${message}</span>
+        <button class="toast-close" onclick="this.parentElement.remove()">×</button>
+    `;
+    
+    container.appendChild(toast);
+    
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+        if (toast.parentElement) {
+            toast.style.opacity = '0';
+            toast.style.transition = 'opacity 0.3s';
+            setTimeout(() => toast.remove(), 300);
+        }
+    }, 5000);
+}
+</script>
+{% endblock %}

@@ -40,6 +40,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'detector.middleware.CorsMiddleware',
     'detector.middleware.RateLimitMiddleware',
 ]
 
@@ -163,3 +164,11 @@ TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN', '')
 AT_USERNAME = os.getenv('AT_USERNAME', 'sandbox')
 AT_API_KEY = os.getenv('AT_API_KEY', '')
 AT_SHORTCODE = os.getenv('AT_SHORTCODE', '4350')
+NGROK_URL = os.getenv('NGROK_URL')
+# Add to settings.py
+VAPID_PUBLIC_KEY = os.getenv('VAPID_PUBLIC_KEY')
+VAPID_PRIVATE_KEY = os.getenv('VAPID_PRIVATE_KEY')
+VAPID_SUBJECT = os.getenv('VAPID_SUBJECT')
+# Threat Intelligence
+GOOGLE_SAFE_BROWSING_KEY = os.getenv('GOOGLE_SAFE_BROWSING_KEY', '')
+VIRUSTOTAL_API_KEY = os.getenv('VIRUSTOTAL_API_KEY', '')

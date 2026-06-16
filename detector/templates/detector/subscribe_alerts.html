@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Subscribe to Scam Alerts{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card" style="border: 1px solid #e2e8f0; border-radius: 16px; overflow: hidden;">
+                <div class="card-header" style="background: linear-gradient(135deg, #002855, #001a3f); color: white; padding: 20px;">
+                    <h4 class="mb-0"><i class="fas fa-bell" style="color: #F5A623;"></i> Subscribe to Scam Alerts</h4>
+                    <small>Get notified when new scams are detected in your area</small>
+                </div>
+                <div class="card-body" style="padding: 24px;">
+                    <form method="POST">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label class="form-label" style="font-weight: 600;">Email Address</label>
+                            <input type="email" name="email" class="form-control" value="{{ user.email }}" required>
+                            <small class="text-muted">We'll send scam alerts to this email</small>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label" style="font-weight: 600;">Phone Number (Optional)</label>
+                            <input type="tel" name="phone" class="form-control" placeholder="0712345678">
+                            <small class="text-muted">For SMS alerts (coming soon)</small>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label" style="font-weight: 600;">Alert Frequency</label>
+                            <select name="frequency" class="form-control" style="border-radius: 8px;">
+                                <option value="INSTANT">Instant - Get alerts immediately</option>
+                                <option value="DAILY" selected>Daily Digest</option>
+                                <option value="WEEKLY">Weekly Summary</option>
+                            </select>
+                        </div>
+                        
+                        <button type="submit" class="btn" style="background: linear-gradient(135deg, #002855, #001a3f); color: white; padding: 12px 24px; border-radius: 50px; font-weight: 700; width: 100%; border: none;">
+                            <i class="fas fa-bell"></i> Subscribe Now
+                        </button>
+                    </form>
+                </div>
+                <div class="card-footer" style="background: #f8fafc; padding: 16px; text-align: center; border-top: 1px solid #e2e8f0;">
+                    <small style="color: #64748b;">🔒 We never share your data. Unsubscribe anytime.</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

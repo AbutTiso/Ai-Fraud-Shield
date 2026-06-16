@@ -11,7 +11,7 @@
   <link rel="stylesheet" href="{% static 'detector/css/home.css' %}" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <style>
-    /* Landing Hero */
+    /* Landing Hero - Only page-specific styles remain here */
     .landing-hero {
       background: linear-gradient(135deg, #002855 0%, #001a3f 100%);
       color: white;
@@ -127,7 +127,7 @@
       color: white;
     }
 
-    /* Quick Stats - inside main content */
+    /* Quick Stats */
     .quick-stats-strip {
       display: grid;
       grid-template-columns: repeat(5, 1fr);
@@ -175,14 +175,383 @@
       margin-top: 3px;
     }
 
+    /* Footer */
+    .home-footer {
+      background: linear-gradient(135deg, #002855 0%, #001a3f 100%);
+      color: white;
+      padding: 40px 30px 30px;
+      margin-top: 30px;
+      border-radius: 20px;
+      border-top: 4px solid #f5a623;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .home-footer::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(245, 166, 35, 0.05) 1%, transparent 1%);
+      background-size: 40px 40px;
+      animation: shimmer 25s linear infinite;
+      pointer-events: none;
+    }
+
+    .home-footer-content {
+      position: relative;
+      z-index: 1;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .home-footer-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 30px;
+      margin-bottom: 30px;
+    }
+
+    .home-footer-col h4 {
+      color: #f5a623;
+      font-weight: 700;
+      font-size: 1rem;
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .home-footer-col p, .home-footer-col a {
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 0.85rem;
+      margin: 8px 0;
+      text-decoration: none;
+      display: block;
+      transition: color 0.2s;
+    }
+
+    .home-footer-col a:hover {
+      color: #f5a623;
+    }
+
+    .home-footer-col strong {
+      color: #f5a623;
+    }
+
+    .home-footer-bottom {
+      border-top: 1px solid rgba(255, 255, 255, 0.15);
+      padding-top: 20px;
+      text-align: center;
+      font-size: 0.8rem;
+      opacity: 0.85;
+    }
+
+    .home-footer-bottom i {
+      color: #f5a623;
+    }
+
+    /* Call Monitor */
+    .call-monitor-card {
+      border: none;
+      border-radius: 20px;
+      overflow: hidden;
+      margin-bottom: 24px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+    }
+    
+    .call-monitor-header {
+      background: linear-gradient(135deg, #002855, #001a3f);
+      color: white;
+      padding: 20px 24px;
+    }
+    
+    .live-transcript-panel {
+      background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+      border-radius: 16px;
+      border: 1px solid #e2e8f0;
+      padding: 20px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+    
+    .critical-alert-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.95);
+      z-index: 99999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: fadeIn 0.3s ease;
+    }
+    
+    .critical-alert-box {
+      background: linear-gradient(135deg, #dc3545, #c82333);
+      color: white;
+      padding: 40px;
+      border-radius: 30px;
+      text-align: center;
+      max-width: 500px;
+      margin: 20px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+      animation: shake 0.5s ease;
+    }
+    
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-10px); }
+      75% { transform: translateX(10px); }
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
+    .critical-alert-box h2 {
+      font-size: 2rem;
+      margin-bottom: 20px;
+    }
+    
+    .critical-alert-box .alert-icon {
+      font-size: 4rem;
+      margin-bottom: 20px;
+    }
+    
+    .critical-alert-box button {
+      background: white;
+      color: #dc3545;
+      border: none;
+      padding: 12px 30px;
+      border-radius: 50px;
+      font-weight: bold;
+      margin-top: 20px;
+      cursor: pointer;
+    }
+    
+    .terminate-warning {
+      background: linear-gradient(135deg, #dc3545, #c82333);
+      color: white;
+      padding: 15px 20px;
+      border-radius: 12px;
+      margin-bottom: 15px;
+      animation: pulseWarning 0.8s ease-in-out infinite;
+      cursor: pointer;
+    }
+    
+    @keyframes pulseWarning {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.02); opacity: 0.95; }
+    }
+    
+    .terminate-warning button {
+      background: white;
+      color: #dc3545;
+      border: none;
+      padding: 8px 20px;
+      border-radius: 50px;
+      font-weight: bold;
+      margin-left: 10px;
+    }
+    
+    .high-risk-warning {
+      background: linear-gradient(135deg, #fd7e14, #e8590c);
+      color: white;
+      padding: 12px 16px;
+      border-radius: 10px;
+      margin-bottom: 10px;
+      animation: slideIn 0.3s ease;
+    }
+    
+    .transcript-message {
+      padding: 10px 14px;
+      margin: 6px 0;
+      border-radius: 12px;
+      background: white;
+      border-left: 4px solid #002855;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      transition: all 0.2s ease;
+    }
+    
+    .transcript-message.scam-critical {
+      border-left-color: #dc3545;
+      background: #fff5f5;
+      animation: criticalPulse 0.5s ease;
+      font-weight: bold;
+    }
+    
+    @keyframes criticalPulse {
+      0%, 100% { background: #fff5f5; }
+      50% { background: #ffe0e0; transform: scale(1.01); }
+    }
+    
+    #liveTranscript {
+      max-height: 280px;
+      overflow-y: auto;
+      background: #f8f9fa;
+      border-radius: 12px;
+      padding: 8px;
+    }
+    
+    #interimTranscript {
+      font-style: italic;
+      background: linear-gradient(135deg, #e9ecef, #dee2e6);
+      padding: 12px 16px;
+      border-radius: 12px;
+      min-height: 55px;
+      font-size: 0.9rem;
+    }
+    
+    #scamMeterBar {
+      transition: width 0.3s ease, background-color 0.3s ease;
+      border-radius: 10px;
+    }
+    
+    .risk-meter-container {
+      background: #e9ecef;
+      border-radius: 12px;
+      padding: 3px;
+    }
+    
+    .scam-alert-item {
+      padding: 10px 14px;
+      margin: 6px 0;
+      border-radius: 10px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      animation: slideIn 0.3s ease;
+    }
+    
+    .scam-alert-critical {
+      background: linear-gradient(135deg, #dc3545, #c82333);
+      color: white;
+    }
+    
+    .scam-alert-warning {
+      background: linear-gradient(135deg, #ffc107, #e0a800);
+      color: #333;
+    }
+    
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(-20px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    
+    #callSpinner {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: white;
+      padding: 20px 30px;
+      border-radius: 12px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+      z-index: 9999;
+      text-align: center;
+      display: none;
+    }
+    
+    .btn-success {
+      background: linear-gradient(135deg, #28a745, #1e7e34);
+      border: none;
+      border-radius: 50px;
+      padding: 12px 24px;
+      font-weight: 600;
+    }
+    
+    .btn-danger {
+      background: linear-gradient(135deg, #dc3545, #c82333);
+      border: none;
+      border-radius: 50px;
+      padding: 12px 24px;
+      font-weight: 600;
+    }
+    
+    .status-badge {
+      padding: 8px 16px;
+      border-radius: 50px;
+      font-weight: 600;
+    }
+    
+    .status-badge-live {
+      animation: pulse 1.5s ease-in-out infinite;
+      background: #28a745 !important;
+    }
+    
+    .status-badge-critical {
+      background: #dc3545 !important;
+      animation: pulse 0.5s ease-in-out infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+    
+    .word-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      margin: 3px;
+      border-radius: 20px;
+      font-size: 0.7rem;
+      font-weight: 600;
+    }
+    
+    .word-badge-danger {
+      background: #dc3545;
+      color: white;
+    }
+    
+    .word-badge-warning {
+      background: #ffc107;
+      color: #333;
+    }
+    
+    .floating-terminate-btn {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      background: #dc3545;
+      color: white;
+      border: none;
+      border-radius: 60px;
+      padding: 15px 25px;
+      font-weight: bold;
+      z-index: 9998;
+      box-shadow: 0 5px 20px rgba(220,53,69,0.4);
+      animation: floatPulse 1s ease-in-out infinite;
+      cursor: pointer;
+      display: none;
+    }
+    
+    @keyframes floatPulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+    
+    .floating-terminate-btn:hover {
+      transform: scale(1.1);
+    }
+
     @media (max-width: 768px) {
       .landing-hero { padding: 24px 16px; }
       .landing-hero h1 { font-size: 1.4rem; }
       .quick-stats-strip { grid-template-columns: repeat(3, 1fr); }
+      .home-footer-grid { grid-template-columns: 1fr; text-align: center; gap: 20px; }
+      .home-footer-col h4 { justify-content: center; }
+      .home-footer { padding: 30px 20px; }
+      .critical-alert-box { padding: 25px; margin: 15px; }
+      .critical-alert-box h2 { font-size: 1.5rem; }
     }
     
     @media (max-width: 480px) {
       .quick-stats-strip { grid-template-columns: repeat(2, 1fr); }
+      .floating-terminate-btn { padding: 12px 20px; font-size: 0.9rem; }
     }
   </style>
 {% endblock %}
@@ -191,11 +560,11 @@
 <div class="container">
   <div class="main-card">
     
-    <!-- ========== LANDING HERO HEADER ========== -->
+    <!-- LANDING HERO HEADER -->
     <div class="landing-hero">
       <div class="landing-hero-content">
         <div class="landing-hero-icon">
-          <i class="fas fa-shield-haltered"></i>
+          <i class="fas fa-shield-alt"></i>
         </div>
         <h1><i class="fas fa-shield-alt"></i> AI Fraud Shield</h1>
         
@@ -243,7 +612,6 @@
 
     <!-- SIDEBAR LAYOUT -->
     <div class="sidebar-layout">
-      <!-- SIDEBAR -->
       <div class="sidebar">
         <div class="sidebar-brand">
           <div class="sidebar-brand-icon"><i class="fas fa-shield-alt"></i></div>
@@ -258,6 +626,7 @@
             <li><a href="#" class="side-link" data-tab="screenshot"><span class="nav-icon"><i class="fas fa-camera"></i></span><span class="nav-label">Screenshot</span></a></li>
             <li><a href="#" class="side-link" data-tab="url"><span class="nav-icon"><i class="fas fa-link"></i></span><span class="nav-label">URL Checker</span></a></li>
           </ul>
+          
           <div class="sidebar-section-title">More Tools</div>
           <ul class="sidebar-nav">
             <li><a href="#" class="side-link" data-tab="call"><span class="nav-icon"><i class="fas fa-phone-alt"></i></span><span class="nav-label">Call Monitor</span></a></li>
@@ -266,26 +635,34 @@
           </ul>
           
           {% if user.is_authenticated %}
-            <div class="sidebar-section-title">Dashboard</div>
-            <ul class="sidebar-nav">
-              <li><a href="#" class="side-link" data-tab="stats"><span class="nav-icon"><i class="fas fa-chart-bar"></i></span><span class="nav-label">My Statistics</span></a></li>
-              <li><a href="/reports-dashboard/"><span class="nav-icon"><i class="fas fa-flag"></i></span><span class="nav-label">View Reports</span></a></li>
-            </ul>
+          <div class="sidebar-section-title">Dashboard</div>
+          <ul class="sidebar-nav">
+            <li><a href="#" class="side-link" data-tab="stats"><span class="nav-icon"><i class="fas fa-chart-bar"></i></span><span class="nav-label">My Statistics</span></a></li>
+            <li><a href="/reports-dashboard/"><span class="nav-icon"><i class="fas fa-flag"></i></span><span class="nav-label">View Reports</span></a></li>
+          </ul>
           {% endif %}
           
           {% if user.is_superuser or user.userprofile.role == 'COMPANY_ADMIN' %}
-            <div class="sidebar-section-title" style="color:#dc3545;"><i class="fas fa-lock"></i> Admin</div>
-            <ul class="sidebar-nav">
-              <li><a href="{% url 'admin:detector_scamreport_changelist' %}"><span class="nav-icon"><i class="fas fa-flag"></i></span><span class="nav-label">Scam Reports</span></a></li>
-              <li><a href="{% url 'admin:detector_blockednumber_changelist' %}"><span class="nav-icon"><i class="fas fa-ban"></i></span><span class="nav-label">Blocked Numbers</span></a></li>
-              {% if user.is_superuser %}
-              <li><a href="{% url 'admin:detector_company_changelist' %}"><span class="nav-icon"><i class="fas fa-building"></i></span><span class="nav-label">Companies</span></a></li>
-              {% endif %}
-              <li><a href="/api/export/reports/"><span class="nav-icon"><i class="fas fa-download"></i></span><span class="nav-label">Export CSV</span></a></li>
-            </ul>
+          <div class="sidebar-section-title" style="color:#dc3545;"><i class="fas fa-lock"></i> Admin</div>
+          <ul class="sidebar-nav">
+            <li><a href="{% url 'admin:detector_scamreport_changelist' %}"><span class="nav-icon"><i class="fas fa-flag"></i></span><span class="nav-label">Scam Reports</span></a></li>
+            <li><a href="{% url 'admin:detector_blockednumber_changelist' %}"><span class="nav-icon"><i class="fas fa-ban"></i></span><span class="nav-label">Blocked Numbers</span></a></li>
+            {% if user.is_superuser %}
+            <li><a href="{% url 'admin:detector_company_changelist' %}"><span class="nav-icon"><i class="fas fa-building"></i></span><span class="nav-label">Companies</span></a></li>
+            {% endif %}
+            <li><a href="/api/export/reports/"><span class="nav-icon"><i class="fas fa-download"></i></span><span class="nav-label">Export CSV</span></a></li>
+          </ul>
           {% endif %}
         </div>
+        
+        <!-- SIDEBAR FOOTER - ALWAYS VISIBLE -->
         <div class="sidebar-footer">
+          <a href="/analytics/" class="sidebar-footer-link">
+            <i class="fas fa-chart-line"></i> Analytics
+          </a>
+          <a href="/takedown/" class="sidebar-footer-link">
+            <i class="fas fa-trash-alt"></i> Takedown
+          </a>
           <a href="/scam-alerts/"><i class="fas fa-bell"></i> Scam Alerts</a>
           <a href="/safety-tips/"><i class="fas fa-lightbulb"></i> Safety Tips</a>
         </div>
@@ -301,7 +678,7 @@
             <div class="qs-value" id="qsScans">--</div>
             <div class="qs-label">Today</div>
           </div>
-          <div class="quick-stat-item" onclick="window.location.href='{% url 'admin:detector_scamreport_changelist' %}'">
+          <div class="quick-stat-item">
             <div class="qs-icon">🚨</div>
             <div class="qs-value" id="qsHighRisk">--</div>
             <div class="qs-label">High Risk</div>
@@ -316,10 +693,22 @@
             <div class="qs-value" id="qsCounties">--</div>
             <div class="qs-label">Counties</div>
           </div>
-          <div class="quick-stat-item" onclick="window.location.href='{% url 'admin:detector_blockednumber_changelist' %}'">
+          <div class="quick-stat-item">
             <div class="qs-icon">🚫</div>
             <div class="qs-value" id="qsBlocked">--</div>
             <div class="qs-label">Blocked</div>
+          </div>
+        </div>
+
+        <!-- Scam Alert Subscription Card -->
+        <div class="card mb-4" style="border: 1px solid #e2e8f0; border-radius: 16px; background: linear-gradient(135deg, #f8fafc, #ffffff);">
+          <div class="card-body text-center" style="padding: 20px;">
+            <div style="font-size: 2.5rem; margin-bottom: 10px;">🔔</div>
+            <h5 style="color: #002855; font-weight: 700;">Stay Informed</h5>
+            <p style="color: #64748b; font-size: 0.9rem; margin-bottom: 15px;">Get instant scam alerts via email</p>
+            <a href="/subscribe/" class="btn" style="background: linear-gradient(135deg, #F5A623, #e6951a); color: #002855; padding: 10px 24px; border-radius: 50px; font-weight: 600; text-decoration: none; display: inline-block; transition: all 0.3s;">
+              <i class="fas fa-bell"></i> Subscribe Now
+            </a>
           </div>
         </div>
 
@@ -360,12 +749,164 @@
           <div id="whatsappResult" class="result-card"></div>
         </div>
 
-        <!-- Call Tab -->
+        <!-- CALL TAB -->
         <div id="callTab" class="tab-content">
-          <div class="tab-header"><h5><i class="fas fa-phone-alt"></i> Call Monitor</h5></div>
-          <div class="row">
-            <div class="col-md-6"><div class="card"><div class="card-body"><h6>Manual Analysis</h6><textarea id="callTranscript" class="form-control" rows="8" placeholder="Paste transcript..."></textarea><button class="btn-analyze mt-3" id="analyzeCallBtn">Analyze</button><div id="callResult" class="result-card mt-3"></div></div></div></div>
-            <div class="col-md-6"><div class="card"><div class="card-body"><h6>Check Number</h6><input type="tel" id="callerNumber" class="form-control" placeholder="0712345678" /><button class="btn-analyze mt-2" id="checkNumberBtn">Check</button><div id="numberCheckResult" class="mt-3"></div></div></div></div>
+          <div class="tab-header">
+            <h5><i class="fas fa-phone-alt"></i> Call Monitor</h5>
+            <p class="text-muted mb-0 mt-1">⚠️ LIVE scam detection - Get warned to HANG UP immediately if scam detected!</p>
+          </div>
+          
+          <div id="callSpinner" style="display: none; text-align: center; padding: 20px;">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p class="mt-2">Analyzing call transcript...</p>
+          </div>
+          
+          <button id="floatingTerminateBtn" class="floating-terminate-btn" style="display: none;">
+            <i class="fas fa-phone-slash"></i> 🚨 TERMINATE CALL NOW! 🚨
+          </button>
+          
+          <div class="call-monitor-card">
+            <div class="call-monitor-header">
+              <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div>
+                  <h5 class="mb-0"><i class="fas fa-microphone-alt"></i> Live Voice Monitor</h5>
+                  <small>⚠️ You will be warned IMMEDIATELY if scam detected - HANG UP right away!</small>
+                </div>
+                <div>
+                  <span id="monitorStatus" class="status-badge bg-secondary">
+                    <i class="fas fa-circle"></i> Not monitoring
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div class="card-body p-4">
+              <div class="row">
+                <div class="col-md-8">
+                  <div class="d-flex gap-3 mb-4 flex-wrap">
+                    <button id="startCallMonitorBtn" class="btn btn-success">
+                      <i class="fas fa-play"></i> Start Live Monitoring
+                    </button>
+                    <button id="stopCallMonitorBtn" class="btn btn-danger" disabled>
+                      <i class="fas fa-stop"></i> Stop & Save
+                    </button>
+                    <input type="text" id="callerNumberInput" class="form-control w-auto" placeholder="Caller number (optional)" style="max-width: 180px;">
+                  </div>
+                  
+                  <div id="terminateWarningBanner" style="display: none;">
+                    <div class="terminate-warning" id="terminateWarningMsg">
+                      <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                          <i class="fas fa-skull-crosswalk" style="font-size: 1.5rem; margin-right: 10px;"></i>
+                          <strong>🚨 SCAM DETECTED! HANG UP IMMEDIATELY! 🚨</strong>
+                          <div class="small mt-1">The caller is trying to scam you. Do NOT share any information. HANG UP NOW!</div>
+                        </div>
+                        <button id="terminateCallBtn" class="btn btn-light">
+                          <i class="fas fa-phone-slash"></i> HANG UP
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div id="liveTranscriptContainer">
+                    <div class="live-transcript-panel">
+                      <div class="d-flex justify-content-between align-items-center mb-3">
+                        <strong><i class="fas fa-comment-dots"></i> Live Call Transcript</strong>
+                        <small class="text-muted" id="transcriptTimer">00:00</small>
+                      </div>
+                      
+                      <div id="interimTranscript" class="mb-3">
+                        🎤 Click "Start Monitoring" and allow microphone access. Speak naturally...
+                      </div>
+                      
+                      <div id="liveTranscript" style="max-height: 280px; overflow-y: auto;">
+                        <div class="text-muted text-center py-4">Waiting for speech...</div>
+                      </div>
+                      
+                      <div class="mt-3">
+                        <div class="d-flex justify-content-between mb-1">
+                          <small><i class="fas fa-chart-line"></i> Risk Score</small>
+                          <small id="scamMeterText" class="text-success fw-bold">0% - Safe</small>
+                        </div>
+                        <div class="risk-meter-container">
+                          <div id="scamMeterBar" class="progress-bar bg-success" style="width: 0%; height: 12px; border-radius: 10px;"></div>
+                        </div>
+                      </div>
+                      
+                      <div id="realtimeAlerts" class="mt-3" style="max-height: 150px; overflow-y: auto;">
+                        <div class="text-muted text-center small">Alerts will appear here during the call...</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="col-md-4">
+                  <div class="alert alert-danger mb-3" style="border-left: 4px solid #ffc107;">
+                    <strong><i class="fas fa-exclamation-triangle"></i> ⚠️ CRITICAL WARNING ⚠️</strong>
+                    <p class="small mt-2 mb-0">If this tool detects scam phrases, you will see a RED BANNER telling you to <strong class="text-warning">HANG UP IMMEDIATELY</strong>. DO NOT stay on the call - scammers will pressure you to act fast!</p>
+                  </div>
+                  
+                  <div class="alert alert-warning small">
+                    <strong><i class="fas fa-skull"></i> Scam Keywords (HANG UP if heard):</strong>
+                    <div class="mt-2">
+                      <span class="word-badge word-badge-danger">PIN</span>
+                      <span class="word-badge word-badge-danger">MPIN</span>
+                      <span class="word-badge word-badge-danger">OTP</span>
+                      <span class="word-badge word-badge-danger">Password</span>
+                      <span class="word-badge word-badge-danger">M-Pesa PIN</span>
+                      <span class="word-badge word-badge-warning">Send money</span>
+                      <span class="word-badge word-badge-warning">Tuma pesa</span>
+                      <span class="word-badge word-badge-warning">Urgent</span>
+                      <span class="word-badge word-badge-warning">Suspended</span>
+                      <span class="word-badge word-badge-warning">Blocked</span>
+                      <span class="word-badge word-badge-warning">Verify account</span>
+                      <span class="word-badge word-badge-warning">Winning prize</span>
+                    </div>
+                  </div>
+                  
+                  <div class="alert alert-success small">
+                    <strong><i class="fas fa-phone-slash"></i> What to do if scammed:</strong>
+                    <ul class="mb-0 mt-1 small">
+                      <li>📞 Call your bank immediately</li>
+                      <li>📱 Report to Safaricom: <strong>333</strong></li>
+                      <li>📧 Forward details to <strong>report@kenyacic.go.ke</strong></li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Manual Analysis Section -->
+          <div class="row mt-4">
+            <div class="col-md-6">
+              <div class="card h-100">
+                <div class="card-body">
+                  <h6><i class="fas fa-pen-alt"></i> Manual Analysis</h6>
+                  <p class="text-muted small">Don't want to use microphone? Paste call transcript here:</p>
+                  <textarea id="callTranscript" class="form-control" rows="6" placeholder="Paste call transcript here..."></textarea>
+                  <button class="btn-analyze mt-3" id="analyzeCallBtn">
+                    <i class="fas fa-search"></i> Analyze Transcript
+                  </button>
+                  <div id="callResult" class="result-card mt-3"></div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="col-md-6">
+              <div class="card h-100">
+                <div class="card-body">
+                  <h6><i class="fas fa-search"></i> Check Phone Number</h6>
+                  <p class="text-muted small">Verify if a phone number has been reported for scams:</p>
+                  <div class="input-group">
+                    <input type="tel" id="callerNumber" class="form-control" placeholder="0712345678" />
+                    <button class="btn-analyze" id="checkNumberBtn">
+                      <i class="fas fa-check-circle"></i> Check
+                    </button>
+                  </div>
+                  <div id="numberCheckResult" class="mt-3"></div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -381,10 +922,43 @@
 
         <!-- Telegram Tab -->
         <div id="telegramTab" class="tab-content">
-          <div class="tab-header"><h5><i class="fab fa-telegram-plane"></i> Telegram Bot</h5></div>
+          <div class="tab-header">
+            <h5><i class="fab fa-telegram-plane"></i> Telegram Scam Detector</h5>
+            <p class="text-muted mb-0 mt-1">Paste any suspicious Telegram message for analysis</p>
+          </div>
           <div class="row">
-            <div class="col-md-7"><div class="card"><div class="card-body"><h6>Check Message</h6><form id="telegramForm"><textarea class="form-control" id="telegramText" rows="8" placeholder="Paste Telegram message..."></textarea><button type="submit" class="btn-analyze mt-2">Analyze</button></form><div id="telegramResult" class="result-card"></div></div></div></div>
-            <div class="col-md-5"><div class="card telegram-gradient"><div class="card-body text-center"><div style="font-size:3rem;">🤖</div><h6>@AIFraudShield_Bot</h6><p class="small">Our bot is LIVE!</p><a href="https://t.me/AIFraudShield_Bot" target="_blank" class="btn btn-light btn-sm">Open Bot</a></div></div></div>
+            <div class="col-md-7">
+              <div class="card">
+                <div class="card-body">
+                  <h6><i class="fab fa-telegram"></i> Check Message</h6>
+                  <form id="telegramForm">
+                    <textarea class="form-control" id="telegramText" rows="8" placeholder="Paste Telegram message here..."></textarea>
+                    <button type="submit" class="btn-analyze mt-3">
+                      <i class="fab fa-telegram-plane"></i> Analyze Message
+                    </button>
+                  </form>
+                  <div id="telegramSpinner" class="spinner mt-3" style="display: none; text-align: center;">
+                    <div class="spinner-border text-primary" role="status"></div>
+                    <p class="mt-2">Analyzing Telegram message...</p>
+                  </div>
+                  <div id="telegramResult" class="result-card mt-3"></div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-5">
+              <div class="card telegram-gradient bg-dark text-white">
+                <div class="card-body text-center">
+                  <div style="font-size:3rem;">🤖</div>
+                  <h6 class="mt-2">@AIFraudShield_Bot</h6>
+                  <p class="small">Our official Telegram bot is LIVE!</p>
+                  <a href="https://t.me/AIFraudShield_Bot" target="_blank" class="btn btn-outline-light btn-sm">
+                    <i class="fab fa-telegram"></i> Open Bot
+                  </a>
+                  <hr class="bg-light">
+                  <p class="small mb-0">Forward suspicious messages to our bot for instant scam detection!</p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -416,36 +990,55 @@
         </div>
       </div>
     </div>
+    
+    <!-- FOOTER -->
+    <div class="home-footer">
+      <div class="home-footer-content">
+        <div class="home-footer-grid">
+          <div class="home-footer-col">
+            <h4><i class="fas fa-shield-alt"></i> AI Fraud Shield</h4>
+            <p>Kenya's most advanced AI-powered scam detection platform. Protecting Kenyans from digital fraud since 2024.</p>
+          </div>
+          <div class="home-footer-col">
+            <h4><i class="fas fa-link"></i> Quick Links</h4>
+            <a href="/"><i class="fas fa-home"></i> Home</a>
+            <a href="/how-it-works/"><i class="fas fa-cogs"></i> How It Works</a>
+            <a href="/safety-tips/"><i class="fas fa-lightbulb"></i> Safety Tips</a>
+            <a href="/scam-alerts/"><i class="fas fa-bell"></i> Scam Alerts</a>
+          </div>
+          <div class="home-footer-col">
+            <h4><i class="fas fa-flag"></i> Report & Help</h4>
+            <a href="/report-scam/"><i class="fas fa-exclamation-circle"></i> Report a Scam</a>
+            <a href="/heatmap/"><i class="fas fa-map-marked-alt"></i> Scam Heatmap</a>
+            <a href="/faq/"><i class="fas fa-question-circle"></i> FAQ</a>
+          </div>
+          <div class="home-footer-col">
+            <h4><i class="fas fa-phone-alt"></i> Emergency Contacts</h4>
+            <p><i class="fas fa-phone"></i> Safaricom: <strong>333</strong></p>
+            <p><i class="fas fa-phone"></i> Airtel: <strong>3333</strong></p>
+            <p><i class="fas fa-envelope"></i> Cybercrime: <strong>report@kenyacic.go.ke</strong></p>
+          </div>
+        </div>
+        <div class="home-footer-bottom">
+          <p>
+            <i class="fas fa-shield-alt"></i> 
+            &copy; 2026 <strong>AI Fraud Shield Kenya</strong> | 
+            🛡️ Protecting Kenyans from Digital Scams
+          </p>
+        </div>
+      </div>
+    </div>
+    
   </div>
 </div>
-
-<script>
-fetch('/api/stats/')
-  .then(r => r.json())
-  .then(d => {
-    if (d.stats) {
-      document.getElementById('qsScans').textContent = d.stats.today_count || 0;
-      document.getElementById('qsHighRisk').textContent = d.stats.high_risk_count || 0;
-      document.getElementById('qsSMS').textContent = d.stats.sms_count || 0;
-      document.getElementById('qsCounties').textContent = (d.stats.county_data || []).length || 0;
-      document.getElementById('qsBlocked').textContent = d.stats.takedown_total || 0;
-    }
-  });
-</script>
 {% endblock %}
 
 {% block extra_js %}
   <script src="{% static 'detector/js/main.js' %}"></script>
+  <script src="{% static 'detector/js/home.js' %}"></script>
   <script>
-    document.querySelectorAll('.side-link[data-tab]').forEach((link) => {
-      link.addEventListener('click', function (e) {
-        e.preventDefault()
-        document.querySelectorAll('.side-link').forEach((l) => l.classList.remove('active'))
-        this.classList.add('active')
-        document.querySelectorAll('.tab-content').forEach((t) => t.classList.remove('active'))
-        document.getElementById(this.dataset.tab + 'Tab').classList.add('active')
-        if (this.dataset.tab === 'stats') loadEnhancedStats()
-      })
-    })
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('✅ Home page loaded successfully');
+    });
   </script>
 {% endblock %}

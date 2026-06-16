@@ -40,6 +40,9 @@ class ScamReport(models.Model):
         ('WHATSAPP', 'WhatsApp Chat'),
         ('SCREENSHOT', 'Screenshot'),
         ('CALL', 'Phone Call'),
+        ('TELEGRAM', 'Telegram Message'),
+        ('USSD', 'USSD Report'),
+        ('WEB', 'Web Page'),
     ]
     
     user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name='scam_reports')
@@ -59,9 +62,24 @@ class ScamReport(models.Model):
         ordering = ['-date_reported']
         verbose_name = 'Scam Report'
         verbose_name_plural = 'Scam Reports'
+        indexes = [
+            models.Index(fields=['risk_score'], name='idx_scam_score'),
+            models.Index(fields=['report_type'], name='idx_scam_type'),
+            models.Index(fields=['date_reported'], name='idx_scam_date'),
+            models.Index(fields=['user'], name='idx_scam_user'),
+            models.Index(fields=['company'], name='idx_scam_company'),
+        ]
     
     def __str__(self):
         return f"{self.report_type} - Score: {self.risk_score} - {self.date_reported.date()}"
+    
+    @property
+    def is_high_risk(self):
+        return self.risk_score >= 70
+    
+    @property
+    def is_scam(self):
+        return self.risk_score >= 40
 
 
 class PhoneRisk(models.Model):
@@ -75,6 +93,10 @@ class PhoneRisk(models.Model):
         verbose_name = 'Phone Risk'
         verbose_name_plural = 'Phone Risks'
         ordering = ['-risk_score', '-reports_count']
+        indexes = [
+            models.Index(fields=['phone_number'], name='idx_phone_num'),
+            models.Index(fields=['risk_score'], name='idx_phone_risk'),
+        ]
     
     def __str__(self):
         return f"{self.phone_number} - Risk: {self.risk_score}% - Reports: {self.reports_count}"
@@ -91,6 +113,9 @@ class EmailRisk(models.Model):
         verbose_name = 'Email Risk'
         verbose_name_plural = 'Email Risks'
         ordering = ['-risk_score', '-reports_count']
+        indexes = [
+            models.Index(fields=['email_address'], name='idx_email_addr'),
+        ]
     
     def __str__(self):
         return f"{self.email_address} - Risk: {self.risk_score}% - Reports: {self.reports_count}"
@@ -109,6 +134,10 @@ class UrlRisk(models.Model):
         verbose_name = 'URL Risk'
         verbose_name_plural = 'URL Risks'
         ordering = ['-risk_score', '-date_added']
+        indexes = [
+            models.Index(fields=['domain'], name='idx_url_domain'),
+            models.Index(fields=['is_phishing'], name='idx_url_phish'),
+        ]
     
     def __str__(self):
         return f"{self.domain} - Phishing: {self.is_phishing} - Risk: {self.risk_score}%"
@@ -139,7 +168,7 @@ class WhatsAppRisk(models.Model):
     phone_number = models.CharField(max_length=15, db_index=True)
     risk_score = models.IntegerField(default=0)
     reports_count = models.IntegerField(default=0)
-    scam_patterns_detected = models.TextField(blank=True)  # JSON or comma-separated patterns
+    scam_patterns_detected = models.TextField(blank=True)
     last_message_preview = models.CharField(max_length=200, blank=True)
     first_reported = models.DateTimeField(auto_now_add=True)
     last_reported = models.DateTimeField(auto_now=True)
@@ -148,6 +177,9 @@ class WhatsAppRisk(models.Model):
         verbose_name = 'WhatsApp Risk'
         verbose_name_plural = 'WhatsApp Risks'
         ordering = ['-risk_score', '-reports_count']
+        indexes = [
+            models.Index(fields=['phone_number'], name='idx_wa_phone'),
+        ]
     
     def __str__(self):
         return f"WhatsApp: {self.phone_number} - Risk: {self.risk_score}% - Reports: {self.reports_count}"
@@ -179,6 +211,11 @@ class BlockedNumber(models.Model):
     
     class Meta:
         ordering = ['-report_count', '-confidence_score']
+        indexes = [
+            models.Index(fields=['phone_number'], name='idx_block_phone'),
+            models.Index(fields=['status'], name='idx_block_status'),
+            models.Index(fields=['confidence_score'], name='idx_block_conf'),
+        ]
     
     def __str__(self):
         return f"{self.phone_number} - {self.status} ({self.report_count} reports)"
@@ -193,14 +230,11 @@ class BlockedNumber(models.Model):
         if self.confidence_score >= 70 and self.report_count >= 5:
             self.status = 'BLOCKED'
             self.auto_blocked = True
-        # REMOVED self.save() from here - let caller decide when to save
 
     def save(self, *args, **kwargs):
         if not self.confidence_score:
             self.calculate_confidence()
         super().save(*args, **kwargs)
-        
-
 
 
 class UserProfile(models.Model):
@@ -219,6 +253,24 @@ class UserProfile(models.Model):
     department = models.CharField(max_length=100, blank=True)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
+     # New subscription fields
+    alert_subscription = models.BooleanField(default=False)
+    alert_frequency = models.CharField(max_length=10, choices=[
+        ('DAILY', 'Daily'),
+        ('WEEKLY', 'Weekly'),
+        ('INSTANT', 'Instant'),
+    ], default='DAILY')
+    alert_email = models.EmailField(null=True, blank=True)
+    alert_phone = models.CharField(max_length=20, null=True, blank=True)
+    
+    # Takedown preferences
+    takedown_notifications = models.BooleanField(default=True)
+    
+    class Meta:
+        indexes = [
+            models.Index(fields=['role'], name='idx_profile_role'),
+            models.Index(fields=['company'], name='idx_profile_company'),
+        ]
     
     def __str__(self):
         return f"{self.user.username} - {self.company.name if self.company else 'Individual'} ({self.role})"
@@ -311,6 +363,10 @@ class TakedownReport(models.Model):
     
     class Meta:
         ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['status'], name='idx_takedown_status'),
+            models.Index(fields=['domain'], name='idx_takedown_domain'),
+        ]
     
     def __str__(self):
         return f"{self.domain} - {self.status}"
@@ -359,6 +415,11 @@ class CorporateAccount(models.Model):
     is_active = models.BooleanField(default=True)
     trial_ends = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        indexes = [
+            models.Index(fields=['api_key'], name='idx_corp_apikey'),
+        ]
     
     def __str__(self):
         return f"{self.company.name} - {self.plan}"

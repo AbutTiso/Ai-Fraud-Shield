@@ -1,40 +1,140 @@
 {
-  "manifest_version": 3,
-  "name": "AI Fraud Shield - Scam Detector",
-  "version": "1.0.0",
-  "description": "Protect yourself from web scams with real-time detection, password protection, and download scanning",
-  "permissions": [
-    "activeTab",
-    "storage",
-    "notifications",
-    "webNavigation",
-    "scripting",
-    "downloads",
-    "webRequest"
-  ],
-  "host_permissions": [
-    "http://localhost:8000/*",
-    "https://*/*",
-    "http://*/*"
-  ],
-  "action": {
-    "default_popup": "popup.html",
-    "default_title": "AI Fraud Shield",
-    "default_icon": {
-      "128": "icon128.png"
-    }
-  },
-  "background": {
-    "service_worker": "background.js"
-  },
-  "content_scripts": [
+  "name": "AI Fraud Shield",
+  "short_name": "FraudShield",
+  "description": "Kenya's Most Advanced AI-Powered Scam Detection Platform",
+  "start_url": "/",
+  "id": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#002855",
+  "background_color": "#ffffff",
+  "display_override": ["window-controls-overlay", "standalone"],
+  "screenshots": [
     {
-      "matches": ["<all_urls>"],
-      "js": ["content.js"],
-      "run_at": "document_end"
+      "src": "/static/detector/icons/screenshot-wide.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "AI Fraud Shield Desktop View"
+    },
+    {
+      "src": "/static/detector/icons/screenshot-mobile.png",
+      "sizes": "360x640",
+      "type": "image/png",
+      "label": "AI Fraud Shield Mobile View"
     }
   ],
-  "icons": {
-    "128": "icon128.png"
-  }
+  "icons": [
+    {
+      "src": "/static/detector/icons/icon-72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/detector/icons/icon-96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/detector/icons/icon-128.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/detector/icons/icon-144.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/detector/icons/icon-152.png",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/detector/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/detector/icons/icon-384.png",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/detector/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/detector/icons/icon-192-maskable.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/static/detector/icons/icon-512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Report a Scam",
+      "short_name": "Report",
+      "description": "Quickly report a scam",
+      "url": "/report-scam/",
+      "icons": [
+        {
+          "src": "/static/detector/icons/icon-96.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Check Number",
+      "short_name": "Check",
+      "description": "Check if a number is a scam",
+      "url": "/#call",
+      "icons": [
+        {
+          "src": "/static/detector/icons/icon-96.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Scam Alerts",
+      "short_name": "Alerts",
+      "description": "View latest scam alerts",
+      "url": "/scam-alerts/",
+      "icons": [
+        {
+          "src": "/static/detector/icons/icon-96.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    }
+  ],
+  "categories": ["security", "productivity", "utilities"],
+  "lang": "en-KE",
+  "dir": "ltr",
+  "prefer_related_applications": false,
+  "protocol_handlers": [
+    {
+      "protocol": "web+fraudshield",
+      "url": "/?q=%s"
+    }
+  ]
 }

@@ -1,409 +1,820 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}AI Fraud Shield - Scam Detection{% endblock %}</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>
+      {% block title %}
+        USIU Africa AI Fraud Shield - Scam Detection
+      {% endblock %}
+    </title>
+
+    <!-- ========== PWA META TAGS ========== -->
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#002855" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="FraudShield" />
+    <link rel="apple-touch-icon" href="/static/detector/icons/icon-192.png" />
+
+    <!-- Add this for maskable icon support -->
+    <link rel="icon" type="image/png" sizes="192x192" href="/static/detector/icons/icon-192-maskable.png" maskable />
+
+    <!-- Additional PWA Meta Tags -->
+    <meta name="application-name" content="AI Fraud Shield" />
+    <meta name="msapplication-TileColor" content="#002855" />
+    <meta name="msapplication-TileImage" content="/static/detector/icons/icon-144.png" />
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    {% block extra_css %}{% endblock %}
+
+    {% block extra_css %}
+    {% endblock %}
+
     <style>
-        :root {
-            --navy: #002855;
-            --navy-light: #1a3f6e;
-            --navy-dark: #001a3a;
-            --gold: #F5A623;
-            --gold-light: #f7b94e;
-            --gold-dark: #e6951a;
-            --bg-body-start: #fefce8;
-            --bg-body-mid: #fef9c3;
-            --bg-body-end: #f7b94e;
-            --text-primary: #1e293b;
-            --text-secondary: #64748b;
-            --text-muted: #94a3b8;
-            --border-color: #e2e8f0;
-            --danger: #dc3545;
-            --success: #10b981;
+      /* TWO COLORS ONLY: Navy (#002855) and Gold (#F5A623) */
+      :root {
+        --navy: #002855;
+        --navy-dark: #001a3a;
+        --navy-light: #e8f0fe;
+        --gold: #f5a623;
+        --gold-dark: #e6951a;
+        --gold-light: #fef3d5;
+        --white: #ffffff;
+        --gray: #6c757d;
+        --text-dark: #1e293b;
+        --text-light: #64748b;
+        --border-color: #e2e8f0;
+      }
+      
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      
+      body {
+        background: linear-gradient(135deg, #fefce8 0%, #fef9c3 30%, #f7b94e 100%);
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        min-height: 100vh;
+        padding: clamp(10px, 3vw, 20px);
+        color: var(--text-dark);
+        line-height: 1.5;
+      }
+      
+      .container {
+        max-width: 1400px;
+        margin: 0 auto;
+        width: 100%;
+      }
+      
+      .main-card {
+        background: var(--white);
+        border-radius: clamp(16px, 4vw, 24px);
+        box-shadow: 0 25px 50px -12px rgba(0, 40, 85, 0.2);
+        overflow: hidden;
+        border: 1px solid var(--border-color);
+      }
+      
+      /* ========== HEADER - Responsive ========== */
+      .header {
+        background: linear-gradient(135deg, var(--navy) 0%, var(--navy-dark) 100%);
+        color: var(--white);
+        padding: clamp(30px, 6vw, 50px) clamp(20px, 5vw, 40px);
+        text-align: center;
+        position: relative;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border-bottom: 4px solid var(--gold);
+        overflow: hidden;
+      }
+      
+      .header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(245, 166, 35, 0.08) 1%, transparent 1%);
+        background-size: 50px 50px;
+        animation: shimmer 20s linear infinite;
+        pointer-events: none;
+      }
+      
+      @keyframes shimmer {
+        from {
+          transform: translate(0, 0);
         }
-        
-        * { box-sizing: border-box; }
-
-        body {
-            background: linear-gradient(135deg, var(--bg-body-start) 0%, var(--bg-body-mid) 30%, var(--bg-body-end) 100%);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            min-height: 100vh;
-            padding: 20px;
-            color: var(--text-primary);
-            line-height: 1.6;
+        to {
+          transform: translate(50px, 50px);
         }
-        
-        .container { max-width: 1400px; margin: 0 auto; }
-        
-        .main-card {
-            background: white;
-            border-radius: 24px;
-            box-shadow: 0 25px 50px -12px rgba(0, 40, 85, 0.2);
-            overflow: hidden;
-            border: 1px solid var(--border-color);
+      }
+      
+      .header:hover {
+        opacity: 0.95;
+        transform: scale(1.005);
+      }
+      
+      .header h1 {
+        font-size: clamp(1.5rem, 5vw, 2.2rem);
+        margin-bottom: clamp(8px, 2vw, 12px);
+        position: relative;
+        z-index: 1;
+        font-weight: 700;
+        word-break: break-word;
+      }
+      
+      .header h1 i {
+        color: var(--gold);
+        font-size: clamp(1.3rem, 4vw, 1.8rem);
+      }
+      
+      .header p {
+        position: relative;
+        z-index: 1;
+        opacity: 0.9;
+        font-size: clamp(0.85rem, 3vw, 1rem);
+        margin: 0;
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+      
+      .header a {
+        color: var(--white);
+        text-decoration: none;
+      }
+      
+      .badge-custom {
+        display: inline-block;
+        background: var(--gold);
+        padding: clamp(5px, 1.5vw, 8px) clamp(14px, 3vw, 20px);
+        border-radius: 50px;
+        font-size: clamp(0.7rem, 2.5vw, 0.85rem);
+        font-weight: 700;
+        position: relative;
+        z-index: 1;
+        color: var(--navy);
+        margin-top: clamp(10px, 3vw, 16px);
+        letter-spacing: 0.5px;
+      }
+      
+      .user-welcome {
+        position: relative;
+        z-index: 1;
+        margin-top: 8px;
+        font-size: clamp(0.75rem, 2.5vw, 0.85rem);
+        opacity: 0.85;
+      }
+      
+      /* ========== FOOTER - Responsive ========== */
+      .footer {
+        background: linear-gradient(135deg, var(--navy) 0%, var(--navy-dark) 100%);
+        color: var(--white);
+        padding: clamp(24px, 5vw, 32px) clamp(16px, 4vw, 30px);
+        text-align: center;
+        font-size: clamp(0.8rem, 2.5vw, 0.9rem);
+        border-top: 4px solid var(--gold);
+        border-radius: 0 0 clamp(16px, 4vw, 24px) clamp(16px, 4vw, 24px);
+        position: relative;
+        overflow: hidden;
+      }
+      
+      .footer::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(245, 166, 35, 0.05) 1%, transparent 1%);
+        background-size: 40px 40px;
+        animation: shimmer 25s linear infinite;
+        pointer-events: none;
+      }
+      
+      .footer-content {
+        position: relative;
+        z-index: 1;
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+      
+      .footer-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: clamp(16px, 4vw, 24px);
+        text-align: left;
+        margin-bottom: 20px;
+      }
+      
+      .footer-col h4 {
+        color: var(--gold);
+        font-weight: 700;
+        font-size: clamp(0.85rem, 2.5vw, 0.95rem);
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      
+      .footer-col h4 i {
+        color: var(--gold);
+        font-size: clamp(0.8rem, 2.5vw, 0.9rem);
+      }
+      
+      .footer-col p,
+      .footer-col a {
+        color: rgba(255, 255, 255, 0.8);
+        font-size: clamp(0.75rem, 2vw, 0.85rem);
+        margin: 6px 0;
+        text-decoration: none;
+        display: block;
+        transition: color 0.2s ease;
+        word-break: break-word;
+      }
+      
+      .footer-col a:hover {
+        color: var(--gold);
+      }
+      .footer-col strong {
+        color: var(--gold);
+      }
+      
+      .footer-bottom {
+        border-top: 1px solid rgba(255, 255, 255, 0.15);
+        padding-top: 16px;
+        margin-top: 16px;
+        text-align: center;
+        position: relative;
+        z-index: 1;
+        font-size: clamp(0.7rem, 2vw, 0.8rem);
+        opacity: 0.85;
+      }
+      
+      .footer-bottom i {
+        color: var(--gold);
+      }
+      .footer-bottom strong {
+        color: var(--gold);
+      }
+      
+      /* ========== SCROLLBAR ========== */
+      ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: var(--gold-light);
+        border-radius: 10px;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: var(--gold);
+        border-radius: 10px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: var(--gold-dark);
+      }
+      
+      ::selection {
+        background: var(--navy);
+        color: var(--white);
+      }
+      
+      :focus-visible {
+        outline: 3px solid var(--gold);
+        outline-offset: 3px;
+        border-radius: 4px;
+      }
+      
+      /* ========== PWA STYLES (ADDED) ========== */
+      .pwa-install-banner {
+        position: fixed;
+        bottom: 20px;
+        left: 20px;
+        right: 20px;
+        background: linear-gradient(135deg, #002855, #001a3f);
+        color: white;
+        padding: 15px 20px;
+        border-radius: 16px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        z-index: 10000;
+        display: none;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 15px;
+        border: 1px solid rgba(245, 166, 35, 0.3);
+        backdrop-filter: blur(10px);
+      }
+      
+      .pwa-install-banner.show {
+        display: flex;
+        animation: slideUp 0.3s ease;
+      }
+      
+      .pwa-install-banner .banner-content {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        flex: 1;
+      }
+      
+      .pwa-install-banner .banner-icon {
+        font-size: 2rem;
+      }
+      
+      .pwa-install-banner .banner-text h6 {
+        margin: 0;
+        font-weight: 700;
+      }
+      
+      .pwa-install-banner .banner-text p {
+        margin: 0;
+        font-size: 0.8rem;
+        opacity: 0.9;
+      }
+      
+      .pwa-install-banner .btn-install {
+        background: #f5a623;
+        color: #002855;
+        border: none;
+        padding: 10px 24px;
+        border-radius: 50px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.3s;
+      }
+      
+      .pwa-install-banner .btn-install:hover {
+        transform: scale(1.05);
+        background: #e6951a;
+      }
+      
+      .pwa-install-banner .btn-close-banner {
+        background: rgba(255, 255, 255, 0.2);
+        border: none;
+        color: white;
+        padding: 8px 16px;
+        border-radius: 30px;
+        cursor: pointer;
+        font-size: 0.8rem;
+      }
+      
+      .pwa-badge {
+        position: fixed;
+        top: 10px;
+        right: 10px;
+        background: rgba(0, 40, 85, 0.9);
+        color: #f5a623;
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        z-index: 10000;
+        backdrop-filter: blur(5px);
+        pointer-events: none;
+        display: none;
+      }
+      
+      .pwa-badge.show {
+        display: block;
+      }
+      
+      .offline-indicator {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        background: #dc3545;
+        color: white;
+        text-align: center;
+        padding: 5px;
+        font-size: 0.8rem;
+        z-index: 10001;
+        display: none;
+      }
+      
+      .offline-indicator.show {
+        display: block;
+        animation: slideDown 0.3s ease;
+      }
+      
+      @keyframes slideUp {
+        from {
+          transform: translateY(100%);
+          opacity: 0;
         }
-        
-        /* Header */
-        .header {
-            background: linear-gradient(135deg, var(--navy) 0%, var(--navy-dark) 100%);
-            color: white;
-            padding: 40px 30px;
-            text-align: center;
-            position: relative;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            border-bottom: 4px solid var(--gold);
-            overflow: hidden;
+        to {
+          transform: translateY(0);
+          opacity: 1;
         }
-        
-        .header::before {
-            content: '';
-            position: absolute;
-            top: -50%; right: -50%;
-            width: 200%; height: 200%;
-            background: radial-gradient(circle, rgba(255,255,255,0.05) 1%, transparent 1%);
-            background-size: 50px 50px;
-            animation: shimmer 20s linear infinite;
-            pointer-events: none;
+      }
+      
+      @keyframes slideDown {
+        from {
+          transform: translateY(-100%);
         }
-        
-        @keyframes shimmer {
-            from { transform: translate(0, 0); }
-            to { transform: translate(50px, 50px); }
+        to {
+          transform: translateY(0);
         }
-        
-        .header:hover { opacity: 0.95; transform: scale(1.005); }
-        
-        .header h1 { 
-            font-size: 2rem; margin-bottom: 10px;
-            position: relative; z-index: 1;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
-            font-weight: 700;
-        }
-        
-        .header h1 i { color: var(--gold); }
-        
-        .header p { position: relative; z-index: 1; opacity: 0.9; font-size: 1rem; margin: 0; }
-        
-        .header a { color: white; text-decoration: none; }
-        
-        .badge-custom {
-            display: inline-block;
-            background: var(--gold);
-            padding: 6px 18px;
-            border-radius: 50px;
-            font-size: 0.8rem;
-            font-weight: 700;
-            position: relative; z-index: 1;
-            color: var(--navy);
-            letter-spacing: 0.5px;
-            margin-top: 12px;
-        }
-
-        /* User welcome in header */
-        .header .user-welcome {
-            position: relative; z-index: 1;
-            margin-top: 8px;
-            font-size: 0.85rem;
-            opacity: 0.85;
-        }
-        
-        /* Footer */
-        .footer {
-            background: linear-gradient(135deg, var(--navy) 0%, var(--navy-dark) 100%);
-            color: white;
-            padding: 28px 30px;
-            text-align: center;
-            font-size: 0.9rem;
-            border-top: 4px solid var(--gold);
-            border-radius: 0 0 24px 24px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .footer::before {
-            content: '';
-            position: absolute;
-            top: -50%; left: -50%;
-            width: 200%; height: 200%;
-            background: radial-gradient(circle, rgba(255,255,255,0.03) 1%, transparent 1%);
-            background-size: 40px 40px;
-            animation: shimmer 25s linear infinite;
-            pointer-events: none;
-        }
-
-        .footer-content { position: relative; z-index: 1; }
-
+      }
+      
+      /* ========== RESPONSIVE BREAKPOINTS ========== */
+      
+      /* Tablet Landscape (1024px) */
+      @media (max-width: 1024px) {
         .footer-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            text-align: left;
-            margin-bottom: 20px;
+          grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+          gap: 20px;
         }
-
+      }
+      
+      /* Tablet Portrait (768px) */
+      @media (max-width: 768px) {
+        body {
+          padding: 8px;
+        }
+      
+        .header {
+          padding: 25px 20px;
+        }
+      
+        .footer-grid {
+          grid-template-columns: 1fr;
+          text-align: center;
+          gap: 24px;
+        }
+      
         .footer-col h4 {
-            color: var(--gold); font-weight: 700; font-size: 0.95rem;
-            margin-bottom: 10px; display: flex; align-items: center; gap: 8px;
+          justify-content: center;
         }
-
-        .footer-col h4 i { color: var(--gold); }
-
-        .footer-col p, .footer-col a {
-            color: rgba(255, 255, 255, 0.8); font-size: 0.85rem;
-            margin: 4px 0; text-decoration: none; display: block;
-            transition: color 0.2s ease;
+      
+        .footer-col p,
+        .footer-col a {
+          text-align: center;
         }
-
-        .footer-col a:hover { color: var(--gold); }
-        .footer-col strong { color: var(--gold); }
-
-        .footer-bottom {
-            border-top: 1px solid rgba(255, 255, 255, 0.15);
-            padding-top: 16px; margin-top: 16px;
-            text-align: center; position: relative; z-index: 1;
-            font-size: 0.8rem; opacity: 0.85;
+      }
+      
+      /* Mobile Landscape (640px) */
+      @media (max-width: 640px) {
+        body {
+          padding: 6px;
         }
-
-        .footer-bottom i { color: var(--gold); }
-        .footer-bottom strong { color: var(--gold); }
-        
-        /* Navbar */
-        .navbar-custom {
-            background: white; padding: 12px 24px;
-            border-radius: 16px;
-            box-shadow: 0 4px 20px rgba(0, 40, 85, 0.1);
-            margin-bottom: 20px;
-            border: 1px solid var(--border-color);
+      
+        .header h1 {
+          font-size: 1.3rem;
         }
-        
-        .navbar-custom .navbar-brand {
-            font-weight: 700; font-size: 1.2rem;
-            color: var(--navy); text-decoration: none;
+      
+        .badge-custom {
+          font-size: 0.7rem;
+          padding: 5px 12px;
         }
-        
-        .navbar-custom .navbar-brand i { color: var(--gold); }
-        
-        .navbar-custom .nav-link {
-            color: var(--text-secondary); font-weight: 500;
-            transition: all 0.3s ease; border-radius: 8px; padding: 8px 16px;
+      }
+      
+      /* Mobile Portrait (480px) */
+      @media (max-width: 480px) {
+        body {
+          padding: 4px;
         }
-        
-        .navbar-custom .nav-link:hover {
-            color: var(--navy); background: rgba(0, 40, 85, 0.05);
+      
+        .header {
+          padding: 20px 16px;
         }
-        
-        .navbar-custom .nav-link.active {
-            color: var(--navy); background: rgba(245, 166, 35, 0.15); font-weight: 600;
+      
+        .header h1 {
+          font-size: 1.2rem;
         }
-        
-        .btn-emergency-nav {
-            background: linear-gradient(135deg, var(--danger), #a71d2a);
-            color: white; border-radius: 50px; padding: 8px 18px;
-            font-size: 0.85rem; font-weight: 600;
-            text-decoration: none; transition: all 0.3s ease;
+      
+        .header p {
+          font-size: 0.8rem;
         }
-        
-        .btn-emergency-nav:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(220, 53, 69, 0.3);
-            color: white;
+      
+        .badge-custom {
+          font-size: 0.65rem;
+          padding: 4px 10px;
         }
-        
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: #fefce8; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: var(--gold-dark); }
-        
-        ::selection { background: var(--navy); color: white; }
-        
-        :focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
-        
-        @media (prefers-reduced-motion: reduce) {
-            .header::before, .footer::before { animation: none; }
-            * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+      
+        .footer {
+          padding: 20px 16px;
         }
-        
-        @media (prefers-contrast: high) {
-            body { background: white; }
-            .header, .footer { background: #000 !important; border-color: #000; }
+      
+        .footer-col h4 {
+          font-size: 0.85rem;
         }
-        
-        @media print {
-            body { background: white; }
-            .header::before, .footer::before { display: none; }
+      
+        .footer-col p,
+        .footer-col a {
+          font-size: 0.75rem;
         }
-        
-        @media (max-width: 768px) {
-            body { padding: 10px; }
-            .header { padding: 25px 20px; }
-            .header h1 { font-size: 1.5rem; }
-            .header p { font-size: 0.9rem; }
-            .footer { padding: 20px 15px; }
-            .footer-grid { grid-template-columns: 1fr; text-align: center; }
-            .footer-col h4 { justify-content: center; }
+      }
+      
+      /* Small phones (375px) */
+      @media (max-width: 375px) {
+        .header h1 {
+          font-size: 1rem;
         }
-        
-        @media (max-width: 576px) {
-            .header h1 { font-size: 1.3rem; }
+      
+        .badge-custom {
+          font-size: 0.6rem;
+          padding: 3px 8px;
         }
+      }
+      
+      /* Accessibility - Reduced Motion */
+      @media (prefers-reduced-motion: reduce) {
+        .header::before,
+        .footer::before {
+          animation: none;
+        }
+        * {
+          animation-duration: 0.01ms !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
+      
+      /* High Contrast Mode */
+      @media (prefers-contrast: high) {
+        body {
+          background: white;
+        }
+        .header,
+        .footer {
+          background: #000 !important;
+          border-color: #000;
+        }
+        .badge-custom {
+          background: #000;
+          color: white;
+          border: 1px solid white;
+        }
+      }
+      
+      /* Print Styles */
+      @media print {
+        body {
+          background: white;
+          padding: 0;
+        }
+        .header::before,
+        .footer::before {
+          display: none;
+        }
+        .badge-custom {
+          background: #ccc;
+          color: #000;
+        }
+      }
+      
+      /* Touch Device Optimizations */
+      @media (hover: none) and (pointer: coarse) {
+        .header:hover {
+          transform: none;
+          opacity: 1;
+        }
+      
+        button,
+        a {
+          min-height: 44px;
+          min-width: 44px;
+        }
+      }
     </style>
-</head>
-<body>
-    <div class="container">
-        {% include 'includes/navbar.html' %}
-        
-        <div class="main-card mt-3">
-            <!-- ========== DYNAMIC HEADER - Changes based on page ========== -->
-            {% block header %}
-            <a href="/" style="text-decoration: none; display: block;">
-                <div class="header">
-                    {% if request.path == '/' %}
-                        {# Home Page #}
-                        <h1><i class="fas fa-shield-alt"></i> AI Fraud Shield</h1>
-                        <p>Kenya's Most Advanced Scam Detection Platform</p>
-                        <div class="badge-custom">
-                            <i class="fas fa-lock"></i> 100% Safe Analysis
-                        </div>
-                        {% if user.is_authenticated %}
-                        <div class="user-welcome">
-                            Welcome, <strong>{{ user.username }}</strong>
-                            {% if user.userprofile.company %}
-                                · {{ user.userprofile.company.name }}
-                            {% endif %}
-                        </div>
-                        {% endif %}
-                        
-                    {% elif '/about/' in request.path %}
-                        <h1><i class="fas fa-info-circle"></i> About Us</h1>
-                        <p>Learn about our mission to protect Kenyans from digital scams</p>
-                        
-                    {% elif '/how-it-works/' in request.path %}
-                        <h1><i class="fas fa-cogs"></i> How It Works</h1>
-                        <p>Understanding our advanced scam detection technology</p>
-                        <div class="badge-custom">
-                            <i class="fas fa-robot"></i> AI-Powered Protection
-                        </div>
-                        
-                    {% elif '/faq/' in request.path %}
-                        <h1><i class="fas fa-question-circle"></i> Frequently Asked Questions</h1>
-                        <p>Answers to common questions about our service</p>
-                        
-                    {% elif '/safety-tips/' in request.path %}
-                        <h1><i class="fas fa-lightbulb"></i> Safety Tips</h1>
-                        <p>How to protect yourself from digital scams</p>
-                        
-                    {% elif '/scam-alerts/' in request.path %}
-                        <h1><i class="fas fa-bell"></i> Scam Alerts</h1>
-                        <p>Latest scam threats reported in Kenya</p>
-                        
-                    {% elif '/report-scam/' in request.path %}
-                        <h1><i class="fas fa-flag"></i> Report a Scam</h1>
-                        <p>Help protect fellow Kenyans by reporting scams</p>
-                        <div class="badge-custom">
-                            <i class="fas fa-shield-alt"></i> Confidential Report
-                        </div>
-                        
-                    {% elif '/report-phishing/' in request.path %}
-                        <h1><i class="fas fa-fish"></i> Report Phishing Email</h1>
-                        <p>Help stop email scammers by reporting phishing attempts</p>
-                        
-                    {% elif '/contact/' in request.path %}
-                        <h1><i class="fas fa-envelope"></i> Contact Us</h1>
-                        <p>Get in touch with our support team</p>
-                        
-                    {% elif '/login/' in request.path %}
-                        <h1><i class="fas fa-sign-in-alt"></i> Welcome Back</h1>
-                        <p>Sign in to your AI Fraud Shield account</p>
-                        
-                    {% elif '/register/' in request.path %}
-                        <h1><i class="fas fa-user-plus"></i> Create Account</h1>
-                        <p>Join thousands of Kenyans protecting themselves from scams</p>
-                        
-                    {% elif '/profile/' in request.path %}
-                        <h1><i class="fas fa-user-circle"></i> My Profile</h1>
-                        <p>Your account details and activity</p>
-                        
-                    {% elif '/corporate/' in request.path %}
-                        <h1><i class="fas fa-building-shield"></i> Corporate Shield</h1>
-                        <p>Enterprise security dashboard for your organization</p>
-                        
-                    {% elif '/reports-dashboard/' in request.path %}
-                        <h1><i class="fas fa-flag"></i> Scam Reports Dashboard</h1>
-                        <p>Comprehensive overview of all submitted scam reports</p>
-                        
-                    {% elif '/heatmap/' in request.path %}
-                        <h1><i class="fas fa-map-marked-alt"></i> Scam Heatmap</h1>
-                        <p>Geographic distribution of scam reports across Kenya</p>
-                        
-                    {% elif '/leaderboard/' in request.path %}
-                        <h1><i class="fas fa-trophy"></i> Leaderboard</h1>
-                        <p>Top contributors protecting Kenya from scams</p>
-                        
-                    {% else %}
-                        {# Default Header #}
-                        <h1><i class="fas fa-shield-alt"></i> AI Fraud Shield</h1>
-                        <p>Kenya's Most Advanced Scam Detection Platform</p>
-                        <div class="badge-custom">
-                            <i class="fas fa-lock"></i> 100% Safe Analysis
-                        </div>
-                    {% endif %}
-                </div>
-            </a>
-            {% endblock %}
-            
-            {% block content %}{% endblock %}
+  </head>
+  <body>
+    <!-- PWA Install Banner -->
+    <div id="pwaInstallBanner" class="pwa-install-banner">
+      <div class="banner-content">
+        <div class="banner-icon">📱</div>
+        <div class="banner-text">
+          <h6>Install AI Fraud Shield App</h6>
+          <p>Get faster access, offline support, and better protection</p>
         </div>
-        
-        <!-- Footer -->
-        <div class="footer mt-3">
-            <div class="footer-content">
-                <div class="footer-grid">
-                    <div class="footer-col">
-                        <h4><i class="fas fa-link"></i> Quick Links</h4>
-                        <a href="/"><i class="fas fa-home"></i> Home</a>
-                        <a href="/how-it-works/"><i class="fas fa-cogs"></i> How It Works</a>
-                        <a href="/safety-tips/"><i class="fas fa-lightbulb"></i> Safety Tips</a>
-                        <a href="/scam-alerts/"><i class="fas fa-bell"></i> Scam Alerts</a>
-                    </div>
-                    <div class="footer-col">
-                        <h4><i class="fas fa-flag"></i> Report Scams</h4>
-                        <a href="/report-scam/"><i class="fas fa-exclamation-circle"></i> Report a Scam</a>
-                        <a href="/report-phishing/"><i class="fas fa-fish"></i> Report Phishing</a>
-                        <p><i class="fas fa-phone"></i> Safaricom: <strong>333</strong></p>
-                        <p><i class="fas fa-phone"></i> Airtel: <strong>3333</strong></p>
-                    </div>
-                    <div class="footer-col">
-                        <h4><i class="fas fa-shield-alt"></i> Stay Safe</h4>
-                        <p><i class="fas fa-lock"></i> Never share your PIN</p>
-                        <p><i class="fas fa-key"></i> Never share M-Pesa password</p>
-                        <p><i class="fas fa-user-slash"></i> Don't send money to unknown numbers</p>
-                        <p><i class="fas fa-envelope"></i> Forward phishing to <strong>report@kenyacic.go.ke</strong></p>
-                    </div>
-                </div>
-                <div class="footer-bottom">
-                    <p>
-                        <i class="fas fa-shield-alt"></i> 
-                        &copy; 2026 <strong>AI Fraud Shield Kenya</strong> | 
-                        🛡️ Protecting Kenyans from Scams | 
-                        Report scams: SMS <strong>333</strong> (Safaricom) | 
-                        <strong>3333</strong> (Airtel)
-                    </p>
-                    <p style="margin-top: 4px; font-size: 0.75rem;">
-                        Developed with ❤️ to keep Kenya safe from digital fraud
-                    </p>
-                </div>
-            </div>
-        </div>
+      </div>
+      <div>
+        <button id="pwaInstallBtn" class="btn-install">Install</button>
+        <button id="pwaCloseBanner" class="btn-close-banner">Not now</button>
+      </div>
     </div>
-    
+
+    <!-- PWA Mode Badge -->
+    <div id="pwaBadge" class="pwa-badge">📱 App Mode</div>
+
+    <!-- Offline Indicator -->
+    <div id="offlineIndicator" class="offline-indicator">
+      <i class="fas fa-wifi"></i> You're offline. Some features may be limited.
+    </div>
+
+    <div class="container">
+      {% include 'includes/navbar.html' %}
+
+      <div class="main-card mt-3">
+        <!-- DYNAMIC HEADER -->
+        {% block header %}
+          <a href="/" style="text-decoration: none; display: block;">
+            <div class="header">
+              {% if request.path == '/' %}
+                <h1><i class="fas fa-shield-alt"></i> AI Fraud Shield</h1>
+                <p>Kenya's Most Advanced Scam Detection Platform</p>
+                <div class="badge-custom">
+                  <i class="fas fa-lock"></i> 100% Safe Analysis
+                </div>
+                {% if user.is_authenticated %}
+                  <div class="user-welcome">
+                    Welcome, <strong>{{ user.username }}</strong>
+                    {% if user.userprofile.company %}
+                      · {{ user.userprofile.company.name }}
+                    {% endif %}
+                  </div>
+                {% endif %}
+              {% elif '/about/' in request.path %}
+                <h1><i class="fas fa-info-circle"></i> About Us</h1>
+                <p>Learn about our mission to protect Kenyans from digital scams</p>
+              {% elif '/how-it-works/' in request.path %}
+                <h1><i class="fas fa-cogs"></i> How It Works</h1>
+                <p>Understanding our advanced scam detection technology</p>
+                <div class="badge-custom">
+                  <i class="fas fa-robot"></i> AI-Powered Protection
+                </div>
+              {% elif '/faq/' in request.path %}
+                <h1><i class="fas fa-question-circle"></i> Frequently Asked Questions</h1>
+                <p>Answers to common questions about our service</p>
+              {% elif '/safety-tips/' in request.path %}
+                <h1><i class="fas fa-lightbulb"></i> Safety Tips</h1>
+                <p>How to protect yourself from digital scams</p>
+              {% elif '/scam-alerts/' in request.path %}
+                <h1><i class="fas fa-bell"></i> Scam Alerts</h1>
+                <p>Latest scam threats reported in Kenya</p>
+              {% elif '/report-scam/' in request.path %}
+                <h1><i class="fas fa-flag"></i> Report a Scam</h1>
+                <p>Help protect fellow Kenyans by reporting scams</p>
+                <div class="badge-custom">
+                  <i class="fas fa-shield-alt"></i> Confidential Report
+                </div>
+              {% elif '/report-phishing/' in request.path %}
+                <h1><i class="fas fa-fish"></i> Report Phishing Email</h1>
+                <p>Help stop email scammers by reporting phishing attempts</p>
+              {% elif '/contact/' in request.path %}
+                <h1><i class="fas fa-envelope"></i> Contact Us</h1>
+                <p>Get in touch with our support team</p>
+              {% elif '/login/' in request.path %}
+                <h1><i class="fas fa-sign-in-alt"></i> Welcome Back</h1>
+                <p>Sign in to your AI Fraud Shield account</p>
+              {% elif '/register/' in request.path %}
+                <h1><i class="fas fa-user-plus"></i> Create Account</h1>
+                <p>Join thousands of Kenyans protecting themselves from scams</p>
+              {% elif '/profile/' in request.path %}
+                <h1><i class="fas fa-user-circle"></i> My Profile</h1>
+                <p>Your account details and activity</p>
+              {% elif '/corporate/' in request.path %}
+                <h1><i class="fas fa-building-shield"></i> Corporate Shield</h1>
+                <p>Enterprise security dashboard for your organization</p>
+              {% elif '/reports-dashboard/' in request.path %}
+                <h1><i class="fas fa-flag"></i> Scam Reports Dashboard</h1>
+                <p>Comprehensive overview of all submitted scam reports</p>
+              {% elif '/heatmap/' in request.path %}
+                <h1><i class="fas fa-map-marked-alt"></i> Scam Heatmap</h1>
+                <p>Geographic distribution of scam reports across Kenya</p>
+              {% elif '/leaderboard/' in request.path %}
+                <h1><i class="fas fa-trophy"></i> Leaderboard</h1>
+                <p>Top contributors protecting Kenya from scams</p>
+              {% else %}
+                <h1><i class="fas fa-shield-alt"></i> AI Fraud Shield</h1>
+                <p>Kenya's Most Advanced Scam Detection Platform</p>
+                <div class="badge-custom">
+                  <i class="fas fa-lock"></i> 100% Safe Analysis
+                </div>
+              {% endif %}
+            </div>
+          </a>
+        {% endblock %}
+
+        {% block content %}
+        {% endblock %}
+      </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    {% block extra_js %}{% endblock %}
-</body>
+
+    <!-- ========== ENHANCED PWA SERVICE WORKER REGISTRATION ========== -->
+    <script>
+      // PWA Installation
+      let deferredPrompt
+      const installBanner = document.getElementById('pwaInstallBanner')
+      const installBtn = document.getElementById('pwaInstallBtn')
+      const closeBanner = document.getElementById('pwaCloseBanner')
+      const pwaBadge = document.getElementById('pwaBadge')
+      const offlineIndicator = document.getElementById('offlineIndicator')
+      
+      // Check if already installed/running as PWA
+      function isRunningAsPWA() {
+        return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true
+      }
+      
+      // Show PWA badge if running as app
+      if (isRunningAsPWA()) {
+        pwaBadge.classList.add('show')
+        console.log('🛡️ AI Fraud Shield running as PWA')
+      }
+      
+      // Listen for install prompt
+      window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault()
+        deferredPrompt = e
+      
+        // Don't show banner if already installed
+        if (!isRunningAsPWA()) {
+          const bannerClosed = localStorage.getItem('pwaBannerClosed')
+          if (!bannerClosed) {
+            installBanner.classList.add('show')
+          }
+        }
+      })
+      
+      // Handle install button click
+      if (installBtn) {
+        installBtn.addEventListener('click', async () => {
+          if (deferredPrompt) {
+            deferredPrompt.prompt()
+            const { outcome } = await deferredPrompt.userChoice
+            console.log(`User response to install: ${outcome}`)
+            deferredPrompt = null
+            installBanner.classList.remove('show')
+            localStorage.setItem('pwaBannerClosed', 'true')
+          }
+        })
+      }
+      
+      // Close banner
+      if (closeBanner) {
+        closeBanner.addEventListener('click', () => {
+          installBanner.classList.remove('show')
+          localStorage.setItem('pwaBannerClosed', 'true')
+        })
+      }
+      
+      // Service Worker Registration
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker
+            .register('/sw.js')
+            .then((registration) => {
+              console.log('✅ ServiceWorker registered: ', registration.scope)
+      
+              // Check for updates
+              registration.addEventListener('updatefound', () => {
+                const newWorker = registration.installing
+                console.log('New service worker installing...')
+                newWorker.addEventListener('statechange', () => {
+                  if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                    console.log('Update available - refresh to get latest version')
+                  }
+                })
+              })
+            })
+            .catch((error) => {
+              console.log('⚠️ ServiceWorker registration failed: ', error)
+            })
+        })
+      }
+      
+      // Online/Offline detection
+      window.addEventListener('online', () => {
+        offlineIndicator.classList.remove('show')
+        console.log('Back online')
+      })
+      
+      window.addEventListener('offline', () => {
+        offlineIndicator.classList.add('show')
+        console.log('Offline mode - using cached content')
+      })
+      
+      // Check initial online status
+      if (!navigator.onLine) {
+        offlineIndicator.classList.add('show')
+      }
+      
+      // Check if this is first visit (show welcome to PWA)
+      if (isRunningAsPWA() && !localStorage.getItem('pwaWelcomeShown')) {
+        setTimeout(() => {
+          console.log('🎉 Welcome to AI Fraud Shield PWA!')
+          localStorage.setItem('pwaWelcomeShown', 'true')
+        }, 2000)
+      }
+      
+      // iOS specific PWA detection
+      if (window.navigator.standalone === true) {
+        console.log('Running as iOS PWA')
+        document.body.classList.add('ios-pwa')
+      }
+      
+      console.log('🛡️ AI Fraud Shield PWA Ready')
+    </script>
+
+    {% block extra_js %}
+    {% endblock %}
+  </body>
 </html>

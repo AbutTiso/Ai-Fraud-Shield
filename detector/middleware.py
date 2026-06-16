@@ -35,3 +35,33 @@ class RateLimitMiddleware:
         else:
             ip = request.META.get('REMOTE_ADDR')
         return ip
+
+# ============================================================
+# ADD THIS CORS MIDDLEWARE BELOW
+# ============================================================
+
+class CorsMiddleware:
+    """Handle CORS preflight OPTIONS requests"""
+    
+    def __init__(self, get_response):
+        self.get_response = get_response
+    
+    def __call__(self, request):
+        # Handle OPTIONS request first
+        if request.method == 'OPTIONS':
+            response = JsonResponse({'status': 'ok'})
+            response['Access-Control-Allow-Origin'] = '*'
+            response['Access-Control-Allow-Methods'] = 'GET, POST, PUT, PATCH, DELETE, OPTIONS'
+            response['Access-Control-Allow-Headers'] = 'Content-Type, X-CSRFToken, Authorization'
+            response['Access-Control-Max-Age'] = '86400'  # Cache preflight for 24 hours
+            return response
+        
+        # Process normal request
+        response = self.get_response(request)
+        
+        # Add CORS headers to all responses
+        response['Access-Control-Allow-Origin'] = '*'
+        response['Access-Control-Allow-Methods'] = 'GET, POST, PUT, PATCH, DELETE, OPTIONS'
+        response['Access-Control-Allow-Headers'] = 'Content-Type, X-CSRFToken, Authorization'
+        
+        return response

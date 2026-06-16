@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>USSD Simulator - AI Fraud Shield</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #002855 0%, #001a3f 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .phone {
+            max-width: 450px;
+            width: 100%;
+            margin: 0 auto;
+            background: #1a1a1a;
+            border-radius: 40px;
+            padding: 20px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            border: 1px solid #333;
+        }
+        
+        .phone-header {
+            text-align: center;
+            padding: 10px;
+            color: white;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        
+        .screen {
+            background: #0a0e1a;
+            color: #00ff00;
+            padding: 20px;
+            border-radius: 15px;
+            min-height: 400px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            overflow-y: auto;
+            border: 1px solid #00ff00;
+            box-shadow: inset 0 0 10px rgba(0,255,0,0.1);
+        }
+        
+        .keypad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-top: 20px;
+        }
+        
+        .key {
+            background: #2a2a2a;
+            color: white;
+            border: none;
+            padding: 18px;
+            font-size: 20px;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        }
+        
+        .key:active {
+            background: #f5a623;
+            color: #002855;
+            transform: scale(0.95);
+        }
+        
+        .key-special {
+            background: #f5a623;
+            color: #002855;
+        }
+        
+        .key-zero {
+            grid-column: span 2;
+        }
+        
+        .input-area {
+            display: flex;
+            margin-top: 20px;
+            gap: 10px;
+        }
+        
+        .input-area input {
+            flex: 1;
+            padding: 15px;
+            font-size: 16px;
+            border-radius: 50px;
+            border: none;
+            background: #2a2a2a;
+            color: white;
+            text-align: center;
+        }
+        
+        .input-area input:focus {
+            outline: none;
+            border: 2px solid #f5a623;
+        }
+        
+        .send {
+            background: #f5a623;
+            color: #002855;
+            border: none;
+            padding: 15px 25px;
+            border-radius: 50px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .send:active {
+            transform: scale(0.95);
+        }
+        
+        .clear {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .info {
+            margin-top: 15px;
+            text-align: center;
+            color: rgba(255,255,255,0.6);
+            font-size: 12px;
+        }
+        
+        .status {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #00ff00;
+            animation: pulse 1s infinite;
+            margin-right: 8px;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+        
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #1a1a2e;
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #f5a623;
+            border-radius: 10px;
+        }
+        
+        @media (max-width: 500px) {
+            .phone {
+                padding: 15px;
+            }
+            .key {
+                padding: 14px;
+                font-size: 18px;
+            }
+            .screen {
+                min-height: 350px;
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="phone">
+    <div class="phone-header">
+        <span class="status"></span> AI Fraud Shield USSD
+    </div>
+    <div class="screen" id="screen">
+        📱 Dial *384# to start
+    </div>
+    <div class="input-area">
+        <input type="text" id="input" placeholder="Enter response..." autocomplete="off">
+        <button class="send" onclick="sendUSSD()">Send</button>
+        <button class="send clear" onclick="clearScreen()">Reset</button>
+    </div>
+    <div class="keypad">
+        <button class="key" onclick="addDigit('1')">1</button>
+        <button class="key" onclick="addDigit('2')">2</button>
+        <button class="key" onclick="addDigit('3')">3</button>
+        <button class="key" onclick="addDigit('4')">4</button>
+        <button class="key" onclick="addDigit('5')">5</button>
+        <button class="key" onclick="addDigit('6')">6</button>
+        <button class="key" onclick="addDigit('7')">7</button>
+        <button class="key" onclick="addDigit('8')">8</button>
+        <button class="key" onclick="addDigit('9')">9</button>
+        <button class="key key-special" onclick="addDigit('*')">*</button>
+        <button class="key" onclick="addDigit('0')">0</button>
+        <button class="key key-special" onclick="addDigit('#')">#</button>
+    </div>
+    <div class="info">
+        💡 Tip: Type numbers and press Send | 0 = Back/Exit
+    </div>
+</div>
+
+<script>
+let currentText = "";
+let sessionActive = true;
+
+// Auto-start USSD when page loads
+window.onload = function() {
+    setTimeout(() => {
+        startUSSD();
+    }, 500);
+};
+
+function startUSSD() {
+    fetch('/ussd/callback/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+            'phoneNumber': '254712345678',
+            'sessionId': 'test_session_' + Date.now(),
+            'serviceCode': '*384#',
+            'text': ''
+        })
+    })
+    .then(response => response.text())
+    .then(data => {
+        document.getElementById('screen').innerHTML = data;
+        sessionActive = true;
+        currentText = "";
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        document.getElementById('screen').innerHTML = '❌ Connection error. Make sure Django is running.';
+    });
+}
+
+function sendUSSD() {
+    let input = document.getElementById('input').value;
+    if (!input && currentText) {
+        input = currentText;
+    }
+    
+    if (!input && sessionActive) {
+        input = document.getElementById('input').value;
+    }
+    
+    if (!input) return;
+    
+    let textParam = currentText ? currentText + '*' + input : input;
+    
+    fetch('/ussd/callback/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+            'phoneNumber': '254712345678',
+            'sessionId': 'test_session',
+            'serviceCode': '*384#',
+            'text': textParam
+        })
+    })
+    .then(response => response.text())
+    .then(data => {
+        document.getElementById('screen').innerHTML = data;
+        document.getElementById('input').value = '';
+        
+        if (data.startsWith('END')) {
+            sessionActive = false;
+            currentText = "";
+        } else if (data.startsWith('CON')) {
+            currentText = textParam;
+            sessionActive = true;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        document.getElementById('screen').innerHTML = '❌ Connection error. Make sure Django is running.';
+    });
+}
+
+function addDigit(digit) {
+    let input = document.getElementById('input');
+    input.value += digit;
+    input.focus();
+}
+
+function clearScreen() {
+    document.getElementById('screen').innerHTML = '📱 Dial *384# to start';
+    document.getElementById('input').value = '';
+    currentText = "";
+    sessionActive = false;
+    setTimeout(() => startUSSD(), 500);
+}
+
+// Allow Enter key to send
+document.getElementById('input').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        sendUSSD();
+    }
+});
+</script>
+</body>
+</html>

@@ -218,10 +218,16 @@ body {
   padding: 16px 14px 6px;
   font-weight: 700;
 }
+
+/* ========== SIDEBAR FOOTER - UPDATED ========== */
 .sidebar-footer {
   padding: 12px 14px;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
+
 .sidebar-footer a {
   display: flex;
   align-items: center;
@@ -233,12 +239,26 @@ body {
   font-size: 0.82rem;
   transition: all 0.2s;
 }
+
 .sidebar-footer a:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.08);
   color: #f5a623;
 }
 
-/* Main Content */
+/* Highlight Analytics and Takedown links */
+.sidebar-footer .sidebar-footer-link {
+  font-weight: 600;
+}
+
+.sidebar-footer .sidebar-footer-link i {
+  color: #f5a623;
+}
+
+.sidebar-footer .sidebar-footer-link:hover i {
+  color: #fff;
+}
+
+/* ========== MAIN CONTENT ========== */
 .main-content {
   flex: 1;
   min-width: 0;
@@ -469,6 +489,21 @@ body {
 }
 .table tbody tr:hover { background-color: #fefce8; }
 
+/* Safe Analysis Badge */
+.safe-analysis-badge {
+  background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+  border: 1px solid #86efac;
+  border-left: 5px solid #10b981;
+  padding: 16px 20px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+}
+
+/* Spinner */
+.spinner { display: none; text-align: center; margin: 30px 0; }
+.spinner.show { display: block; }
+.spinner-border { width: 3rem; height: 3rem; color: #002855; border-width: 3px; }
+
 /* Responsive */
 @media (max-width: 1199px) {
   .sidebar { width: 70px; min-width: 70px; }
@@ -491,7 +526,8 @@ body {
   .sidebar-nav a { padding: 8px 12px; font-size: 0.75rem; border-radius: 8px; gap: 6px; }
   .sidebar-nav a .nav-label { display: inline; }
   .sidebar-nav a .nav-icon { width: 28px; height: 28px; font-size: 0.8rem; }
-  .sidebar-footer { display: none; }
+  .sidebar-footer { display: flex; flex-direction: row; flex-wrap: wrap; gap: 4px; padding: 6px 8px; }
+  .sidebar-footer a { padding: 6px 10px; font-size: 0.7rem; }
   .main-content { padding: 12px 0 0; margin-top: 12px; }
   .header h1 { font-size: 1.4rem; }
   .stats-card .stats-number { font-size: 1.4rem; }
@@ -501,18 +537,3 @@ body {
   .sidebar-nav a { padding: 6px 10px; font-size: 0.7rem; gap: 4px; }
   .sidebar-nav a .nav-icon { width: 24px; height: 24px; font-size: 0.7rem; }
 }
-
-/* Safe Analysis Badge */
-.safe-analysis-badge {
-  background: linear-gradient(135deg, #f0fdf4, #dcfce7);
-  border: 1px solid #86efac;
-  border-left: 5px solid #10b981;
-  padding: 16px 20px;
-  border-radius: 12px;
-  margin-bottom: 20px;
-}
-
-/* Spinner */
-.spinner { display: none; text-align: center; margin: 30px 0; }
-.spinner.show { display: block; }
-.spinner-border { width: 3rem; height: 3rem; color: #002855; border-width: 3px; }

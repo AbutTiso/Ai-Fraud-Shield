@@ -1,12 +1,12 @@
 // Service Worker for AI Fraud Shield Chrome Extension
-// Version 2.0 - Enhanced Security
+// Version 2.0 - Enhanced Security - MODERN COLOR SCHEME
 
 // ============ CONSTANTS & CONFIGURATION ============
 
 const EXTENSION_CONFIG = {
     version: '2.0.0',
     name: 'AI Fraud Shield',
-    checkInterval: 5000 // ms between checks
+    checkInterval: 5000
 };
 
 // Known legitimate domains (whitelist)
@@ -15,21 +15,17 @@ const LEGITIMATE_DOMAINS = new Set([
     'linkedin.com', 'youtube.com', 'amazon.com', 'microsoft.com',
     'apple.com', 'netflix.com', 'spotify.com', 'github.com',
     'stackoverflow.com', 'wikipedia.org', 'reddit.com', 'whatsapp.com',
-    'telegram.org', 'zoom.us', 'dropbox.com', 'slack.com'
+    'telegram.org', 'zoom.us', 'dropbox.com', 'slack.com',
+    'github.io', 'vercel.app', 'netlify.app', 'cloudflare.com'
 ]);
 
 // Suspicious URL patterns
 const SUSPICIOUS_PATTERNS = [
-    // Phishing keywords
     'secure-', 'verify-', 'login-', 'update-', 'confirm-',
     'account-', 'signin-', 'authenticate', 'validate-',
     'authorize-', 'identity-', 'verification-', 'security-',
-    
-    // Brand impersonation
     'safaricom', 'mpesa', 'airtel', 'telkom', 'equity', 'kcb',
     'paypal', 'amazon', 'microsoft', 'apple', 'google',
-    
-    // Suspicious words
     'claim', 'winner', 'prize', 'reward', 'gift', 'bonus',
     'free-', 'discount-', 'limited-', 'urgent-'
 ];
@@ -42,78 +38,70 @@ const SUSPICIOUS_TLDS = new Set([
     '.tech', '.store', '.work', '.link', '.gq', '.icu', '.cyou'
 ]);
 
-// Scam keywords for content analysis
-const SCAM_KEYWORDS = {
-    urgency: ['urgent', 'immediately', 'asap', 'today only', 'limited time', 'expires', 'last chance'],
-    threat: ['suspended', 'blocked', 'locked', 'closed', 'terminated', 'legal action', 'lawsuit'],
-    reward: ['won', 'winner', 'prize', 'congratulations', 'reward', 'gift card', 'free gift'],
-    sensitive: ['pin', 'password', 'otp', 'verification code', 'credit card', 'debit card', 'mpesa pin'],
-    pressure: ['don\'t miss', 'act now', 'click here', 'verify now', 'confirm your identity']
-};
+// ============ HELPER FUNCTIONS ============
 
-// ============ INITIALIZATION ============
+function updateBadge(text, color, title) {
+    try {
+        chrome.action.setBadgeText({ text: text });
+        chrome.action.setBadgeBackgroundColor({ color: color });
+        chrome.action.setTitle({ title: title });
+    } catch (error) {
+        console.log('Badge update error:', error);
+    }
+}
 
-chrome.runtime.onInstalled.addListener((details) => {
-    console.log(`${EXTENSION_CONFIG.name} Extension ${EXTENSION_CONFIG.version} - ${details.reason}`);
-    
-    // Initialize default settings
-    const defaultSettings = { 
-        enabled: true,
-        autoCheck: true,
+async function getSettings() {
+    const defaults = { 
+        enabled: true, 
+        autoCheck: true, 
         badgeEnabled: true,
         notificationsEnabled: true,
-        blockLevel: 'medium', // low, medium, high
-        scanType: 'both' // url, content, both
+        blockLevel: 'medium',
+        scanType: 'both'
     };
-    
-    chrome.storage.sync.set(defaultSettings);
-    
-    // Set default badge state
-    updateBadge('🟢', '#28a745', 'Extension active');
-    
-    // Create context menu for reporting
-    chrome.contextMenus.create({
-        id: 'reportScam',
-        title: 'Report this site as scam',
-        contexts: ['page_action', 'link']
-    });
-});
+    return await chrome.storage.sync.get(defaults);
+}
 
-// ============ NAVIGATION LISTENER ============
+function showNotification(title, message, type = 'info') {
+    console.log(`[${type.toUpperCase()}] ${title}: ${message}`);
+    
+    chrome.notifications.create({
+        type: 'basic',
+        iconUrl: 'icon128.png',
+        title: title.substring(0, 50),
+        message: message.substring(0, 200),
+        priority: 1
+    }).catch(() => {});
+}
 
-chrome.webNavigation.onCommitted.addListener(async (details) => {
-    if (details.frameId === 0) { // Main frame only
-        const settings = await getSettings();
-        
-        if (settings.enabled) {
-            const result = await analyzeUrlSafety(details.url);
-            
-            if (settings.badgeEnabled) {
-                updateBadge(result.badge.text, result.badge.color, result.badge.title);
-            }
-            
-            // Auto-check content if enabled
-            if (settings.autoCheck && settings.scanType !== 'url') {
-                await checkPageContent();
-            }
-            
-            // Show notification for high-risk sites
-            if (result.isDangerous && settings.notificationsEnabled) {
-                await showSecurityNotification(result);
+function detectBrandImpersonation(domain) {
+    const brands = [
+        { name: 'Safaricom', patterns: ['safaricom', 'safaric0m', 'safaricom-'] },
+        { name: 'M-Pesa', patterns: ['mpesa', 'm-pesa', 'mpesa-'] },
+        { name: 'Airtel', patterns: ['airtel', 'airt3l', 'airtel-'] },
+        { name: 'Equity Bank', patterns: ['equity', 'equitybank', 'equity-'] },
+        { name: 'KCB', patterns: ['kcb', 'kcb-', 'kcbgroup'] },
+        { name: 'PayPal', patterns: ['paypal', 'pay-pal', 'paypall'] },
+        { name: 'Amazon', patterns: ['amazon', 'amaz0n', 'amzn'] },
+        { name: 'Microsoft', patterns: ['microsoft', 'micros0ft', 'msft'] }
+    ];
+    
+    for (const brand of brands) {
+        for (const pattern of brand.patterns) {
+            if (domain.includes(pattern)) {
+                const realMatch = brand.name.toLowerCase().replace(/[^a-z]/g, '');
+                if (!domain.includes(realMatch) || domain !== `${realMatch}.com`) {
+                    return {
+                        detected: true,
+                        brand: brand.name,
+                        message: `Fake ${brand.name} domain detected!`
+                    };
+                }
             }
         }
     }
-});
-
-// ============ CONTEXT MENU HANDLER ============
-
-chrome.contextMenus.onClicked.addListener(async (info, tab) => {
-    if (info.menuItemId === 'reportScam') {
-        const url = info.linkUrl || info.pageUrl;
-        await reportScamSite(url, tab.id);
-        showNotification('Report Submitted', 'Thank you for helping keep others safe!', 'info');
-    }
-});
+    return { detected: false };
+}
 
 // ============ CORE ANALYSIS FUNCTIONS ============
 
@@ -128,14 +116,14 @@ async function analyzeUrlSafety(url) {
         let reasons = [];
         let riskLevel = 'safe';
         
-        // Check 1: Known legitimate domains (whitelist)
+        // Check 1: Known legitimate domains
         if (LEGITIMATE_DOMAINS.has(domain)) {
             return {
                 isDangerous: false,
                 score: 0,
                 riskLevel: 'safe',
                 reasons: ['Known legitimate domain'],
-                badge: { text: '✓', color: '#28a745', title: 'Safe site' }
+                badge: { text: '✓', color: '#10a37f', title: 'Safe site' }
             };
         }
         
@@ -143,7 +131,7 @@ async function analyzeUrlSafety(url) {
         for (const tld of SUSPICIOUS_TLDS) {
             if (domain.endsWith(tld)) {
                 score += 35;
-                reasons.push(`⚠️ Suspicious domain extension: ${tld}`);
+                reasons.push(`Suspicious domain extension: ${tld}`);
                 break;
             }
         }
@@ -151,14 +139,14 @@ async function analyzeUrlSafety(url) {
         // Check 3: IP address as domain
         if (/^\d+\.\d+\.\d+\.\d+$/.test(domain)) {
             score += 50;
-            reasons.push('🔴 Uses IP address instead of domain name');
+            reasons.push('Uses IP address instead of domain name');
         }
         
-        // Check 4: Suspicious patterns in domain
+        // Check 4: Suspicious patterns
         for (const pattern of SUSPICIOUS_PATTERNS) {
             if (domain.includes(pattern) || path.includes(pattern) || search.includes(pattern)) {
                 score += 15;
-                reasons.push(`⚠️ Suspicious pattern: "${pattern}"`);
+                reasons.push(`Suspicious pattern: "${pattern}"`);
                 break;
             }
         }
@@ -167,35 +155,29 @@ async function analyzeUrlSafety(url) {
         const brandImpersonation = detectBrandImpersonation(domain);
         if (brandImpersonation.detected) {
             score += 40;
-            reasons.push(`🔴 ${brandImpersonation.message}`);
+            reasons.push(brandImpersonation.message);
         }
         
-        // Check 6: Hyphenated domains (often suspicious)
+        // Check 6: Hyphenated domains
         if (domain.includes('-') && domain.split('-').length > 2) {
             score += 10;
-            reasons.push('⚠️ Multiple hyphens in domain name');
+            reasons.push('Multiple hyphens in domain name');
         }
         
-        // Check 7: Long URL (hiding tactic)
-        if (url.length > 120) {
-            score += 5;
-            reasons.push('⚠️ Unusually long URL');
-        }
-        
-        // Determine risk level and badge
+        // Determine risk level and badge - MODERN AI COLORS
         let badge, isDangerous;
         if (score >= 50) {
             isDangerous = true;
             riskLevel = 'dangerous';
-            badge = { text: '⚠️', color: '#dc3545', title: 'Security Risk - Do Not Trust!' };
+            badge = { text: '⚠️', color: '#ef4444', title: 'Security Risk - Do Not Trust!' };
         } else if (score >= 25) {
             isDangerous = true;
             riskLevel = 'suspicious';
-            badge = { text: '?', color: '#ffc107', title: 'Suspicious - Be Careful' };
+            badge = { text: '?', color: '#f59e0b', title: 'Suspicious - Be Careful' };
         } else {
             isDangerous = false;
             riskLevel = 'safe';
-            badge = { text: '✓', color: '#28a745', title: 'Site appears safe' };
+            badge = { text: '✓', color: '#10a37f', title: 'Site appears safe' };
         }
         
         return {
@@ -215,157 +197,37 @@ async function analyzeUrlSafety(url) {
             score: 0,
             riskLevel: 'unknown',
             reasons: ['Could not analyze URL'],
-            badge: { text: '?', color: '#6c757d', title: 'Unable to analyze' }
+            badge: { text: '?', color: '#6b7280', title: 'Unable to analyze' }
         };
     }
 }
-
-// ============ BRAND IMPERSONATION DETECTION ============
-
-function detectBrandImpersonation(domain) {
-    const brands = [
-        { name: 'Safaricom', patterns: ['safaricom', 'safaric0m', 'safaricom-'] },
-        { name: 'M-Pesa', patterns: ['mpesa', 'm-pesa', 'mpesa-'] },
-        { name: 'Airtel', patterns: ['airtel', 'airt3l', 'airtel-'] },
-        { name: 'Equity Bank', patterns: ['equity', 'equitybank', 'equity-'] },
-        { name: 'KCB', patterns: ['kcb', 'kcb-', 'kcbgroup'] },
-        { name: 'PayPal', patterns: ['paypal', 'pay-pal', 'paypall'] },
-        { name: 'Amazon', patterns: ['amazon', 'amaz0n', 'amzn'] },
-        { name: 'Microsoft', patterns: ['microsoft', 'micros0ft', 'msft'] }
-    ];
-    
-    for (const brand of brands) {
-        for (const pattern of brand.patterns) {
-            if (domain.includes(pattern)) {
-                // Check if it's the real domain vs fake
-                const realMatch = brand.name.toLowerCase().replace(/[^a-z]/g, '');
-                if (!domain.includes(realMatch) || domain !== `${realMatch}.com`) {
-                    return {
-                        detected: true,
-                        brand: brand.name,
-                        message: `Fake ${brand.name} domain detected! This looks like a phishing site.`
-                    };
-                }
-            }
-        }
-    }
-    
-    return { detected: false };
-}
-
-// ============ PAGE CONTENT SCANNING ============
 
 async function checkPageContent() {
     try {
         const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
         if (!tab || !tab.id) return;
         
-        // Check if content script is injected
         try {
             const response = await chrome.tabs.sendMessage(tab.id, { action: "scanContent" });
             if (response && response.hasScamIndicators) {
-                await showContentWarning(response.scamDetails);
-                updateBadge('⚠️', '#ffc107', 'Scam content detected');
+                updateBadge('⚠️', '#f59e0b', 'Scam content detected');
             }
         } catch (error) {
-            // Content script not injected - inject it
-            if (tab.url && tab.url.startsWith('http')) {
-                await chrome.scripting.executeScript({
-                    target: { tabId: tab.id },
-                    files: ['content.js']
-                });
-            }
+            console.log('Content script not available');
         }
     } catch (error) {
         console.log('Content check error:', error);
     }
 }
 
-// ============ NOTIFICATION FUNCTIONS ============
-
-async function showSecurityNotification(analysisResult) {
-    const notificationKey = `alert_${analysisResult.domain}`;
-    const shown = await chrome.storage.local.get(notificationKey);
-    
-    // Only show once per domain per session
-    if (!shown[notificationKey]) {
-        const notificationId = await chrome.notifications.create({
-            type: 'basic',
-            iconUrl: 'icons/icon128.png',
-            title: analysisResult.score >= 50 ? '⚠️ Security Alert!' : '🔍 Suspicious Site Detected',
-            message: analysisResult.reasons.slice(0, 2).join('\n'),
-            priority: analysisResult.score >= 50 ? 2 : 1,
-            buttons: [{ title: 'Block Site' }, { title: 'Learn More' }]
-        });
-        
-        // Store notification reference
-        await chrome.storage.local.set({ [notificationKey]: true });
-        
-        // Auto-clear after 1 hour
-        setTimeout(async () => {
-            await chrome.storage.local.remove(notificationKey);
-        }, 60 * 60 * 1000);
-    }
-}
-
-function showNotification(title, message, type = 'info') {
-    const colors = {
-        info: '#17a2b8',
-        warning: '#ffc107',
-        danger: '#dc3545',
-        success: '#28a745'
-    };
-    
-    // Non-intrusive notification (doesn't require permission)
-    console.log(`[${type.toUpperCase()}] ${title}: ${message}`);
-    
-    // Optional: Use chrome.notifications if permission granted
-    chrome.notifications.create({
-        type: 'basic',
-        iconUrl: 'icons/icon48.png',
-        title: title,
-        message: message,
-        priority: 1
-    }).catch(() => {
-        // Silent fail if notification permission not granted
-    });
-}
-
-async function showContentWarning(scamDetails) {
-    const notificationId = await chrome.notifications.create({
-        type: 'basic',
-        iconUrl: 'icons/icon128.png',
-        title: '⚠️ Scam Content Detected!',
-        message: `Detected: ${scamDetails.detectedTypes.join(', ')}`,
-        priority: 2,
-        buttons: [{ title: 'Leave Site' }, { title: 'I Understand' }]
-    });
-}
-
-// ============ BADGE UPDATE ============
-
-function updateBadge(text, color, title) {
-    try {
-        chrome.action.setBadgeText({ text: text });
-        chrome.action.setBadgeBackgroundColor({ color: color });
-        chrome.action.setTitle({ title: title });
-    } catch (error) {
-        console.log('Badge update error:', error);
-    }
-}
-
-// ============ SCAM REPORTING ============
-
 async function reportScamSite(url, tabId) {
     try {
         const urlObj = new URL(url);
         const domain = urlObj.hostname;
         
-        // Store reported site
         const reported = await chrome.storage.local.get(['reportedSites']);
         const reportedSites = reported.reportedSites || [];
         
-        // Check if already reported
         const alreadyReported = reportedSites.some(site => 
             site.domain === domain && 
             Date.now() - new Date(site.timestamp).getTime() < 30 * 24 * 60 * 60 * 1000
@@ -381,46 +243,103 @@ async function reportScamSite(url, tabId) {
             });
             
             await chrome.storage.local.set({ reportedSites });
-            
-            // Optional: Send to backend API
-            sendToBackendAPI(domain, url);
-            
-            // Update badge for this tab
-            updateBadge('🚫', '#6c757d', 'Reported as scam');
-            
+            updateBadge('🚫', '#6b7280', 'Reported as scam');
             showNotification('Report Submitted', 'Thank you for helping protect others!', 'success');
+        } else {
+            showNotification('Already Reported', 'This site has already been reported', 'info');
         }
     } catch (error) {
         console.error('Report error:', error);
     }
 }
 
-async function sendToBackendAPI(domain, url) {
-    try {
-        // Send report to your fraud shield backend
-        const response = await fetch('https://your-fraudshield-api.com/api/report-scam-site/', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ domain, url, source: 'chrome_extension' })
-        }).catch(() => null);
-    } catch (error) {
-        // Silent fail - backend not required for extension to work
+async function showSecurityNotification(analysisResult) {
+    const notificationKey = `alert_${analysisResult.domain}`;
+    const shown = await chrome.storage.local.get(notificationKey);
+    
+    if (!shown[notificationKey]) {
+        try {
+            await chrome.notifications.create({
+                type: 'basic',
+                iconUrl: 'icon128.png',
+                title: analysisResult.score >= 50 ? 'Security Alert!' : 'Suspicious Site Detected',
+                message: analysisResult.reasons.slice(0, 2).join('\n'),
+                priority: analysisResult.score >= 50 ? 2 : 1
+            });
+            
+            await chrome.storage.local.set({ [notificationKey]: true });
+            
+            setTimeout(async () => {
+                await chrome.storage.local.remove(notificationKey);
+            }, 60 * 60 * 1000);
+        } catch (error) {
+            console.log('Notification error:', error);
+        }
     }
 }
 
-// ============ SETTINGS MANAGEMENT ============
+// ============ INITIALIZATION ============
 
-async function getSettings() {
-    const defaults = { 
-        enabled: true, 
-        autoCheck: true, 
+chrome.runtime.onInstalled.addListener((details) => {
+    console.log(`${EXTENSION_CONFIG.name} Extension ${EXTENSION_CONFIG.version} - ${details.reason}`);
+    
+    const defaultSettings = { 
+        enabled: true,
+        autoCheck: true,
         badgeEnabled: true,
         notificationsEnabled: true,
         blockLevel: 'medium',
         scanType: 'both'
     };
-    return await chrome.storage.sync.get(defaults);
-}
+    
+    chrome.storage.sync.set(defaultSettings);
+    updateBadge('🟢', '#10a37f', 'Extension active');
+    
+    chrome.contextMenus.create({
+        id: 'reportScam',
+        title: 'Report this site as scam',
+        contexts: ['page', 'link']
+    }, () => {
+        if (chrome.runtime.lastError && !chrome.runtime.lastError.message.includes('already exists')) {
+            console.warn('Context menu error:', chrome.runtime.lastError);
+        } else {
+            console.log('Context menu created successfully');
+        }
+    });
+});
+
+// ============ NAVIGATION LISTENER ============
+
+chrome.webNavigation.onCommitted.addListener(async (details) => {
+    if (details.frameId === 0) {
+        const settings = await getSettings();
+        
+        if (settings.enabled) {
+            const result = await analyzeUrlSafety(details.url);
+            
+            if (settings.badgeEnabled) {
+                updateBadge(result.badge.text, result.badge.color, result.badge.title);
+            }
+            
+            if (result.isDangerous && settings.notificationsEnabled) {
+                await showSecurityNotification(result);
+            }
+        }
+    }
+});
+
+// ============ CONTEXT MENU HANDLER ============
+
+chrome.contextMenus.onClicked.addListener(async (info, tab) => {
+    if (!info || !tab) return;
+    
+    if (info.menuItemId === 'reportScam') {
+        const url = info.linkUrl || info.pageUrl || tab.url;
+        if (url) {
+            await reportScamSite(url, tab.id);
+        }
+    }
+});
 
 // ============ MESSAGE HANDLING ============
 
@@ -443,7 +362,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 await reportScamSite(sender.tab.url, sender.tab.id);
                 sendResponse({ success: true });
             } else {
-                sendResponse({ success: false, error: 'No URL available' });
+                sendResponse({ success: false });
             }
         },
         getStats: async () => {
@@ -452,13 +371,25 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 totalReports: (reported.reportedSites || []).length,
                 version: EXTENSION_CONFIG.version
             });
+        },
+        checkPageSafety: async () => {
+            if (sender.tab && sender.tab.id) {
+                try {
+                    const response = await chrome.tabs.sendMessage(sender.tab.id, { action: "getRiskScore" });
+                    sendResponse(response);
+                } catch (error) {
+                    sendResponse({ score: 0, isScam: false });
+                }
+            } else {
+                sendResponse({ score: 0, isScam: false });
+            }
         }
     };
     
     const handler = handlers[request.action];
     if (handler) {
         handler();
-        return true; // Keep message channel open for async response
+        return true;
     }
     
     sendResponse({ error: 'Unknown action' });
@@ -467,7 +398,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
 // ============ PERIODIC CLEANUP ============
 
-// Clean up old notifications from storage (once per day)
 setInterval(async () => {
     const thirtyDaysAgo = Date.now() - (30 * 24 * 60 * 60 * 1000);
     const items = await chrome.storage.local.get(null);
@@ -481,7 +411,6 @@ setInterval(async () => {
         }
     }
     
-    // Clean old reported sites
     const reported = await chrome.storage.local.get(['reportedSites']);
     if (reported.reportedSites) {
         const filtered = reported.reportedSites.filter(site => 
@@ -493,11 +422,8 @@ setInterval(async () => {
     }
 }, 24 * 60 * 60 * 1000);
 
-// ============ HEARTBEAT / KEEPALIVE ============
-
-// Keep service worker alive for better performance
 setInterval(() => {
     console.log(`${EXTENSION_CONFIG.name} service worker active`);
-}, 5 * 60 * 1000); // Every 5 minutes
+}, 5 * 60 * 1000);
 
-console.log(`${EXTENSION_CONFIG.name} Extension ${EXTENSION_CONFIG.version} - Service Worker Loaded`);
+console.log(`✅ ${EXTENSION_CONFIG.name} Extension ${EXTENSION_CONFIG.version} - Service Worker Loaded Successfully`);
