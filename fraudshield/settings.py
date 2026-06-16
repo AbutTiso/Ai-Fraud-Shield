@@ -42,21 +42,25 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'detector.middleware.CorsMiddleware',
     'detector.middleware.RateLimitMiddleware',
+    'detector.middleware.NoCacheMiddleware',  # Add this for development
 ]
 
 ROOT_URLCONF = 'fraudshield.urls'
 
+# ============ TEMPLATES - FIXED ============
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [BASE_DIR / 'templates'],
-        'APP_DIRS': True,
+        'APP_DIRS': True,  # Keep as True
         'OPTIONS': {
             'context_processors': [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'django.template.context_processors.debug',
             ],
+            # DO NOT add 'loaders' here - it conflicts with APP_DIRS
         },
     },
 ]
@@ -99,7 +103,6 @@ LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
 
 # ============ EMAIL SETTINGS ============
-# For development (logs to console)
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 DEFAULT_FROM_EMAIL = 'noreply@aifraudshield.com'
 CONTACT_EMAIL = 'admin@aifraudshield.com'
@@ -113,6 +116,14 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [
     BASE_DIR / 'detector' / 'static',
 ]
+
+# ============ STATIC FILES CACHE CONTROL ============
+if DEBUG:
+    # Disable ETags to prevent 304 responses
+    USE_ETAGS = False
+    
+    # Static files storage - no caching
+    STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
@@ -129,13 +140,20 @@ REST_FRAMEWORK = {
 }
 
 # ============ CACHING ============
-CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-        'LOCATION': 'unique-snowflake',
-        'TIMEOUT': 300,
+if DEBUG:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
+        }
     }
-}
+else:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+            'LOCATION': 'unique-snowflake',
+            'TIMEOUT': 300,
+        }
+    }
 
 # ============ LOGGING ============
 LOGGING = {
@@ -159,16 +177,18 @@ LOGGING = {
     },
 }
 
-# ============ THIRD PARTY API KEYS (from .env) ============
+# ============ THIRD PARTY API KEYS ============
 TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN', '')
 AT_USERNAME = os.getenv('AT_USERNAME', 'sandbox')
 AT_API_KEY = os.getenv('AT_API_KEY', '')
 AT_SHORTCODE = os.getenv('AT_SHORTCODE', '4350')
 NGROK_URL = os.getenv('NGROK_URL')
-# Add to settings.py
 VAPID_PUBLIC_KEY = os.getenv('VAPID_PUBLIC_KEY')
 VAPID_PRIVATE_KEY = os.getenv('VAPID_PRIVATE_KEY')
 VAPID_SUBJECT = os.getenv('VAPID_SUBJECT')
-# Threat Intelligence
 GOOGLE_SAFE_BROWSING_KEY = os.getenv('GOOGLE_SAFE_BROWSING_KEY', '')
 VIRUSTOTAL_API_KEY = os.getenv('VIRUSTOTAL_API_KEY', '')
+
+# ============ APP VERSION ============
+APP_VERSION = os.getenv('APP_VERSION', '1.0.0')
+BUILD_NUMBER = os.getenv('BUILD_NUMBER', '1')

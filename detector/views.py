@@ -4379,3 +4379,17 @@ def subscribe_push(request):
 
 def send_scam_alert_push(user_id, scam_title, scam_message, scam_url):
     print(f"Push notification would be sent to {user_id}: {scam_title} (disabled)")
+    
+# In detector/views.py or enhancements_views.py
+from django.http import JsonResponse
+from django.views.decorators.cache import cache_control
+import time
+
+@cache_control(no_cache=True, must_revalidate=True, no_store=True)
+def api_version(request):
+    """Return current app version for auto-update checking"""
+    return JsonResponse({
+        'version': str(int(time.time())),  # Unix timestamp
+        'build': time.strftime('%Y%m%d%H%M%S'),
+        'updated': time.strftime('%Y-%m-%d %H:%M:%S')
+    })

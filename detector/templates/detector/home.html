@@ -585,6 +585,9 @@
               <i class="fas fa-building-shield"></i> Corporate Shield
             </a>
             {% endif %}
+            <a href="/logout/" class="btn-landing btn-landing-outline">
+              <i class="fas fa-sign-out-alt"></i> Logout
+            </a>
           </div>
         {% else %}
           <p class="welcome-msg">
@@ -634,6 +637,7 @@
             <li><a href="/heatmap/"><span class="nav-icon"><i class="fas fa-map-marked-alt"></i></span><span class="nav-label">Scam Heatmap</span></a></li>
           </ul>
           
+          <!-- ============ DASHBOARD SECTION - AUTHENTICATED USERS ONLY ============ -->
           {% if user.is_authenticated %}
           <div class="sidebar-section-title">Dashboard</div>
           <ul class="sidebar-nav">
@@ -642,6 +646,7 @@
           </ul>
           {% endif %}
           
+          <!-- ============ ADMIN SECTION - ADMINS ONLY ============ -->
           {% if user.is_superuser or user.userprofile.role == 'COMPANY_ADMIN' %}
           <div class="sidebar-section-title" style="color:#dc3545;"><i class="fas fa-lock"></i> Admin</div>
           <ul class="sidebar-nav">
@@ -655,14 +660,23 @@
           {% endif %}
         </div>
         
-        <!-- SIDEBAR FOOTER - ALWAYS VISIBLE -->
+        <!-- ============ SIDEBAR FOOTER - CONDITIONAL ============ -->
         <div class="sidebar-footer">
+          <!-- Analytics - Only for authenticated users -->
+          {% if user.is_authenticated %}
           <a href="/analytics/" class="sidebar-footer-link">
             <i class="fas fa-chart-line"></i> Analytics
           </a>
+          {% endif %}
+          
+          <!-- Takedown - Only for authenticated users -->
+          {% if user.is_authenticated %}
           <a href="/takedown/" class="sidebar-footer-link">
             <i class="fas fa-trash-alt"></i> Takedown
           </a>
+          {% endif %}
+          
+          <!-- Public Links - Everyone can see -->
           <a href="/scam-alerts/"><i class="fas fa-bell"></i> Scam Alerts</a>
           <a href="/safety-tips/"><i class="fas fa-lightbulb"></i> Safety Tips</a>
         </div>
@@ -671,7 +685,7 @@
       <!-- MAIN CONTENT -->
       <div class="main-content">
         
-        <!-- Quick Stats -->
+        <!-- Quick Stats - Public but shows different data -->
         <div class="quick-stats-strip">
           <div class="quick-stat-item">
             <div class="qs-icon">🛡️</div>
@@ -700,7 +714,7 @@
           </div>
         </div>
 
-        <!-- Scam Alert Subscription Card -->
+        <!-- Scam Alert Subscription Card - Everyone can see -->
         <div class="card mb-4" style="border: 1px solid #e2e8f0; border-radius: 16px; background: linear-gradient(135deg, #f8fafc, #ffffff);">
           <div class="card-body text-center" style="padding: 20px;">
             <div style="font-size: 2.5rem; margin-bottom: 10px;">🔔</div>
@@ -970,14 +984,18 @@
           <div id="urlResult" class="result-card"></div>
         </div>
 
-        <!-- Stats Tab -->
+        <!-- Stats Tab - Only for Authenticated Users -->
         <div id="statsTab" class="tab-content">
           <div class="tab-header"><h5><i class="fas fa-chart-bar"></i> Statistics</h5></div>
+          
           {% if not user.is_authenticated %}
           <div class="alert mb-3" style="background:#fef3d5;border:1px solid #f5a623;text-align:center;">
-            <a href="/register/" style="color:#002855;font-weight:700;">Sign Up Free</a> to track your activity
+            <i class="fas fa-lock" style="color:#f5a623;"></i> 
+            <a href="/login/" style="color:#002855;font-weight:700;">Login</a> or 
+            <a href="/register/" style="color:#002855;font-weight:700;">Sign Up Free</a> to track your personal statistics
           </div>
           {% endif %}
+          
           {% if user.is_authenticated %}
           <div class="row g-3 mb-3">
             <div class="col-md-6"><div class="chart-card"><h6>Scams by Type</h6><canvas id="scamTypeChart"></canvas></div></div>

@@ -183,7 +183,7 @@ urlpatterns = [
     path('analytics/', enhancements_views.analytics_dashboard, name='analytics_dashboard'),
     path('api/analytics-data/', enhancements_views.analytics_data, name='analytics_data'),
     path('api/export-analytics-pdf/', enhancements_views.export_analytics_pdf, name='export_analytics_pdf'),
-    
+     path('api/version/', views.api_version, name='api_version'), 
     # =========================
     # ENHANCEMENTS - Plan Upgrades (FIXED - Now pointing to enhancements_views)
     # =========================

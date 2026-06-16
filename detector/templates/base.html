@@ -9,22 +9,31 @@
       {% endblock %}
     </title>
 
+    <!-- ========== CACHE CONTROL - FORCE FRESH LOADING ========== -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    
+    <!-- ========== VERSION TRACKING ========== -->
+    <meta name="app-version" content="{% now 'U' %}" />
+
     <!-- ========== PWA META TAGS ========== -->
-    <link rel="manifest" href="/manifest.json" />
+    <link rel="manifest" href="/manifest.json?v={% now 'U' %}" />
     <meta name="theme-color" content="#002855" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="FraudShield" />
-    <link rel="apple-touch-icon" href="/static/detector/icons/icon-192.png" />
+    <link rel="apple-touch-icon" href="/static/detector/icons/icon-192.png?v={% now 'U' %}" />
 
     <!-- Add this for maskable icon support -->
-    <link rel="icon" type="image/png" sizes="192x192" href="/static/detector/icons/icon-192-maskable.png" maskable />
+    <link rel="icon" type="image/png" sizes="192x192" href="/static/detector/icons/icon-192-maskable.png?v={% now 'U' %}" maskable />
 
     <!-- Additional PWA Meta Tags -->
     <meta name="application-name" content="AI Fraud Shield" />
     <meta name="msapplication-TileColor" content="#002855" />
-    <meta name="msapplication-TileImage" content="/static/detector/icons/icon-144.png" />
+    <meta name="msapplication-TileImage" content="/static/detector/icons/icon-144.png?v={% now 'U' %}" />
 
+    <!-- ========== CSS WITH CACHE BUSTING ========== -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
@@ -290,7 +299,7 @@
         border-radius: 4px;
       }
       
-      /* ========== PWA STYLES (ADDED) ========== */
+      /* ========== PWA STYLES ========== */
       .pwa-install-banner {
         position: fixed;
         bottom: 20px;
@@ -403,6 +412,75 @@
         animation: slideDown 0.3s ease;
       }
       
+      /* ========== AUTO-UPDATE NOTIFICATION ========== */
+      .update-notification {
+        position: fixed;
+        bottom: 100px;
+        right: 20px;
+        background: var(--navy);
+        color: white;
+        padding: 16px 24px;
+        border-radius: 16px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        z-index: 9999;
+        display: none;
+        align-items: center;
+        gap: 16px;
+        border-left: 4px solid var(--gold);
+        max-width: 400px;
+        animation: slideUp 0.3s ease;
+      }
+      
+      .update-notification.show {
+        display: flex;
+      }
+      
+      .update-notification .update-icon {
+        font-size: 1.5rem;
+        color: var(--gold);
+      }
+      
+      .update-notification .update-text {
+        flex: 1;
+      }
+      
+      .update-notification .update-text h6 {
+        margin: 0;
+        font-weight: 700;
+      }
+      
+      .update-notification .update-text p {
+        margin: 4px 0 0;
+        font-size: 0.8rem;
+        opacity: 0.8;
+      }
+      
+      .update-notification .btn-refresh {
+        background: var(--gold);
+        color: var(--navy);
+        border: none;
+        padding: 8px 16px;
+        border-radius: 50px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.3s;
+        white-space: nowrap;
+      }
+      
+      .update-notification .btn-refresh:hover {
+        transform: scale(1.05);
+        background: #e6951a;
+      }
+      
+      .update-notification .btn-close-update {
+        background: rgba(255,255,255,0.1);
+        border: none;
+        color: white;
+        padding: 4px 10px;
+        border-radius: 30px;
+        cursor: pointer;
+      }
+      
       @keyframes slideUp {
         from {
           transform: translateY(100%);
@@ -457,6 +535,13 @@
         .footer-col a {
           text-align: center;
         }
+        
+        .update-notification {
+          bottom: 20px;
+          right: 20px;
+          left: 20px;
+          max-width: none;
+        }
       }
       
       /* Mobile Landscape (640px) */
@@ -509,6 +594,12 @@
         .footer-col p,
         .footer-col a {
           font-size: 0.75rem;
+        }
+        
+        .update-notification {
+          flex-direction: column;
+          text-align: center;
+          padding: 16px;
         }
       }
       
@@ -608,6 +699,23 @@
       <i class="fas fa-wifi"></i> You're offline. Some features may be limited.
     </div>
 
+    <!-- Update Notification -->
+    <div id="updateNotification" class="update-notification">
+      <div class="update-icon">
+        <i class="fas fa-sync-alt"></i>
+      </div>
+      <div class="update-text">
+        <h6>🔄 Update Available</h6>
+        <p>A new version is ready. Refresh to get the latest features!</p>
+      </div>
+      <button class="btn-refresh" onclick="refreshApp()">
+        <i class="fas fa-arrow-right"></i> Refresh
+      </button>
+      <button class="btn-close-update" onclick="dismissUpdate()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
     <div class="container">
       {% include 'includes/navbar.html' %}
 
@@ -697,121 +805,254 @@
       </div>
     </div>
 
+    <!-- ========== SCRIPTS ========== -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-    <!-- ========== ENHANCED PWA SERVICE WORKER REGISTRATION ========== -->
+    <!-- ========== ENHANCED PWA + AUTO-UPDATE SERVICE WORKER REGISTRATION ========== -->
     <script>
-      // PWA Installation
-      let deferredPrompt
-      const installBanner = document.getElementById('pwaInstallBanner')
-      const installBtn = document.getElementById('pwaInstallBtn')
-      const closeBanner = document.getElementById('pwaCloseBanner')
-      const pwaBadge = document.getElementById('pwaBadge')
-      const offlineIndicator = document.getElementById('offlineIndicator')
+      // ============================================================
+      // AUTO-UPDATE SYSTEM - Ensures always fresh content
+      // ============================================================
       
-      // Check if already installed/running as PWA
-      function isRunningAsPWA() {
-        return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true
-      }
+      // Check for updates every 30 seconds
+      let updateCheckInterval = null;
+      let currentVersion = document.querySelector('meta[name="app-version"]')?.content || '1.0';
+      let updateAvailable = false;
       
-      // Show PWA badge if running as app
-      if (isRunningAsPWA()) {
-        pwaBadge.classList.add('show')
-        console.log('🛡️ AI Fraud Shield running as PWA')
-      }
-      
-      // Listen for install prompt
-      window.addEventListener('beforeinstallprompt', (e) => {
-        e.preventDefault()
-        deferredPrompt = e
-      
-        // Don't show banner if already installed
-        if (!isRunningAsPWA()) {
-          const bannerClosed = localStorage.getItem('pwaBannerClosed')
-          if (!bannerClosed) {
-            installBanner.classList.add('show')
-          }
+      function checkForUpdates() {
+        // Check if service worker has an update
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.getRegistration().then(registration => {
+            if (registration) {
+              // Check for updates
+              registration.update().then(() => {
+                // Check if there's a waiting service worker
+                if (registration.waiting) {
+                  showUpdateNotification();
+                }
+              });
+            }
+          });
         }
-      })
-      
-      // Handle install button click
-      if (installBtn) {
-        installBtn.addEventListener('click', async () => {
-          if (deferredPrompt) {
-            deferredPrompt.prompt()
-            const { outcome } = await deferredPrompt.userChoice
-            console.log(`User response to install: ${outcome}`)
-            deferredPrompt = null
-            installBanner.classList.remove('show')
-            localStorage.setItem('pwaBannerClosed', 'true')
-          }
-        })
+        
+        // Also check version from server
+        fetch('/api/version/')
+          .then(response => response.json())
+          .then(data => {
+            if (data.version && data.version !== currentVersion) {
+              currentVersion = data.version;
+              showUpdateNotification();
+            }
+          })
+          .catch(() => {
+            // Silently fail - maybe offline
+          });
       }
       
-      // Close banner
-      if (closeBanner) {
-        closeBanner.addEventListener('click', () => {
-          installBanner.classList.remove('show')
-          localStorage.setItem('pwaBannerClosed', 'true')
-        })
+      function showUpdateNotification() {
+        const notification = document.getElementById('updateNotification');
+        if (notification && !notification.classList.contains('show')) {
+          notification.classList.add('show');
+          updateAvailable = true;
+          
+          // Auto-dismiss after 30 seconds if not clicked
+          setTimeout(() => {
+            if (updateAvailable) {
+              dismissUpdate();
+            }
+          }, 30000);
+        }
       }
       
-      // Service Worker Registration
+      function dismissUpdate() {
+        const notification = document.getElementById('updateNotification');
+        notification.classList.remove('show');
+        updateAvailable = false;
+      }
+      
+      function refreshApp() {
+        // Force reload with cache bypass
+        window.location.reload(true);
+      }
+      
+      // ============================================================
+      // SERVICE WORKER - Enhanced with auto-update
+      // ============================================================
+      
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
           navigator.serviceWorker
-            .register('/sw.js')
+            .register('/sw.js', { updateViaCache: 'none' })
             .then((registration) => {
-              console.log('✅ ServiceWorker registered: ', registration.scope)
-      
-              // Check for updates
+              console.log('✅ ServiceWorker registered: ', registration.scope);
+              
+              // Check for updates immediately and periodically
+              registration.update();
+              
+              // Listen for updates
               registration.addEventListener('updatefound', () => {
-                const newWorker = registration.installing
-                console.log('New service worker installing...')
+                const newWorker = registration.installing;
+                console.log('🔄 New service worker installing...');
+                
                 newWorker.addEventListener('statechange', () => {
                   if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                    console.log('Update available - refresh to get latest version')
+                    console.log('📦 Update available - prompting refresh');
+                    showUpdateNotification();
                   }
-                })
-              })
+                });
+              });
+              
+              // Check for updates every 60 seconds
+              setInterval(() => {
+                registration.update();
+              }, 60000);
             })
             .catch((error) => {
-              console.log('⚠️ ServiceWorker registration failed: ', error)
-            })
-        })
+              console.log('⚠️ ServiceWorker registration failed: ', error);
+            });
+        });
+        
+        // Handle controller change (new service worker takes over)
+        let refreshing = false;
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          if (!refreshing) {
+            refreshing = true;
+            console.log('🔄 Service worker changed, refreshing...');
+            window.location.reload(true);
+          }
+        });
       }
       
-      // Online/Offline detection
+      // ============================================================
+      // PWA INSTALLATION
+      // ============================================================
+      
+      let deferredPrompt;
+      const installBanner = document.getElementById('pwaInstallBanner');
+      const installBtn = document.getElementById('pwaInstallBtn');
+      const closeBanner = document.getElementById('pwaCloseBanner');
+      const pwaBadge = document.getElementById('pwaBadge');
+      const offlineIndicator = document.getElementById('offlineIndicator');
+      
+      function isRunningAsPWA() {
+        return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+      }
+      
+      if (isRunningAsPWA()) {
+        pwaBadge.classList.add('show');
+        console.log('🛡️ AI Fraud Shield running as PWA');
+      }
+      
+      window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        
+        if (!isRunningAsPWA()) {
+          const bannerClosed = localStorage.getItem('pwaBannerClosed');
+          if (!bannerClosed) {
+            installBanner.classList.add('show');
+          }
+        }
+      });
+      
+      if (installBtn) {
+        installBtn.addEventListener('click', async () => {
+          if (deferredPrompt) {
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            console.log(`User response to install: ${outcome}`);
+            deferredPrompt = null;
+            installBanner.classList.remove('show');
+            localStorage.setItem('pwaBannerClosed', 'true');
+          }
+        });
+      }
+      
+      if (closeBanner) {
+        closeBanner.addEventListener('click', () => {
+          installBanner.classList.remove('show');
+          localStorage.setItem('pwaBannerClosed', 'true');
+        });
+      }
+      
+      // ============================================================
+      // ONLINE/OFFLINE DETECTION
+      // ============================================================
+      
       window.addEventListener('online', () => {
-        offlineIndicator.classList.remove('show')
-        console.log('Back online')
-      })
+        offlineIndicator.classList.remove('show');
+        console.log('Back online');
+        // Check for updates when coming back online
+        setTimeout(checkForUpdates, 2000);
+      });
       
       window.addEventListener('offline', () => {
-        offlineIndicator.classList.add('show')
-        console.log('Offline mode - using cached content')
-      })
+        offlineIndicator.classList.add('show');
+        console.log('Offline mode - using cached content');
+      });
       
-      // Check initial online status
       if (!navigator.onLine) {
-        offlineIndicator.classList.add('show')
+        offlineIndicator.classList.add('show');
       }
       
-      // Check if this is first visit (show welcome to PWA)
+      // ============================================================
+      // PWA WELCOME
+      // ============================================================
+      
       if (isRunningAsPWA() && !localStorage.getItem('pwaWelcomeShown')) {
         setTimeout(() => {
-          console.log('🎉 Welcome to AI Fraud Shield PWA!')
-          localStorage.setItem('pwaWelcomeShown', 'true')
-        }, 2000)
+          console.log('🎉 Welcome to AI Fraud Shield PWA!');
+          localStorage.setItem('pwaWelcomeShown', 'true');
+        }, 2000);
       }
       
-      // iOS specific PWA detection
       if (window.navigator.standalone === true) {
-        console.log('Running as iOS PWA')
-        document.body.classList.add('ios-pwa')
+        console.log('Running as iOS PWA');
+        document.body.classList.add('ios-pwa');
       }
       
-      console.log('🛡️ AI Fraud Shield PWA Ready')
+      // ============================================================
+      // START AUTO-UPDATE CHECKING
+      // ============================================================
+      
+      // Initial check after page loads
+      setTimeout(checkForUpdates, 3000);
+      
+      // Then check every 60 seconds
+      setInterval(checkForUpdates, 60000);
+      
+      console.log('🛡️ AI Fraud Shield PWA Ready with Auto-Update');
+      
+      // ============================================================
+      // BROWSER BACK/FORWARD CACHE DISABLE
+      // ============================================================
+      
+      // Prevent page from being stored in bfcache
+      window.addEventListener('pageshow', function(event) {
+        if (event.persisted) {
+          // Page was restored from bfcache - reload fresh
+          window.location.reload(true);
+        }
+      });
+      
+      // ============================================================
+      // FORCE FRESH ON VISIBILITY CHANGE (Tab becomes active)
+      // ============================================================
+      
+      let lastVisibilityCheck = Date.now();
+      document.addEventListener('visibilitychange', function() {
+        if (!document.hidden) {
+          // Tab became visible again - check if we should refresh
+          const now = Date.now();
+          if (now - lastVisibilityCheck > 300000) { // 5 minutes
+            // Check for updates
+            checkForUpdates();
+            lastVisibilityCheck = now;
+          }
+        }
+      });
+      
+      console.log('✅ Auto-update system initialized');
     </script>
 
     {% block extra_js %}
